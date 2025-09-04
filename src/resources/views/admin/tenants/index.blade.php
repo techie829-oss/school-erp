@@ -70,8 +70,26 @@
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $tenant->id }}.{{ config('all.domains.primary') }}
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            @if(isset($tenant->data['full_domain']))
+                                {{ $tenant->data['full_domain'] }}
+                            @else
+                                {{ $tenant->id }}.{{ config('all.domains.primary') }}
+                            @endif
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            @if(isset($tenant->data['domain_type']))
+                                {{ ucfirst($tenant->data['domain_type']) }}
+                                @if($tenant->data['domain_type'] === 'subdomain' && isset($tenant->data['subdomain']))
+                                    ({{ $tenant->data['subdomain'] }})
+                                @elseif($tenant->data['domain_type'] === 'custom' && isset($tenant->data['custom_domain']))
+                                    ({{ $tenant->data['custom_domain'] }})
+                                @endif
+                            @else
+                                Subdomain ({{ $tenant->id }})
+                            @endif
+                        </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">

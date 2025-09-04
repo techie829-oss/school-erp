@@ -82,6 +82,67 @@
                 @enderror
             </div>
 
+            <!-- Domain Configuration -->
+            <div class="mb-6">
+                <label for="domain_type" class="block text-sm font-medium text-gray-700 mb-2">
+                    Domain Type <span class="text-red-500">*</span>
+                </label>
+                <select id="domain_type"
+                        name="domain_type"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('domain_type') border-red-500 @enderror"
+                        required>
+                    <option value="">Select domain type</option>
+                    <option value="subdomain" {{ old('domain_type') == 'subdomain' ? 'selected' : '' }}>Subdomain (e.g., schoola.myschool.test)</option>
+                    <option value="custom" {{ old('domain_type') == 'custom' ? 'selected' : '' }}>Custom Domain (e.g., schoola.com)</option>
+                </select>
+                @error('domain_type')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Subdomain Field -->
+            <div id="subdomain_field" class="mb-6" style="display: none;">
+                <label for="subdomain" class="block text-sm font-medium text-gray-700 mb-2">
+                    Subdomain <span class="text-red-500">*</span>
+                </label>
+                <div class="flex">
+                    <input type="text"
+                           id="subdomain"
+                           name="subdomain"
+                           value="{{ old('subdomain') }}"
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('subdomain') border-red-500 @enderror"
+                           placeholder="schoola"
+                           pattern="[a-z0-9-]+"
+                           title="Only lowercase letters, numbers, and hyphens allowed">
+                    <span class="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-600 text-sm">
+                        .{{ config('all.domains.primary') }}
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Only lowercase letters, numbers, and hyphens allowed</p>
+                @error('subdomain')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Custom Domain Field -->
+            <div id="custom_domain_field" class="mb-6" style="display: none;">
+                <label for="custom_domain" class="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Domain <span class="text-red-500">*</span>
+                </label>
+                <input type="text"
+                       id="custom_domain"
+                       name="custom_domain"
+                       value="{{ old('custom_domain') }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('custom_domain') border-red-500 @enderror"
+                       placeholder="schoola.com"
+                       pattern="[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                       title="Enter a valid domain name">
+                <p class="mt-1 text-xs text-gray-500">Enter the full domain name (e.g., schoola.com)</p>
+                @error('custom_domain')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Active Status -->
             <div class="mb-6">
                 <div class="flex items-center">
@@ -111,4 +172,53 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const domainTypeSelect = document.getElementById('domain_type');
+    const subdomainField = document.getElementById('subdomain_field');
+    const customDomainField = document.getElementById('custom_domain_field');
+    const subdomainInput = document.getElementById('subdomain');
+    const customDomainInput = document.getElementById('custom_domain');
+
+    function toggleDomainFields() {
+        const selectedType = domainTypeSelect.value;
+        
+        // Hide both fields initially
+        subdomainField.style.display = 'none';
+        customDomainField.style.display = 'none';
+        
+        // Clear inputs
+        subdomainInput.value = '';
+        customDomainInput.value = '';
+        
+        // Show appropriate field
+        if (selectedType === 'subdomain') {
+            subdomainField.style.display = 'block';
+        } else if (selectedType === 'custom') {
+            customDomainField.style.display = 'block';
+        }
+    }
+
+    // Handle domain type change
+    domainTypeSelect.addEventListener('change', toggleDomainFields);
+
+    // Auto-generate subdomain from name
+    const nameInput = document.getElementById('name');
+    nameInput.addEventListener('input', function() {
+        if (domainTypeSelect.value === 'subdomain' && !subdomainInput.value) {
+            const slug = this.value
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .trim();
+            subdomainInput.value = slug;
+        }
+    });
+
+    // Initialize on page load
+    toggleDomainFields();
+});
+</script>
 @endsection

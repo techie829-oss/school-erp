@@ -44,7 +44,23 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600">Domain</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ $tenant->id }}.{{ config('all.domains.primary') }}</p>
+                    <p class="mt-1 text-sm text-gray-900">
+                        @if(isset($tenant->data['full_domain']))
+                            {{ $tenant->data['full_domain'] }}
+                        @else
+                            {{ $tenant->id }}.{{ config('all.domains.primary') }}
+                        @endif
+                    </p>
+                    @if(isset($tenant->data['domain_type']))
+                        <p class="mt-1 text-xs text-gray-500">
+                            Type: {{ ucfirst($tenant->data['domain_type']) }}
+                            @if($tenant->data['domain_type'] === 'subdomain' && isset($tenant->data['subdomain']))
+                                ({{ $tenant->data['subdomain'] }})
+                            @elseif($tenant->data['domain_type'] === 'custom' && isset($tenant->data['custom_domain']))
+                                ({{ $tenant->data['custom_domain'] }})
+                            @endif
+                        </p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -79,7 +95,7 @@
     <div class="card p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="http://{{ $tenant->id }}.{{ config('all.domains.primary') }}"
+            <a href="http://{{ $tenant->data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary') }}"
                target="_blank"
                class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                 <div class="p-2 bg-blue-100 rounded-lg mr-3">
@@ -93,7 +109,7 @@
                 </div>
             </a>
 
-            <a href="http://{{ $tenant->id }}.{{ config('all.domains.primary') }}/admin"
+            <a href="http://{{ $tenant->data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary') }}/admin"
                target="_blank"
                class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                 <div class="p-2 bg-green-100 rounded-lg mr-3">
