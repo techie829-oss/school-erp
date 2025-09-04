@@ -1,0 +1,285 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+
+class VhostService
+{
+    /**
+     * Get the path to the Herd vhost configuration file.
+     */
+    public function getVhostPath(): string
+    {
+        // Herd typically stores vhost configs in ~/.config/herd/config/nginx/
+        $homeDir = $_SERVER['HOME'] ?? getenv('HOME');
+        return $homeDir . '/.config/herd/config/nginx/valet.conf';
+    }
+
+    /**
+     * Get the current vhost configuration content.
+     */
+    public function getVhostContent(): string
+    {
+        $path = $this->getVhostPath();
+
+        if (!File::exists($path)) {
+            return $this->getDefaultVhostContent();
+        }
+
+        return File::get($path);
+    }
+
+    /**
+     * Update the vhost configuration content.
+     */
+    public function updateVhostContent(string $content): bool
+    {
+        try {
+            $path = $this->getVhostPath();
+
+            // Create directory if it doesn't exist
+            $directory = dirname($path);
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            // Backup the current file
+            if (File::exists($path)) {
+                File::copy($path, $path . '.backup.' . date('Y-m-d-H-i-s'));
+            }
+
+            // Write the new content
+            File::put($path, $content);
+
+            // Log the change
+            Log::info('Vhost configuration updated', [
+                'path' => $path,
+                'size' => strlen($content)
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to update vhost configuration', [
+                'error' => $e->getMessage(),
+                'path' => $this->getVhostPath()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Get backup files for the vhost configuration.
+     */
+    public function getBackupFiles(): array
+    {
+        $path = $this->getVhostPath();
+        $directory = dirname($path);
+        $filename = basename($path);
+
+        if (!File::exists($directory)) {
+            return [];
+        }
+
+        $files = File::files($directory);
+        $backups = [];
+
+        foreach ($files as $file) {
+            $name = $file->getFilename();
+            if (str_starts_with($name, $filename . '.backup.')) {
+                $backups[] = [
+                    'name' => $name,
+                    'path' => $file->getPathname(),
+                    'size' => $file->getSize(),
+                    'modified' => $file->getMTime(),
+                    'date' => date('Y-m-d H:i:s', $file->getMTime())
+                ];
+            }
+        }
+
+        // Sort by modification time (newest first)
+        usort($backups, fn($a, $b) => $b['modified'] <=> $a['modified']);
+
+        return $backups;
+    }
+
+    /**
+     * Restore from a backup file.
+     */
+    public function restoreFromBackup(string $backupPath): bool
+    {
+        try {
+            $currentPath = $this->getVhostPath();
+
+            if (!File::exists($backupPath)) {
+                return false;
+            }
+
+            // Create directory if it doesn't exist
+            $directory = dirname($currentPath);
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            // Copy backup to current file
+            File::copy($backupPath, $currentPath);
+
+            Log::info('Vhost configuration restored from backup', [
+                'backup_path' => $backupPath,
+                'current_path' => $currentPath
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to restore vhost configuration from backup', [
+                'error' => $e->getMessage(),
+                'backup_path' => $backupPath
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Get default vhost configuration content.
+     */
+    private function getDefaultVhostContent(): string
+    {
+        return <<<'NGINX'
+# Herd Nginx Configuration
+# This file is managed by School ERP Admin Panel
+
+server {
+    listen 80;
+    server_name myschool.test *.myschool.test;
+    root /Users/rohitk/react/lara/school-erp/src/public;
+    index index.php index.html;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+    # Handle tenant subdomains
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # PHP handling
+    location ~ \.php$ {
+        fastcgi_pass unix:/opt/homebrew/var/run/php-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_hide_header X-Powered-By;
+    }
+
+    # Static files caching
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+    }
+
+    # Deny access to sensitive files
+    location ~ /(\.env|composer\.(json|lock)|package\.(json|lock)|yarn\.lock|\.git) {
+        deny all;
+    }
+}
+NGINX;
+    }
+
+    /**
+     * Validate vhost configuration syntax.
+     */
+    public function validateVhostContent(string $content): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Basic validation checks
+        if (empty(trim($content))) {
+            $errors[] = 'Configuration content cannot be empty';
+        }
+
+        if (!str_contains($content, 'server {')) {
+            $errors[] = 'Missing server block';
+        }
+
+        if (!str_contains($content, 'listen')) {
+            $errors[] = 'Missing listen directive';
+        }
+
+        if (!str_contains($content, 'server_name')) {
+            $errors[] = 'Missing server_name directive';
+        }
+
+        if (!str_contains($content, 'root')) {
+            $errors[] = 'Missing root directive';
+        }
+
+        // Check for common issues
+        if (str_contains($content, 'server_name myschool.test')) {
+            $warnings[] = 'Make sure myschool.test domain is properly configured';
+        }
+
+        if (!str_contains($content, '*.myschool.test')) {
+            $warnings[] = 'Wildcard subdomain (*.myschool.test) not found - tenant subdomains may not work';
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'warnings' => $warnings
+        ];
+    }
+
+    /**
+     * Get system information for vhost management.
+     */
+    public function getSystemInfo(): array
+    {
+        return [
+            'vhost_path' => $this->getVhostPath(),
+            'vhost_exists' => File::exists($this->getVhostPath()),
+            'vhost_writable' => File::isWritable(dirname($this->getVhostPath())),
+            'herd_running' => $this->isHerdRunning(),
+            'nginx_running' => $this->isNginxRunning(),
+            'php_version' => PHP_VERSION,
+            'laravel_version' => app()->version(),
+        ];
+    }
+
+    /**
+     * Check if Herd is running.
+     */
+    private function isHerdRunning(): bool
+    {
+        try {
+            $output = shell_exec('ps aux | grep -i herd | grep -v grep');
+            return !empty(trim($output));
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if Nginx is running.
+     */
+    private function isNginxRunning(): bool
+    {
+        try {
+            $output = shell_exec('ps aux | grep -i nginx | grep -v grep');
+            return !empty(trim($output));
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}

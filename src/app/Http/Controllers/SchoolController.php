@@ -17,12 +17,17 @@ class SchoolController extends Controller
     /**
      * Show the school's main landing page.
      */
-    public function home(Request $request, string $tenant): View
+    public function home(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
     {
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
         $tenantInfo = $this->tenantService->getTenantInfo($request);
+
+        // If no tenant found, redirect to landing page
+        if (!$tenantInfo['id']) {
+            return redirect()->away('http://' . config('all.domains.primary'));
+        }
 
         return view('school.home', [
             'tenant' => $tenantInfo,
@@ -34,12 +39,17 @@ class SchoolController extends Controller
     /**
      * Show the school's about page.
      */
-    public function about(Request $request, string $tenant): View
+    public function about(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
     {
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
         $tenantInfo = $this->tenantService->getTenantInfo($request);
+
+        // If no tenant found, redirect to landing page
+        if (!$tenantInfo['id']) {
+            return redirect()->away('http://' . config('all.domains.primary'));
+        }
 
         return view('school.about', [
             'tenant' => $tenantInfo,
@@ -51,12 +61,17 @@ class SchoolController extends Controller
     /**
      * Show the school's programs/curriculum page.
      */
-    public function programs(Request $request, string $tenant): View
+    public function programs(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
     {
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
         $tenantInfo = $this->tenantService->getTenantInfo($request);
+
+        // If no tenant found, redirect to landing page
+        if (!$tenantInfo['id']) {
+            return redirect()->away('http://' . config('all.domains.primary'));
+        }
 
         return view('school.programs', [
             'tenant' => $tenantInfo,
@@ -68,12 +83,17 @@ class SchoolController extends Controller
     /**
      * Show the school's admission page.
      */
-    public function admission(Request $request, string $tenant): View
+    public function admission(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
     {
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
         $tenantInfo = $this->tenantService->getTenantInfo($request);
+
+        // If no tenant found, redirect to landing page
+        if (!$tenantInfo['id']) {
+            return redirect()->away('http://' . config('all.domains.primary'));
+        }
 
         return view('school.admission', [
             'tenant' => $tenantInfo,
@@ -85,12 +105,17 @@ class SchoolController extends Controller
     /**
      * Show the school's contact page.
      */
-    public function contact(Request $request, string $tenant): View
+    public function contact(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
     {
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
         $tenantInfo = $this->tenantService->getTenantInfo($request);
+
+        // If no tenant found, redirect to landing page
+        if (!$tenantInfo['id']) {
+            return redirect()->away('http://' . config('all.domains.primary'));
+        }
 
         return view('school.contact', [
             'tenant' => $tenantInfo,
@@ -102,12 +127,17 @@ class SchoolController extends Controller
     /**
      * Show the school's facilities page.
      */
-    public function facilities(Request $request, string $tenant): View
+    public function facilities(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
     {
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
         $tenantInfo = $this->tenantService->getTenantInfo($request);
+
+        // If no tenant found, redirect to landing page
+        if (!$tenantInfo['id']) {
+            return redirect()->away('http://' . config('all.domains.primary'));
+        }
 
         return view('school.facilities', [
             'tenant' => $tenantInfo,

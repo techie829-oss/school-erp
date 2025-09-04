@@ -35,9 +35,9 @@ class TenantService
     {
         $tenant = $this->getCurrentTenant($request);
 
-        // For development, if no tenant found, return 'landing' as default
+        // Return null if no tenant found - let calling code handle it
         if (!$tenant) {
-            return 'landing';
+            return null;
         }
 
         return $tenant->id;

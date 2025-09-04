@@ -16,14 +16,25 @@ class ColorPaletteService
     /**
      * Get the active color palette for the current tenant.
      */
-    public function getActivePalette(Request $request): TenantColorPalette
+    public function getActivePalette(Request $request): ?TenantColorPalette
     {
         $tenantId = $this->tenantService->getCurrentTenantId($request);
 
+        // If no tenant found, return null
+        if (!$tenantId) {
+            return null;
+        }
+
         return Cache::remember("color_palette_tenant_{$tenantId}", 3600, function () use ($tenantId) {
-            return TenantColorPalette::active()
+            $palette = TenantColorPalette::active()
                 ->where('tenant_id', $tenantId)
-                ->first() ?? TenantColorPalette::getDefaultForTenant($tenantId);
+                ->first();
+
+            if (!$palette) {
+                return TenantColorPalette::getDefaultForTenant($tenantId);
+            }
+
+            return $palette;
         });
     }
 
@@ -32,7 +43,50 @@ class ColorPaletteService
      */
     public function getAllColors(Request $request): array
     {
-        return $this->getActivePalette($request)->colors;
+        $palette = $this->getActivePalette($request);
+
+        if (!$palette) {
+            return $this->getDefaultColors();
+        }
+
+        return $palette->colors;
+    }
+
+    /**
+     * Get default colors when no tenant is found.
+     */
+    private function getDefaultColors(): array
+    {
+        return [
+            'primary' => [
+                '50' => '#eff6ff',
+                '100' => '#dbeafe',
+                '500' => '#3b82f6',
+                '600' => '#2563eb',
+                '700' => '#1d4ed8',
+                '900' => '#1e3a8a',
+            ],
+            'secondary' => [
+                '50' => '#f8fafc',
+                '100' => '#f1f5f9',
+                '500' => '#64748b',
+                '600' => '#475569',
+                '700' => '#334155',
+                '900' => '#0f172a',
+            ],
+            'accent' => [
+                '50' => '#fef3c7',
+                '100' => '#fde68a',
+                '500' => '#f59e0b',
+                '600' => '#d97706',
+                '700' => '#b45309',
+                '900' => '#78350f',
+            ],
+            'success' => '#10b981',
+            'warning' => '#f59e0b',
+            'error' => '#ef4444',
+            'info' => '#3b82f6',
+        ];
     }
 
     /**
@@ -40,8 +94,7 @@ class ColorPaletteService
      */
     public function generateCSSVariables(Request $request): string
     {
-        $palette = $this->getActivePalette($request);
-        $colors = $palette->colors;
+        $colors = $this->getAllColors($request);
 
         $css = ":root {\n";
 
@@ -215,8 +268,8 @@ class ColorPaletteService
     /**
      * Get the current tenant ID from the request.
      */
-    private function getCurrentTenantId(Request $request): string
+    private function getCurrentTenantId(Request $request): ?string
     {
-        return $this->tenantService->getCurrentTenantId($request) ?? 'landing';
+        return $this->tenantService->getCurrentTenantId($request);
     }
 }

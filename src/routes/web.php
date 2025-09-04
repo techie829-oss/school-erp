@@ -71,6 +71,18 @@ Route::domain(config('all.domains.admin'))->group(function () {
         // Tenant Management
         Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
 
+        // Vhost Management
+        Route::prefix('vhost')->name('vhost.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\VhostController::class, 'index'])->name('index');
+            Route::get('/edit', [\App\Http\Controllers\Admin\VhostController::class, 'edit'])->name('edit');
+            Route::put('/update', [\App\Http\Controllers\Admin\VhostController::class, 'update'])->name('update');
+            Route::get('/show', [\App\Http\Controllers\Admin\VhostController::class, 'show'])->name('show');
+            Route::post('/restore', [\App\Http\Controllers\Admin\VhostController::class, 'restore'])->name('restore');
+            Route::post('/validate', [\App\Http\Controllers\Admin\VhostController::class, 'validate'])->name('validate');
+            Route::get('/system-info', [\App\Http\Controllers\Admin\VhostController::class, 'systemInfo'])->name('system-info');
+            Route::get('/backups', [\App\Http\Controllers\Admin\VhostController::class, 'backups'])->name('backups');
+        });
+
         // User Management
         Route::get('/users', function () {
             return view('admin.users.index');
