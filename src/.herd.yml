@@ -3,8 +3,11 @@ domain: myschool.test
 subdomains:
   - app  # Internal Admin
   - dps  # Delhi Public School
-  - bta  # Bangalore Tech Academy
   - mis  # Mumbai International School
+  - bta  # Bangalore Tech Academy
+  - ccs  # Chennai Central School
+  - pec  # Pune Engineering College
+  - hu   # Hyderabad University
 php: 8.3
 mysql: 8.0
-redis: 7.0  # Updated again
+redis: 7.0
