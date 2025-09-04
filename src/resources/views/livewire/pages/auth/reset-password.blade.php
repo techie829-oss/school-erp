@@ -190,7 +190,7 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Back to Login -->
         <div class="text-center">
             <a
-                href="{{ route('login') }}"
+                href="{{ route('admin.login') }}"
                 wire:navigate
                 class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200"
             >

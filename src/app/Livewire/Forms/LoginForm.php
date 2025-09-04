@@ -30,7 +30,10 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+        // Determine which guard to use based on the current domain
+        $guard = $this->getGuardForCurrentDomain();
+
+        if (! Auth::guard($guard)->attempt($this->only(['email', 'password']), $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -39,6 +42,23 @@ class LoginForm extends Form
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Get the appropriate guard based on the current domain
+     */
+    protected function getGuardForCurrentDomain(): string
+    {
+        $host = request()->getHost();
+        $adminDomain = config('all.domains.admin');
+
+        // If we're on the admin domain, use admin guard
+        if ($host === $adminDomain) {
+            return 'admin';
+        }
+
+        // For tenant domains, use admin guard (school admins are also admin users)
+        return 'admin';
     }
 
     /**

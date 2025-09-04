@@ -20,7 +20,26 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        // Redirect to the appropriate dashboard based on domain
+        $redirectRoute = $this->getRedirectRoute();
+        $this->redirectIntended(default: $redirectRoute, navigate: true);
+    }
+
+    /**
+     * Get the appropriate redirect route based on the current domain
+     */
+    protected function getRedirectRoute(): string
+    {
+        $host = request()->getHost();
+        $adminDomain = config('all.domains.admin');
+
+        // If we're on the admin domain, redirect to admin dashboard
+        if ($host === $adminDomain) {
+            return route('admin.dashboard', absolute: false);
+        }
+
+        // For tenant domains, redirect to tenant dashboard
+        return route('tenant.dashboard', absolute: false);
     }
 }; ?>
 

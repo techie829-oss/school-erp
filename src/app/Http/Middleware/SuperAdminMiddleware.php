@@ -16,11 +16,18 @@ class SuperAdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
+        if (!Auth::guard('admin')->check()) {
+            $host = $request->getHost();
+            $adminDomain = config('all.domains.admin');
+
+            if ($host === $adminDomain) {
+                return redirect()->route('admin.login');
+            } else {
+                return redirect()->route('tenant.login');
+            }
         }
 
-        if (!Auth::user()->isSuperAdmin()) {
+        if (!Auth::guard('admin')->user()->isSuperAdmin()) {
             abort(403, 'Access denied. Super admin privileges required.');
         }
 

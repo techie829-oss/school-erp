@@ -69,9 +69,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
         })->name('dashboard');
 
         // Tenant Management
-        Route::get('/tenants', function () {
-            return view('admin.tenants.index');
-        })->name('tenants.index');
+        Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
 
         // User Management
         Route::get('/users', function () {
@@ -179,6 +177,11 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->group(function () {
 
     // Admin routes for tenants
     Route::middleware(['auth', 'verified'])->prefix('admin')->name('tenant.admin.')->group(function () {
+        // Tenant Admin Dashboard
+        Route::get('/', function () {
+            return view('tenant.admin.dashboard');
+        })->name('dashboard');
+
         Route::resource('color-palettes', ColorPaletteController::class);
         Route::post('color-palettes/apply-scheme', [ColorPaletteController::class, 'applyScheme'])->name('color-palettes.apply-scheme');
     });

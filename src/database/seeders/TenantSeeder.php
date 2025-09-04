@@ -74,18 +74,5 @@ class TenantSeeder extends Seeder
             ],
         ]);
 
-        // 5. Landing Page Tenant (Shared Database)
-        Tenant::create([
-            'id' => 'landing',
-            'data' => [
-                'name' => 'Landing Page',
-                'domain' => 'myschool.test',
-                'database_strategy' => 'shared',
-                'database' => 'school_erp',
-                'status' => 'active',
-                'type' => 'landing',
-                'description' => 'Marketing and landing page tenant',
-            ],
-        ]);
     }
 }

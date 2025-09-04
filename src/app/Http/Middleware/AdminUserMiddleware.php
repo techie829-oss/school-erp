@@ -16,13 +16,15 @@ class AdminUserMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        // Check if the authenticated user is an AdminUser
         if (!Auth::guard('admin')->check()) {
-            abort(403, 'Access denied. Admin privileges required.');
+            $host = $request->getHost();
+            $adminDomain = config('all.domains.admin');
+
+            if ($host === $adminDomain) {
+                return redirect()->route('admin.login');
+            } else {
+                return redirect()->route('tenant.login');
+            }
         }
 
         return $next($request);
