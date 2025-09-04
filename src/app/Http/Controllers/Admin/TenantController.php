@@ -47,15 +47,8 @@ class TenantController extends Controller
             'active' => 'boolean',
         ]);
 
-        // Generate unique tenant ID
-        $tenantId = Str::slug($validated['name']);
-        $counter = 1;
-        $originalTenantId = $tenantId;
-
-        while (Tenant::where('id', $tenantId)->exists()) {
-            $tenantId = $originalTenantId . '-' . $counter;
-            $counter++;
-        }
+        // Generate unique tenant ID with better format
+        $tenantId = $this->generateUniqueTenantId($validated['name']);
 
         $tenantData = [
             'name' => $validated['name'],
@@ -676,5 +669,53 @@ class TenantController extends Controller
 
         return redirect()->route('admin.tenants.users.show', [$tenant, $user])
             ->with('success', 'Password updated successfully!');
+    }
+
+    /**
+     * Generate a unique tenant ID with improved format
+     */
+    private function generateUniqueTenantId(string $name): string
+    {
+        // Create base ID from name (lowercase, alphanumeric, hyphens only)
+        $baseId = Str::slug($name, '-');
+
+        // Ensure it's not too long (max 50 chars for database)
+        if (strlen($baseId) > 45) {
+            $baseId = substr($baseId, 0, 45);
+        }
+
+        // Add timestamp suffix for better uniqueness
+        $timestamp = now()->format('ymd');
+        $tenantId = $baseId . '-' . $timestamp;
+
+        // Check uniqueness and add counter if needed
+        $counter = 1;
+        $originalTenantId = $tenantId;
+
+        while (Tenant::where('id', $tenantId)->exists()) {
+            $tenantId = $originalTenantId . '-' . $counter;
+            $counter++;
+        }
+
+        return $tenantId;
+    }
+
+    /**
+     * Toggle tenant active status (deactivate/activate)
+     */
+    public function toggleStatus(Tenant $tenant)
+    {
+        $currentStatus = $tenant->data['active'] ?? true;
+        $newStatus = !$currentStatus;
+
+        $tenantData = $tenant->data;
+        $tenantData['active'] = $newStatus;
+
+        $tenant->update(['data' => $tenantData]);
+
+        $status = $newStatus ? 'activated' : 'deactivated';
+
+        return redirect()->route('admin.tenants.index')
+            ->with('success', "Tenant '{$tenant->data['name']}' has been {$status} successfully!");
     }
 }

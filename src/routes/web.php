@@ -82,6 +82,9 @@ Route::domain(config('all.domains.admin'))->group(function () {
         Route::get('/tenants/{tenant}/users/{user}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersChangePassword'])->name('tenants.users.change-password');
         Route::post('/tenants/{tenant}/users/{user}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdatePassword'])->name('tenants.users.update-password');
 
+        // Tenant Status Management
+        Route::post('/tenants/{tenant}/toggle-status', [\App\Http\Controllers\Admin\TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+
         // Vhost Management
         Route::prefix('vhost')->name('vhost.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\VhostController::class, 'index'])->name('index');

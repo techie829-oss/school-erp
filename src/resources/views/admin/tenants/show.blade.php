@@ -142,20 +142,25 @@
                 </div>
             </a>
 
-            <form method="POST" action="{{ route('admin.tenants.destroy', $tenant) }}"
-                  class="flex items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
-                  onsubmit="return confirm('Are you sure you want to delete this tenant? This action cannot be undone.')">
+            <form method="POST" action="{{ route('admin.tenants.toggle-status', $tenant) }}"
+                  class="flex items-center p-4 {{ ($tenant->data['active'] ?? true) ? 'bg-red-50 hover:bg-red-100' : 'bg-green-50 hover:bg-green-100' }} rounded-lg transition-colors cursor-pointer"
+                  onsubmit="return confirm('Are you sure you want to {{ ($tenant->data['active'] ?? true) ? 'deactivate' : 'activate' }} this tenant?')">
                 @csrf
-                @method('DELETE')
                 <button type="submit" class="flex items-center w-full">
-                    <div class="p-2 bg-red-100 rounded-lg mr-3">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
+                    <div class="p-2 {{ ($tenant->data['active'] ?? true) ? 'bg-red-100' : 'bg-green-100' }} rounded-lg mr-3">
+                        @if($tenant->data['active'] ?? true)
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"/>
+                            </svg>
+                        @else
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        @endif
                     </div>
                     <div class="text-left">
-                        <h4 class="font-medium text-gray-900">Delete Tenant</h4>
-                        <p class="text-sm text-gray-600">Remove tenant permanently</p>
+                        <h4 class="font-medium text-gray-900">{{ ($tenant->data['active'] ?? true) ? 'Deactivate Tenant' : 'Activate Tenant' }}</h4>
+                        <p class="text-sm text-gray-600">{{ ($tenant->data['active'] ?? true) ? 'Disable tenant access' : 'Enable tenant access' }}</p>
                     </div>
                 </button>
             </form>
