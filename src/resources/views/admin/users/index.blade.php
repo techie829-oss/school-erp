@@ -19,6 +19,85 @@
     </a>
 </div>
 
+<!-- Search and Filter Form -->
+<div class="card mb-6">
+    <div class="p-6">
+        <form method="GET" action="{{ route('admin.users.index') }}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Search Input -->
+                <div class="md:col-span-2">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+                        Search Users
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input type="text"
+                               id="search"
+                               name="search"
+                               value="{{ request('search') }}"
+                               class="form-input pl-10"
+                               placeholder="Search by name, email, or admin type...">
+                    </div>
+                </div>
+
+                <!-- Admin Type Filter -->
+                <div>
+                    <label for="admin_type" class="block text-sm font-medium text-gray-700 mb-2">
+                        Admin Type
+                    </label>
+                    <select id="admin_type" name="admin_type" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="super_admin" {{ request('admin_type') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                        <option value="super_manager" {{ request('admin_type') === 'super_manager' ? 'selected' : '' }}>Super Manager</option>
+                        <option value="school_admin" {{ request('admin_type') === 'school_admin' ? 'selected' : '' }}>School Admin</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                        Status
+                    </label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div class="flex space-x-3">
+                    <button type="submit" class="btn-primary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Search
+                    </button>
+                    <a href="{{ route('admin.users.index') }}" class="btn-secondary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Clear
+                    </a>
+                </div>
+
+                <!-- Results Count -->
+                @if(request()->hasAny(['search', 'admin_type', 'status']))
+                    <div class="text-sm text-gray-600">
+                        Showing {{ $users->count() }} of {{ $users->total() }} users
+                    </div>
+                @endif
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Users Table -->
 <div class="card overflow-hidden">
     <div class="overflow-x-auto">
@@ -34,7 +113,7 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @forelse(\App\Models\AdminUser::latest()->get() as $user)
+                @forelse($users as $user)
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
@@ -125,5 +204,12 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination -->
+    @if($users->hasPages())
+        <div class="px-6 py-4 border-t border-gray-200">
+            {{ $users->links() }}
+        </div>
+    @endif
 </div>
 @endsection

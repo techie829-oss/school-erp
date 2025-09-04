@@ -13,9 +13,32 @@ class AdminUserController extends Controller
     /**
      * Display a listing of admin users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = AdminUser::latest()->paginate(10);
+        $query = AdminUser::query();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('admin_type', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by admin type
+        if ($request->filled('admin_type')) {
+            $query->where('admin_type', $request->get('admin_type'));
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->get('status') === 'active');
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
+
         return view('admin.users.index', compact('users'));
     }
 
