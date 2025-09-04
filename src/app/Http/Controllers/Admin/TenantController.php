@@ -257,9 +257,14 @@ class TenantController extends Controller
                     if ($inSubdomainsSection && !str_starts_with($trimmedLine, '- ') && !empty($trimmedLine)) {
                         $inSubdomainsSection = false;
 
-                        // Add all subdomains with proper formatting
+                        // Add all subdomains with proper formatting and school names as comments
                         foreach ($subdomains as $subdomain) {
-                            $newLines[] = "  - {$subdomain}";
+                            $schoolName = $this->getSchoolNameForSubdomain($subdomain);
+                            if ($schoolName) {
+                                $newLines[] = "  - {$subdomain}  # {$schoolName}";
+                            } else {
+                                $newLines[] = "  - {$subdomain}";
+                            }
                         }
                     }
                     $newLines[] = $line;
@@ -268,9 +273,14 @@ class TenantController extends Controller
 
             // If we're still in subdomains section at the end, add the cleaned subdomains
             if ($inSubdomainsSection) {
-                        // Add all subdomains with proper formatting
+                        // Add all subdomains with proper formatting and school names as comments
                         foreach ($subdomains as $subdomain) {
-                            $newLines[] = "  - {$subdomain}";
+                            $schoolName = $this->getSchoolNameForSubdomain($subdomain);
+                            if ($schoolName) {
+                                $newLines[] = "  - {$subdomain}  # {$schoolName}";
+                            } else {
+                                $newLines[] = "  - {$subdomain}";
+                            }
                         }
             }
 
@@ -287,6 +297,28 @@ class TenantController extends Controller
             Log::error('Failed to cleanup Herd YAML file', [
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Get school name for a given subdomain.
+     */
+    private function getSchoolNameForSubdomain(string $subdomain): ?string
+    {
+        try {
+            $tenant = Tenant::whereRaw("JSON_EXTRACT(data, '$.subdomain') = ?", [$subdomain])->first();
+            
+            if ($tenant && isset($tenant->data['name'])) {
+                return $tenant->data['name'];
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::warning('Failed to get school name for subdomain', [
+                'subdomain' => $subdomain,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
 
@@ -359,9 +391,14 @@ class TenantController extends Controller
                             $updated = true;
                         }
 
-                        // Add all subdomains with proper formatting
+                        // Add all subdomains with proper formatting and school names as comments
                         foreach ($subdomains as $subdomain) {
-                            $newLines[] = "  - {$subdomain}";
+                            $schoolName = $this->getSchoolNameForSubdomain($subdomain);
+                            if ($schoolName) {
+                                $newLines[] = "  - {$subdomain}  # {$schoolName}";
+                            } else {
+                                $newLines[] = "  - {$subdomain}";
+                            }
                         }
                     }
                     $newLines[] = $line;
@@ -376,9 +413,14 @@ class TenantController extends Controller
                     $updated = true;
                 }
 
-                        // Add all subdomains with proper formatting
+                        // Add all subdomains with proper formatting and school names as comments
                         foreach ($subdomains as $subdomain) {
-                            $newLines[] = "  - {$subdomain}";
+                            $schoolName = $this->getSchoolNameForSubdomain($subdomain);
+                            if ($schoolName) {
+                                $newLines[] = "  - {$subdomain}  # {$schoolName}";
+                            } else {
+                                $newLines[] = "  - {$subdomain}";
+                            }
                         }
             }
 

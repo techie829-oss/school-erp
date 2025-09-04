@@ -7,7 +7,7 @@ subdomains:
   - schoolc
   - schoold
   - dps  # Delhi Public School
-  - mis  # Mumbai International School
+  - mis
 php: 8.3
 mysql: 8.0
 redis: 7.0
