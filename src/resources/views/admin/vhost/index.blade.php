@@ -30,7 +30,10 @@
     <!-- System Status -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-secondary-900">System Status</h2>
+            <div>
+                <h2 class="text-lg font-semibold text-secondary-900">System Status</h2>
+                <p class="text-sm text-secondary-600">Hosting Type: <span class="font-medium text-primary-600">{{ $systemInfo['hosting_type_display'] }}</span></p>
+            </div>
             <button onclick="refreshSystemStatus()" class="text-sm px-3 py-1 bg-secondary-100 text-secondary-700 rounded hover:bg-secondary-200 transition-colors">
                 <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -74,6 +77,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-lg font-semibold text-secondary-900 mb-4">Service Management</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @if($systemInfo['hosting_type'] === 'laravel-herd')
             <!-- Herd Controls -->
             <div class="border border-gray-200 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-3">
@@ -105,8 +109,42 @@
                     </button>
                 </div>
             </div>
+            @elseif($systemInfo['hosting_type'] === 'apache')
+            <!-- Apache Controls -->
+            <div class="border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-md font-medium text-secondary-900">Apache Service</h3>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 rounded-full {{ $systemInfo['apache_running'] ? 'bg-success' : 'bg-error' }}"></div>
+                        <span class="text-xs text-secondary-600">{{ $systemInfo['apache_running'] ? 'Running' : 'Stopped' }}</span>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="controlService('apache', 'start')" class="flex-1 px-3 py-2 text-xs bg-success-100 text-success-700 rounded hover:bg-success-200 transition-colors">
+                        <svg class="w-3 h-3 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Start
+                    </button>
+                    <button onclick="controlService('apache', 'stop')" class="flex-1 px-3 py-2 text-xs bg-error-100 text-error-700 rounded hover:bg-error-200 transition-colors">
+                        <svg class="w-3 h-3 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10h6v4H9z" />
+                        </svg>
+                        Stop
+                    </button>
+                    <button onclick="controlService('apache', 'restart')" class="flex-1 px-3 py-2 text-xs bg-warning-100 text-warning-700 rounded hover:bg-warning-200 transition-colors">
+                        <svg class="w-3 h-3 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Restart
+                    </button>
+                </div>
+            </div>
+            @endif
 
-            <!-- Nginx Controls -->
+            <!-- Nginx Controls (always show for Apache/Nginx hosting) -->
+            @if($systemInfo['hosting_type'] !== 'laravel-herd')
             <div class="border border-gray-200 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-md font-medium text-secondary-900">Nginx Service</h3>
@@ -137,6 +175,7 @@
                     </button>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 
@@ -228,7 +267,7 @@
                     <p class="text-xs text-secondary-600">Modify global Herd config</p>
                 </div>
             </a>
-            
+
             <a href="{{ route('admin.vhost.herd-yml.edit') }}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-secondary-50 transition-colors">
                 <div class="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center mr-3">
                     <svg class="w-5 h-5 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
