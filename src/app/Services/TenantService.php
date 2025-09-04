@@ -39,7 +39,7 @@ class TenantService
         return $this->findTenantByCustomDomain($host);
     }
 
-    /**
+        /**
      * Get tenant information from the request.
      */
     public function getTenantInfo(Request $request): array
@@ -87,6 +87,20 @@ class TenantService
             'subdomain' => $data['subdomain'] ?? null,
             'custom_domain' => $data['custom_domain'] ?? null,
         ];
+    }
+
+    /**
+     * Get the current tenant model from the request.
+     */
+    public function getCurrentTenant(Request $request = null): ?\App\Models\Tenant
+    {
+        $tenantId = $this->getCurrentTenantId($request);
+
+        if (!$tenantId) {
+            return null;
+        }
+
+        return \App\Models\Tenant::find($tenantId);
     }
 
     /**
