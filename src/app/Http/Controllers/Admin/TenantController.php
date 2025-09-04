@@ -567,4 +567,111 @@ class TenantController extends Controller
             ]);
         }
     }
+
+    /**
+     * Display a listing of tenant users
+     */
+    public function usersIndex(Tenant $tenant)
+    {
+        $users = AdminUser::where('tenant_id', $tenant->id)->latest()->paginate(10);
+        return view('admin.tenants.users.index', compact('tenant', 'users'));
+    }
+
+    /**
+     * Display the specified tenant user
+     */
+    public function usersShow(Tenant $tenant, AdminUser $user)
+    {
+        // Ensure the user belongs to this tenant
+        if ($user->tenant_id !== $tenant->id) {
+            abort(404);
+        }
+        
+        return view('admin.tenants.users.show', compact('tenant', 'user'));
+    }
+
+    /**
+     * Show the form for editing the specified tenant user
+     */
+    public function usersEdit(Tenant $tenant, AdminUser $user)
+    {
+        // Ensure the user belongs to this tenant
+        if ($user->tenant_id !== $tenant->id) {
+            abort(404);
+        }
+        
+        return view('admin.tenants.users.edit', compact('tenant', 'user'));
+    }
+
+    /**
+     * Update the specified tenant user
+     */
+    public function usersUpdate(Request $request, Tenant $tenant, AdminUser $user)
+    {
+        // Ensure the user belongs to this tenant
+        if ($user->tenant_id !== $tenant->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:admin_users,email,' . $user->id,
+            'admin_type' => 'required|in:super_admin,super_manager,school_admin',
+            'is_active' => 'boolean',
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'admin_type' => $request->admin_type,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.tenants.users.show', [$tenant, $user])
+            ->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Show the form for changing tenant user password
+     */
+    public function usersChangePassword(Tenant $tenant, AdminUser $user)
+    {
+        // Ensure the user belongs to this tenant
+        if ($user->tenant_id !== $tenant->id) {
+            abort(404);
+        }
+        
+        return view('admin.tenants.users.change-password', compact('tenant', 'user'));
+    }
+
+    /**
+     * Update the tenant user's password
+     */
+    public function usersUpdatePassword(Request $request, Tenant $tenant, AdminUser $user)
+    {
+        // Ensure the user belongs to this tenant
+        if ($user->tenant_id !== $tenant->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'current_password' => 'required',
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        // Verify current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors([
+                'current_password' => 'The current password is incorrect.'
+            ]);
+        }
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('admin.tenants.users.show', [$tenant, $user])
+            ->with('success', 'Password updated successfully!');
+    }
 }
