@@ -4,7 +4,7 @@ subdomains:
   - app  # Internal Admin
   - dps  # Delhi Public School
   - bta  # Bangalore Tech Academy
-  - mis  # Mumbai International School
+  - mis
 php: 8.3
 mysql: 8.0
 redis: 7.0  # Updated again
