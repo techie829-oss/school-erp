@@ -87,7 +87,7 @@ class VhostService
         return $backupDir;
     }
 
-            /**
+    /**
      * Generate backup filename with timestamp.
      */
     private function generateBackupFilename(string $originalFilename): string
@@ -173,7 +173,7 @@ class VhostService
             return [];
         }
 
-                $files = scandir($backupDir);
+        $files = scandir($backupDir);
         $backups = [];
 
         foreach ($files as $name) {
@@ -182,8 +182,10 @@ class VhostService
                 if (is_file($filePath)) {
                     // Look for backup files with pattern: filename.backup.timestamp
                     // Handle both old pattern (.herd.backup.) and new pattern (.herd.yml.backup.)
-                    if (str_contains($name, '.backup.') &&
-                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))) {
+                    if (
+                        str_contains($name, '.backup.') &&
+                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))
+                    ) {
                         $backups[] = [
                             'name' => $name,
                             'path' => $filePath,
@@ -214,7 +216,7 @@ class VhostService
             return [];
         }
 
-                $files = scandir($backupDir);
+        $files = scandir($backupDir);
         $backups = [];
 
         foreach ($files as $name) {
@@ -223,8 +225,10 @@ class VhostService
                 if (is_file($filePath)) {
                     // Look for backup files with pattern: filename.backup.timestamp
                     // Handle both old pattern (.herd.backup.) and new pattern (.herd.yml.backup.)
-                    if (str_contains($name, '.backup.') &&
-                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))) {
+                    if (
+                        str_contains($name, '.backup.') &&
+                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))
+                    ) {
                         $backups[] = [
                             'name' => $name,
                             'path' => $filePath,
@@ -255,7 +259,7 @@ class VhostService
             return [];
         }
 
-                $files = scandir($backupDir);
+        $files = scandir($backupDir);
         $backups = [];
 
         foreach ($files as $name) {
@@ -264,8 +268,10 @@ class VhostService
                 if (is_file($filePath)) {
                     // Look for backup files with pattern: filename.backup.timestamp
                     // Handle both old pattern (.herd.backup.) and new pattern (.herd.yml.backup.)
-                    if (str_contains($name, '.backup.') &&
-                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))) {
+                    if (
+                        str_contains($name, '.backup.') &&
+                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))
+                    ) {
                         $backups[] = [
                             'name' => $name,
                             'path' => $filePath,

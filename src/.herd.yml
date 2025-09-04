@@ -3,7 +3,7 @@ domain: myschool.test
 subdomains:
   - app  # Internal Admin
   - dps  # Delhi Public School
-  - mis  # Mumbai International School
+  - misa  # Mumbai International School
   - bta  # Bangalore Tech Academy
 php: 8.3
 mysql: 8.0

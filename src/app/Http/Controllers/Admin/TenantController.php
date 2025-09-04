@@ -208,6 +208,120 @@ class TenantController extends Controller
     }
 
     /**
+     * Sync .herd.yml file with database tenant data.
+     */
+    public function syncHerdYmlWithDatabase()
+    {
+        try {
+            $vhostService = app(VhostService::class);
+
+            // Only sync if hosting type is Laravel Herd
+            if ($vhostService->getHostingType() !== 'laravel-herd') {
+                return redirect()->route('admin.tenants.index')
+                    ->with('error', 'Herd YAML sync is only available for Laravel Herd hosting type.');
+            }
+
+            // Get all tenants with subdomains from database
+            $tenants = Tenant::whereRaw("JSON_EXTRACT(data, '$.subdomain') IS NOT NULL")->get();
+            $validSubdomains = [];
+
+            foreach ($tenants as $tenant) {
+                if (isset($tenant->data['subdomain']) && !empty($tenant->data['subdomain'])) {
+                    $validSubdomains[] = $tenant->data['subdomain'];
+                }
+            }
+
+            // Get current .herd.yml content
+            $herdYmlPath = $vhostService->getHerdYmlPath();
+            $content = file_exists($herdYmlPath) ? file_get_contents($herdYmlPath) : '';
+
+            if (empty($content)) {
+                Log::warning('Herd YAML file not found or empty', ['path' => $herdYmlPath]);
+                return;
+            }
+
+            // Parse and update the content
+            $lines = explode("\n", $content);
+            $newLines = [];
+            $inSubdomainsSection = false;
+            $updated = false;
+
+            foreach ($lines as $line) {
+                $trimmedLine = trim($line);
+
+                if ($trimmedLine === 'subdomains:') {
+                    $inSubdomainsSection = true;
+                    $newLines[] = $line;
+                    continue;
+                }
+
+                if ($inSubdomainsSection && str_starts_with($trimmedLine, '- ')) {
+                    $subdomainLine = trim(substr($trimmedLine, 2));
+                    $existingSubdomain = trim(explode('#', $subdomainLine)[0]);
+
+                    // Skip this line if subdomain is not in valid list
+                    if (!in_array($existingSubdomain, $validSubdomains)) {
+                        $updated = true;
+                        continue;
+                    }
+                } else {
+                    if ($inSubdomainsSection && !str_starts_with($trimmedLine, '- ') && !empty($trimmedLine)) {
+                        $inSubdomainsSection = false;
+
+                        // Add all valid subdomains with school names
+                        foreach ($validSubdomains as $subdomain) {
+                            $schoolName = $this->getSchoolNameForSubdomain($subdomain);
+                            if ($schoolName) {
+                                $newLines[] = "  - {$subdomain}  # {$schoolName}";
+                            } else {
+                                $newLines[] = "  - {$subdomain}";
+                            }
+                        }
+                    }
+                    $newLines[] = $line;
+                }
+            }
+
+            // If we're still in subdomains section at the end
+            if ($inSubdomainsSection) {
+                foreach ($validSubdomains as $subdomain) {
+                    $schoolName = $this->getSchoolNameForSubdomain($subdomain);
+                    if ($schoolName) {
+                        $newLines[] = "  - {$subdomain}  # {$schoolName}";
+                    } else {
+                        $newLines[] = "  - {$subdomain}";
+                    }
+                }
+            }
+
+            // Update the file if changes were made
+            if ($updated) {
+                $newContent = implode("\n", $newLines);
+                $vhostService->updateHerdYmlContent($newContent);
+
+                Log::info('Herd YAML file synced with database', [
+                    'path' => $herdYmlPath,
+                    'valid_subdomains' => $validSubdomains
+                ]);
+
+                return redirect()->route('admin.tenants.index')
+                    ->with('success', 'Herd YAML file synced with database successfully!');
+            } else {
+                return redirect()->route('admin.tenants.index')
+                    ->with('info', 'Herd YAML file is already in sync with database.');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to sync Herd YAML with database', [
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('admin.tenants.index')
+                ->with('error', 'Failed to sync Herd YAML with database: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Clean up and format .herd.yml file.
      */
     private function performHerdYmlCleanup(): void
@@ -246,7 +360,10 @@ class TenantController extends Controller
 
                 // If we're in subdomains section and find a subdomain
                 if ($inSubdomainsSection && str_starts_with($trimmedLine, '- ')) {
-                    $subdomain = trim(substr($trimmedLine, 2));
+                    $subdomainLine = trim(substr($trimmedLine, 2));
+
+                    // Extract subdomain (remove comment if present)
+                    $subdomain = trim(explode('#', $subdomainLine)[0]);
 
                     // Skip empty lines and invalid entries
                     if (!empty($subdomain)) {
@@ -363,7 +480,10 @@ class TenantController extends Controller
 
                 // If we're in subdomains section and find a subdomain
                 if ($subdomainsSection && str_starts_with($trimmedLine, '- ')) {
-                    $existingSubdomain = trim(substr($trimmedLine, 2));
+                    $subdomainLine = trim(substr($trimmedLine, 2));
+
+                    // Extract subdomain (remove comment if present)
+                    $existingSubdomain = trim(explode('#', $subdomainLine)[0]);
 
                     // Skip empty lines and invalid entries
                     if (empty($existingSubdomain)) {
