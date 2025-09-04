@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Tenant;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
@@ -11,9 +12,10 @@ class TenantService
     /**
      * Get the current tenant ID from the request.
      */
-    public function getCurrentTenantId(): ?string
+    public function getCurrentTenantId(Request $request = null): ?string
     {
-        $host = request()->getHost();
+        $request = $request ?? request();
+        $host = $request->getHost();
         $primaryDomain = config('all.domains.primary');
         $adminDomain = config('all.domains.admin');
 
@@ -35,6 +37,56 @@ class TenantService
 
         // Check if it's a custom domain
         return $this->findTenantByCustomDomain($host);
+    }
+
+    /**
+     * Get tenant information from the request.
+     */
+    public function getTenantInfo(Request $request): array
+    {
+        $tenantId = $this->getCurrentTenantId($request);
+
+        if (!$tenantId) {
+            return [
+                'id' => null,
+                'name' => null,
+                'email' => null,
+                'type' => null,
+                'active' => false,
+                'domain_type' => null,
+                'full_domain' => null,
+                'subdomain' => null,
+                'custom_domain' => null,
+            ];
+        }
+
+        $tenant = \App\Models\Tenant::find($tenantId);
+        if (!$tenant) {
+            return [
+                'id' => null,
+                'name' => null,
+                'email' => null,
+                'type' => null,
+                'active' => false,
+                'domain_type' => null,
+                'full_domain' => null,
+                'subdomain' => null,
+                'custom_domain' => null,
+            ];
+        }
+
+        $data = $tenant->data;
+        return [
+            'id' => $tenant->id,
+            'name' => $data['name'] ?? 'Unnamed Tenant',
+            'email' => $data['email'] ?? null,
+            'type' => $data['type'] ?? 'school',
+            'active' => $data['active'] ?? false,
+            'domain_type' => $data['domain_type'] ?? 'subdomain',
+            'full_domain' => $data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary'),
+            'subdomain' => $data['subdomain'] ?? null,
+            'custom_domain' => $data['custom_domain'] ?? null,
+        ];
     }
 
     /**
@@ -130,7 +182,7 @@ class TenantService
 
         if ($domainType === 'subdomain') {
             $suggestions[] = $baseSlug;
-            
+
             // Add variations
             $variations = [
                 $baseSlug . '-school',
@@ -204,7 +256,7 @@ class TenantService
 
             $data = $tenant->data;
             $data['domain_type'] = $domainData['domain_type'];
-            
+
             if ($domainData['domain_type'] === 'subdomain') {
                 $data['subdomain'] = $domainData['subdomain'];
                 $data['full_domain'] = $domainData['subdomain'] . '.' . config('all.domains.primary');

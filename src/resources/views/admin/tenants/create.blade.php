@@ -183,15 +183,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function toggleDomainFields() {
         const selectedType = domainTypeSelect.value;
-        
+
         // Hide both fields initially
         subdomainField.style.display = 'none';
         customDomainField.style.display = 'none';
-        
+
         // Clear inputs
         subdomainInput.value = '';
         customDomainInput.value = '';
-        
+
         // Show appropriate field
         if (selectedType === 'subdomain') {
             subdomainField.style.display = 'block';
