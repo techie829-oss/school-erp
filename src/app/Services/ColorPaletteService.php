@@ -80,7 +80,19 @@ class ColorPaletteService
             $css .= "    --color-info: {$colors['info']};\n";
         }
 
-        $css .= "}\n";
+        $css .= "}\n\n";
+
+        // Add CSS rules to ensure Tailwind classes use our variables
+        $css .= "/* Ensure Tailwind classes use our CSS variables */\n";
+        $css .= ".text-primary-600 { color: var(--color-primary-600) !important; }\n";
+        $css .= ".bg-primary-600 { background-color: var(--color-primary-600) !important; }\n";
+        $css .= ".text-secondary-600 { color: var(--color-secondary-600) !important; }\n";
+        $css .= ".bg-secondary-100 { background-color: var(--color-secondary-100) !important; }\n";
+        $css .= ".hover\\:text-primary-600:hover { color: var(--color-primary-600) !important; }\n";
+        $css .= ".hover\\:bg-primary-700:hover { background-color: var(--color-primary-700) !important; }\n";
+        $css .= ".hover\\:bg-secondary-200:hover { background-color: var(--color-secondary-200) !important; }\n";
+        $css .= ".border-primary-600 { border-color: var(--color-primary-600) !important; }\n";
+        $css .= ".bg-primary-50 { background-color: var(--color-primary-50) !important; }\n";
 
         return $css;
     }

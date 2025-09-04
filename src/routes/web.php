@@ -7,7 +7,7 @@ use App\Http\Controllers\ColorPaletteController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Livewire\Volt\Volt;
 
-// Landing Pages (ONLY for primary domain - NO auth routes)
+// Landing Domain Routes (Public)
 Route::domain(config('all.domains.primary'))->group(function () {
     Route::get('/', [LandingController::class, 'home'])->name('landing.home');
     Route::get('/features', [LandingController::class, 'features'])->name('landing.features');
@@ -15,8 +15,132 @@ Route::domain(config('all.domains.primary'))->group(function () {
     Route::get('/about', [LandingController::class, 'about'])->name('landing.about');
     Route::get('/contact', [LandingController::class, 'contact'])->name('landing.contact');
     Route::post('/contact', [LandingController::class, 'submitContact'])->name('landing.contact.submit');
-    Route::get('/colors', [LandingController::class, 'colorPalette'])->name('landing.colors');
+    Route::get('/color-palette', [LandingController::class, 'colorPalette'])->name('landing.color-palette');
     Route::get('/multi-tenancy-demo', [LandingController::class, 'multiTenancyDemo'])->name('landing.multi-tenancy-demo');
+});
+
+// Admin Domain Routes (Super Admin + Auth) - MUST BE BEFORE TENANT ROUTES
+Route::domain(config('all.domains.admin'))->group(function () {
+    // Redirect root to dashboard
+    Route::get('/', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    })->name('admin.root');
+
+    // Auth routes for admin domain (ONLY on admin domain)
+    Route::middleware('guest')->group(function () {
+        Volt::route('login', 'pages.auth.login')->name('admin.login');
+        Volt::route('forgot-password', 'pages.auth.forgot-password')->name('admin.password.request');
+        Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('admin.password.reset');
+    });
+
+    Route::middleware('auth')->group(function () {
+        Volt::route('verify-email', 'pages.auth.verify-email')->name('admin.verification.notice');
+        Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+            ->middleware(['signed', 'throttle:6,1'])
+            ->name('admin.verification.verify');
+        Volt::route('confirm-password', 'pages.auth.confirm-password')->name('admin.password.confirm');
+
+        // Protected admin routes
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('admin.dashboard');
+
+        Route::get('/profile', function () {
+            return view('profile');
+        })->name('admin.profile');
+
+        // Logout route
+        Route::post('/logout', function () {
+            auth()->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+            return redirect()->route('admin.login');
+        })->name('admin.logout');
+    });
+
+    // Super Admin Routes (only accessible on admin domain)
+    Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+        // Dashboard
+        Route::get('/', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+
+        // Tenant Management
+        Route::get('/tenants', function () {
+            return view('admin.tenants.index');
+        })->name('tenants.index');
+
+        // User Management
+        Route::get('/users', function () {
+            return view('admin.users.index');
+        })->name('admin.users.index');
+
+        // System Management
+        Route::get('/system/overview', function () {
+            return view('admin.system.overview');
+        })->name('admin.system.overview');
+    });
+
+    // Catch-all routes for admin domain - prevent undefined routes from falling through
+    Route::get('/about', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    Route::get('/contact', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    Route::get('/features', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    Route::get('/pricing', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    Route::get('/programs', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    Route::get('/facilities', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    Route::get('/admission', function () {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+
+    // Generic catch-all for any other undefined routes
+    Route::get('/{any}', function ($any) {
+        if (auth()->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    })->where('any', '.*');
 });
 
 // Dynamic Tenant Routes (for any tenant domain matching the pattern)
@@ -32,7 +156,6 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->group(function () {
     // Auth routes for tenants (ONLY on tenant domains)
     Route::middleware('guest')->group(function () {
         Volt::route('login', 'pages.auth.login')->name('tenant.login');
-        Volt::route('register', 'pages.auth.register')->name('tenant.register');
         Volt::route('forgot-password', 'pages.auth.forgot-password')->name('tenant.password.request');
         Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('tenant.password.reset');
     });
@@ -60,59 +183,3 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->group(function () {
         Route::post('color-palettes/apply-scheme', [ColorPaletteController::class, 'applyScheme'])->name('color-palettes.apply-scheme');
     });
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern
-
-// Admin Domain Routes (Super Admin + Auth)
-Route::domain(config('all.domains.admin'))->group(function () {
-    // Auth routes for admin domain (ONLY on admin domain)
-    Route::middleware('guest')->group(function () {
-        Volt::route('login', 'pages.auth.login')->name('admin.login');
-        Volt::route('register', 'pages.auth.register')->name('admin.register');
-        Volt::route('forgot-password', 'pages.auth.forgot-password')->name('admin.password.request');
-        Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('admin.password.reset');
-    });
-
-    Route::middleware('auth')->group(function () {
-        Volt::route('verify-email', 'pages.auth.verify-email')->name('admin.verification.notice');
-        Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-            ->middleware(['signed', 'throttle:6,1'])
-            ->name('admin.verification.verify');
-        Volt::route('confirm-password', 'pages.auth.confirm-password')->name('admin.password.confirm');
-
-        // Protected admin routes
-        Route::get('/dashboard', function () {
-            return view('dashboard');
-        })->name('admin.dashboard');
-
-        Route::get('/profile', function () {
-            return view('profile');
-        })->name('admin.profile');
-    });
-
-    // Super Admin Routes (only accessible on admin domain)
-    Route::middleware(['auth', 'admin.user'])->prefix('admin')->name('admin.')->group(function () {
-        // Dashboard
-        Route::get('/', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
-
-        // Tenant Management
-        Route::get('/tenants', function () {
-            return view('admin.tenants.index');
-        })->name('tenants.index');
-
-        // User Management
-        Route::get('/users', function () {
-            return view('admin.users.index');
-        })->name('users.index');
-
-        // System Management
-        Route::get('/system/overview', function () {
-            return view('admin.system.overview');
-        })->name('system.overview');
-    });
-});
-
-// Super Admin Routes (only accessible on admin domain) - Temporarily commented out
-// Route::domain(config('all.domains.admin'))->group(function () {
-//     require __DIR__.'/super-admin.php';
-// });

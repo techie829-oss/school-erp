@@ -5,19 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $tenant['name'] ?? 'School ERP' }} - @yield('title', 'Welcome')</title>
+    <title>{{ $tenant['name'] ?? 'School ERP' }} - @yield('title', 'School Management System')</title>
+    <meta name="description" content="@yield('description', $tenant['description'] ?? 'Excellence in Education')">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-    <!-- Dynamic Color Palette -->
-    {!! app(\App\Services\ColorPaletteService::class)->generateInlineCSS(request()) !!}
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet" />
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .footer {
+            margin-top: auto;
+        }
+    </style>
+
+    <!-- Custom CSS with Color Palette - Loaded after Tailwind to ensure proper override -->
+    @php
+        try {
+            $colorCSS = app(\App\Services\ColorPaletteService::class)->generateInlineCSS(request());
+        } catch (\Exception $e) {
+            $colorCSS = '<style>
+                :root {
+                    --color-primary-600: #3b82f6;
+                    --color-primary-700: #1d4ed8;
+                    --color-secondary-600: #475569;
+                    --color-secondary-100: #f1f5f9;
+                    --color-secondary-200: #e2e8f0;
+                }
+            </style>';
+        }
+    @endphp
+    {!! $colorCSS !!}
+
+    <!-- Additional CSS to ensure colors are visible -->
+    <style>
+        /* Force colors to be visible */
+        .text-primary-600,
+        .hover\:text-primary-600:hover {
+            color: var(--color-primary-600) !important;
+        }
+
+        .bg-primary-600,
+        .hover\:bg-primary-700:hover {
+            background-color: var(--color-primary-600) !important;
+        }
+
+        .text-secondary-600 {
+            color: var(--color-secondary-600) !important;
+        }
+
+        .bg-secondary-100,
+        .hover\:bg-secondary-200:hover {
+            background-color: var(--color-secondary-100) !important;
+        }
+
+        .border-primary-600 {
+            border-color: var(--color-primary-600) !important;
+        }
+
+        .bg-primary-50 {
+            background-color: var(--color-primary-50) !important;
+        }
+
+        /* Debug: Make sure colors are visible */
+        .debug-color {
+            border: 2px solid var(--color-primary-600) !important;
+        }
+    </style>
+
+    <!-- Debug: Show CSS variables -->
+    @if(config('app.debug'))
+    <script>
+        console.log('CSS Variables Debug:');
+        console.log('Primary 600:', getComputedStyle(document.documentElement).getPropertyValue('--color-primary-600'));
+        console.log('Secondary 600:', getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-600'));
+    </script>
+    @endif
 </head>
-<body class="font-sans antialiased">
+<body class="font-sans antialiased bg-white flex flex-col min-h-screen">
     <div class="min-h-screen bg-gray-50">
         <!-- Navigation -->
         <nav class="bg-white shadow-sm border-b border-gray-200">
@@ -63,8 +140,8 @@
                                             <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
                         Parent Login
                     </a>
-                    <a href="{{ route('tenant.register', ['tenant' => $tenantSubdomain]) }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
-                        Apply Now
+                    <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
+                        Contact Us
                     </a>
                     </div>
 
@@ -106,8 +183,8 @@
                     <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
                         Parent Login
                     </a>
-                    <a href="{{ route('tenant.register', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-6 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors rounded-lg">
-                        Apply Now
+                    <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-6 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors rounded-lg">
+                        Contact Us
                     </a>
                 </div>
             </div>
@@ -119,20 +196,31 @@
         </main>
 
         <!-- Footer -->
-        <footer class="bg-gray-900 text-white">
+        <footer class="bg-gray-900 text-white mt-auto">
             <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div class="col-span-1 md:col-span-2">
-                        <h3 class="text-lg font-semibold mb-4">{{ $tenant['name'] ?? 'School ERP' }}</h3>
-                        <p class="text-gray-300 mb-4">{{ $tenant['description'] ?? 'Excellence in Education' }}</p>
-                        <p class="text-gray-400 text-sm">
-                            <strong>Location:</strong> {{ $tenant['location'] ?? 'Location' }}<br>
-                            <strong>Students:</strong> {{ $tenant['student_count'] ?? 'N/A' }}<br>
-                            <strong>Database:</strong> {{ ucfirst($tenant['database_strategy'] ?? 'shared') }}
+                        <h3 class="text-lg font-semibold mb-4 text-white">
+                            {{ $tenant['name'] ?? 'School ERP' }}
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            {{ $tenant['description'] ?? 'Excellence in Education' }}
                         </p>
+                        <div class="text-gray-400 text-sm space-y-1">
+                            @if($tenant['location'])
+                            <p><strong>Location:</strong> {{ $tenant['location'] }}</p>
+                            @endif
+                            @if($tenant['student_count'])
+                            <p><strong>Students:</strong> {{ number_format($tenant['student_count']) }}</p>
+                            @endif
+                            @if($tenant['database_strategy'])
+                            <p><strong>Database:</strong> {{ ucfirst($tenant['database_strategy']) }}</p>
+                            @endif
+                        </div>
                     </div>
+
                     <div>
-                        <h4 class="text-md font-semibold mb-4">Quick Links</h4>
+                        <h4 class="text-md font-semibold mb-4 text-white">Quick Links</h4>
                         <ul class="space-y-2">
                             <li><a href="{{ route('tenant.about', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">About Us</a></li>
                             <li><a href="{{ route('tenant.programs', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Programs</a></li>
@@ -140,15 +228,17 @@
                             <li><a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Contact</a></li>
                         </ul>
                     </div>
+
                     <div>
-                        <h4 class="text-md font-semibold mb-4">Connect</h4>
+                        <h4 class="text-md font-semibold mb-4 text-white">Connect</h4>
                         <ul class="space-y-2">
                             <li><a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Parent Portal</a></li>
-                            <li><a href="{{ route('tenant.register', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Apply Online</a></li>
+                            <li><a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
                             <li><a href="#" class="text-gray-300 hover:text-white transition-colors">Newsletter</a></li>
                         </ul>
                     </div>
                 </div>
+
                 <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
                     <p>&copy; {{ date('Y') }} {{ $tenant['name'] ?? 'School ERP' }}. All rights reserved.</p>
                     <p class="text-sm mt-2">Powered by School ERP System</p>

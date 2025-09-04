@@ -199,8 +199,8 @@
                         <a href="{{ route('landing.contact') }}" class="px-3 py-2 text-sm font-bold text-gray-600 hover:text-blue-600 transition-colors {{ request()->routeIs('landing.contact') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : '' }}">
                             Contact
                         </a>
-                        <a href="{{ route('landing.colors') }}" class="px-3 py-2 text-sm font-bold text-gray-600 hover:text-blue-600 transition-colors {{ request()->routeIs('landing.colors') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : '' }}">
-                            Colors
+                        <a href="{{ route('landing.color-palette') }}" class="px-3 py-2 text-sm font-bold text-gray-600 hover:text-blue-600 transition-colors {{ request()->routeIs('landing.color-palette') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : '' }}">
+                            Color Palette
                         </a>
                         <a href="{{ route('landing.multi-tenancy-demo') }}" class="px-3 py-2 text-sm font-bold text-gray-600 hover:text-blue-600 transition-colors {{ request()->routeIs('landing.multi-tenancy-demo') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : '' }}">
                             Multi-Tenancy
@@ -247,8 +247,8 @@
                 <a href="{{ route('landing.contact') }}" class="block px-3 py-2 text-base font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors {{ request()->routeIs('landing.contact') ? 'text-blue-600 bg-blue-100 border-l-3 border-blue-600 pl-4' : '' }}">
                     Contact
                 </a>
-                <a href="{{ route('landing.colors') }}" class="block px-3 py-2 text-base font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors {{ request()->routeIs('landing.colors') ? 'text-blue-600 bg-blue-100 border-l-3 border-blue-600 pl-4' : '' }}">
-                    Colors
+                <a href="{{ route('landing.color-palette') }}" class="block px-3 py-2 text-base font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors {{ request()->routeIs('landing.color-palette') ? 'text-blue-600 bg-blue-100 border-l-3 border-blue-600 pl-4' : '' }}">
+                    Color Palette
                 </a>
                 <a href="{{ route('landing.multi-tenancy-demo') }}" class="block px-3 py-2 text-base font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors {{ request()->routeIs('landing.multi-tenancy-demo') ? 'text-blue-600 bg-blue-100 border-l-3 border-blue-600 pl-4' : '' }}">
                     Multi-Tenancy
