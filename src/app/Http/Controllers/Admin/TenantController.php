@@ -167,7 +167,7 @@ class TenantController extends Controller
     public function cleanupHerdYml()
     {
         try {
-            $this->cleanupHerdYml();
+            $this->performHerdYmlCleanup();
 
             return redirect()->route('admin.tenants.index')
                 ->with('success', 'Herd YAML file cleaned up and formatted successfully!');
@@ -207,10 +207,10 @@ class TenantController extends Controller
         ]);
     }
 
-        /**
+    /**
      * Clean up and format .herd.yml file.
      */
-    private function cleanupHerdYml(): void
+    private function performHerdYmlCleanup(): void
     {
         try {
             $vhostService = app(VhostService::class);
@@ -388,7 +388,7 @@ class TenantController extends Controller
                 $vhostService->updateHerdYmlContent($newContent);
 
                 // Clean up the file to remove extra spaces and fix formatting
-                $this->cleanupHerdYml();
+                $this->performHerdYmlCleanup();
 
                 Log::info('Herd configuration updated for subdomain change', [
                     'old_subdomain' => $oldSubdomain,

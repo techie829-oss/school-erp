@@ -14,7 +14,7 @@
     <div class="flex space-x-3">
         <form action="{{ route('admin.tenants.cleanup-herd-yml') }}" method="POST" class="inline">
             @csrf
-            <button type="submit" 
+            <button type="submit"
                     class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium"
                     onclick="return confirm('Are you sure you want to clean up the Herd YAML file? This will remove extra spaces and fix formatting.')">
                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
