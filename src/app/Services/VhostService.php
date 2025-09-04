@@ -8,31 +8,24 @@ use Illuminate\Support\Facades\Log;
 class VhostService
 {
     /**
-     * Get the path to the vhost configuration file based on hosting type.
+     * Get the path to the Herd vhost configuration file.
      */
     public function getVhostPath(): string
     {
-        $hostingType = config('app.hosting_type', 'laravel-herd');
-        
-        switch ($hostingType) {
-            case 'laravel-herd':
-                // Herd typically stores vhost configs in ~/.config/herd/config/nginx/
+        $hostingType = config('all.hosting.type', 'laravel-herd');
+        $hostingConfig = config("all.hosting.server.{$hostingType}");
+
+        if ($hostingType === 'laravel-herd') {
+            $path = $hostingConfig['vhost_path'] ?? '~/.config/herd/config/nginx/valet.conf';
+            // Expand ~ to home directory
+            if (str_starts_with($path, '~')) {
                 $homeDir = $_SERVER['HOME'] ?? getenv('HOME');
-                return $homeDir . '/.config/herd/config/nginx/valet.conf';
-                
-            case 'apache':
-                // Apache virtual host configuration
-                return '/etc/apache2/sites-available/school-erp.conf';
-                
-            case 'nginx':
-                // Nginx virtual host configuration
-                return '/etc/nginx/sites-available/school-erp';
-                
-            default:
-                // Default to Herd
-                $homeDir = $_SERVER['HOME'] ?? getenv('HOME');
-                return $homeDir . '/.config/herd/config/nginx/valet.conf';
+                return str_replace('~', $homeDir, $path);
+            }
+            return $path;
         }
+
+        return $hostingConfig['vhost_path'] ?? '/etc/nginx/sites-available/default';
     }
 
     /**
@@ -40,8 +33,20 @@ class VhostService
      */
     public function getHerdConfigPath(): string
     {
-        $homeDir = $_SERVER['HOME'] ?? getenv('HOME');
-        return $homeDir . '/.config/herd';
+        $hostingType = config('all.hosting.type', 'laravel-herd');
+        $hostingConfig = config("all.hosting.server.{$hostingType}");
+
+        if ($hostingType === 'laravel-herd') {
+            $path = $hostingConfig['config_path'] ?? '~/.config/herd';
+            // Expand ~ to home directory
+            if (str_starts_with($path, '~')) {
+                $homeDir = $_SERVER['HOME'] ?? getenv('HOME');
+                return str_replace('~', $homeDir, $path);
+            }
+            return $path;
+        }
+
+        return $hostingConfig['config_path'] ?? '/etc/nginx';
     }
 
     /**
@@ -423,41 +428,16 @@ redis: 7.0
 ";
     }
 
-        /**
-     * Start web server service based on hosting type.
+    /**
+     * Start Herd service.
      */
-    public function startWebServer(): array
+    public function startHerd(): array
     {
-        $hostingType = config('app.hosting_type', 'laravel-herd');
-        
         try {
-            switch ($hostingType) {
-                case 'laravel-herd':
-                    $output = shell_exec('herd start 2>&1');
-                    $success = $this->isHerdRunning();
-                    $serviceName = 'Herd';
-                    break;
-                    
-                case 'apache':
-                    $output = shell_exec('sudo systemctl start apache2 2>&1');
-                    $success = $this->isApacheRunning();
-                    $serviceName = 'Apache';
-                    break;
-                    
-                case 'nginx':
-                    $output = shell_exec('sudo systemctl start nginx 2>&1');
-                    $success = $this->isNginxRunning();
-                    $serviceName = 'Nginx';
-                    break;
-                    
-                default:
-                    $output = shell_exec('herd start 2>&1');
-                    $success = $this->isHerdRunning();
-                    $serviceName = 'Herd';
-            }
-            
-            Log::info("{$serviceName} start command executed", [
-                'hosting_type' => $hostingType,
+            $output = shell_exec('herd start 2>&1');
+            $success = $this->isHerdRunning();
+
+            Log::info('Herd start command executed', [
                 'output' => $output,
                 'success' => $success
             ]);
@@ -465,27 +445,16 @@ redis: 7.0
             return [
                 'success' => $success,
                 'output' => $output,
-                'message' => $success ? "{$serviceName} started successfully" : "Failed to start {$serviceName}"
+                'message' => $success ? 'Herd started successfully' : 'Failed to start Herd'
             ];
         } catch (\Exception $e) {
-            Log::error("Failed to start web server", [
-                'hosting_type' => $hostingType,
-                'error' => $e->getMessage()
-            ]);
+            Log::error('Failed to start Herd', ['error' => $e->getMessage()]);
             return [
                 'success' => false,
                 'output' => $e->getMessage(),
-                'message' => "Error starting web server: " . $e->getMessage()
+                'message' => 'Error starting Herd: ' . $e->getMessage()
             ];
         }
-    }
-
-    /**
-     * Start Herd service (legacy method for backward compatibility).
-     */
-    public function startHerd(): array
-    {
-        return $this->startWebServer();
     }
 
     /**
@@ -634,15 +603,42 @@ redis: 7.0
     }
 
     /**
+     * Get the current hosting type.
+     */
+    public function getHostingType(): string
+    {
+        return config('all.hosting.type', 'laravel-herd');
+    }
+
+    /**
+     * Get hosting configuration for the current type.
+     */
+    public function getHostingConfig(): array
+    {
+        $hostingType = $this->getHostingType();
+        return config("all.hosting.server.{$hostingType}", []);
+    }
+
+    /**
+     * Check if vhost management is enabled.
+     */
+    public function isVhostManagementEnabled(): bool
+    {
+        return config('all.features.vhost_management', true);
+    }
+
+    /**
      * Get system information for vhost management.
      */
     public function getSystemInfo(): array
     {
         $hostingType = $this->getHostingType();
-        
+        $hostingConfig = $this->getHostingConfig();
+
         return [
             'hosting_type' => $hostingType,
-            'hosting_type_display' => $this->getHostingTypeDisplayName(),
+            'hosting_config' => $hostingConfig,
+            'vhost_management_enabled' => $this->isVhostManagementEnabled(),
             'vhost_path' => $this->getVhostPath(),
             'vhost_exists' => File::exists($this->getVhostPath()),
             'vhost_writable' => File::isWritable(dirname($this->getVhostPath())),
@@ -654,7 +650,6 @@ redis: 7.0
             'herd_yml_writable' => File::isWritable(dirname($this->getHerdYmlPath())),
             'herd_running' => $this->isHerdRunning(),
             'nginx_running' => $this->isNginxRunning(),
-            'apache_running' => $this->isApacheRunning(),
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
         ];
@@ -683,42 +678,6 @@ redis: 7.0
             return !empty(trim($output));
         } catch (\Exception $e) {
             return false;
-        }
-    }
-
-    /**
-     * Check if Apache is running.
-     */
-    private function isApacheRunning(): bool
-    {
-        $output = shell_exec('pgrep apache2 2>/dev/null');
-        return !empty(trim($output));
-    }
-
-    /**
-     * Get the current hosting type.
-     */
-    public function getHostingType(): string
-    {
-        return config('app.hosting_type', 'laravel-herd');
-    }
-
-    /**
-     * Get hosting type display name.
-     */
-    public function getHostingTypeDisplayName(): string
-    {
-        $hostingType = $this->getHostingType();
-        
-        switch ($hostingType) {
-            case 'laravel-herd':
-                return 'Laravel Herd';
-            case 'apache':
-                return 'Apache';
-            case 'nginx':
-                return 'Nginx';
-            default:
-                return 'Unknown';
         }
     }
 }

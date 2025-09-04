@@ -56,21 +56,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Application Hosting Type
-    |--------------------------------------------------------------------------
-    |
-    | This value determines the hosting environment your application is running
-    | on. This affects how the application handles server configuration,
-    | virtual hosts, and other hosting-specific features.
-    |
-    | Supported types: 'laravel-herd', 'apache', 'nginx'
-    |
-    */
-
-    'hosting_type' => env('APP_HOSTING_TYPE', 'laravel-herd'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

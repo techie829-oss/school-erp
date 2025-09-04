@@ -72,6 +72,53 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hosting Configuration
+    |--------------------------------------------------------------------------
+    | Application hosting type and server configuration
+    |
+    */
+
+    'hosting' => [
+        'type' => env('HOSTING_TYPE', 'laravel-herd'), // laravel-herd, apache, nginx
+        'server' => [
+            'laravel-herd' => [
+                'enabled' => true,
+                'config_path' => env('HERD_CONFIG_PATH', '~/.config/herd'),
+                'vhost_path' => env('HERD_VHOST_PATH', '~/.config/herd/config/nginx/valet.conf'),
+                'php_version' => env('HERD_PHP_VERSION', '8.3'),
+                'mysql_version' => env('HERD_MYSQL_VERSION', '8.0'),
+                'redis_version' => env('HERD_REDIS_VERSION', '7.0'),
+            ],
+            'apache' => [
+                'enabled' => false,
+                'config_path' => env('APACHE_CONFIG_PATH', '/etc/apache2/sites-available'),
+                'vhost_path' => env('APACHE_VHOST_PATH', '/etc/apache2/sites-available/000-default.conf'),
+                'document_root' => env('APACHE_DOCUMENT_ROOT', '/var/www/html'),
+                'mod_rewrite' => env('APACHE_MOD_REWRITE', true),
+            ],
+            'nginx' => [
+                'enabled' => false,
+                'config_path' => env('NGINX_CONFIG_PATH', '/etc/nginx/sites-available'),
+                'vhost_path' => env('NGINX_VHOST_PATH', '/etc/nginx/sites-available/default'),
+                'document_root' => env('NGINX_DOCUMENT_ROOT', '/var/www/html'),
+                'php_fpm_socket' => env('NGINX_PHP_FPM_SOCKET', '/var/run/php/php8.3-fpm.sock'),
+            ],
+        ],
+        'ssl' => [
+            'enabled' => env('SSL_ENABLED', false),
+            'cert_path' => env('SSL_CERT_PATH', '/etc/ssl/certs/ssl-cert-snakeoil.pem'),
+            'key_path' => env('SSL_KEY_PATH', '/etc/ssl/private/ssl-cert-snakeoil.key'),
+            'auto_redirect' => env('SSL_AUTO_REDIRECT', true),
+        ],
+        'cache' => [
+            'enabled' => env('CACHE_ENABLED', true),
+            'driver' => env('CACHE_DRIVER', 'redis'),
+            'ttl' => env('CACHE_TTL', 3600),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Feature Toggles
     |--------------------------------------------------------------------------
     | Simple on/off switches for major features
@@ -83,6 +130,7 @@ return [
         'online_payments' => env('FEATURE_ONLINE_PAYMENTS', true),
         'sms_notifications' => env('FEATURE_SMS_NOTIFICATIONS', true),
         'lms' => env('FEATURE_LMS', true),
+        'vhost_management' => env('FEATURE_VHOST_MANAGEMENT', true),
     ],
 
 ];
