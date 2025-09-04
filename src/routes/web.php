@@ -71,6 +71,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
         // Tenant Management
         Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
         Route::post('/tenants/check-subdomain', [\App\Http\Controllers\Admin\TenantController::class, 'checkSubdomain'])->name('tenants.check-subdomain');
+        Route::post('/tenants/cleanup-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'cleanupHerdYml'])->name('tenants.cleanup-herd-yml');
 
         // Vhost Management
         Route::prefix('vhost')->name('vhost.')->group(function () {

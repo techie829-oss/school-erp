@@ -2,11 +2,11 @@ name: school-erp
 domain: myschool.test
 subdomains:
   - app
+  - schoola
   - schoolb
   - schoolc
   - schoold
 
-  - dps
 php: 8.3
 mysql: 8.0
 redis: 7.0

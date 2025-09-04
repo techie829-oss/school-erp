@@ -162,6 +162,23 @@ class TenantController extends Controller
     }
 
     /**
+     * Clean up Herd YAML file formatting.
+     */
+    public function cleanupHerdYml()
+    {
+        try {
+            $this->cleanupHerdYml();
+
+            return redirect()->route('admin.tenants.index')
+                ->with('success', 'Herd YAML file cleaned up and formatted successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()->route('admin.tenants.index')
+                ->with('error', 'Failed to cleanup Herd YAML file: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Check if subdomain already exists in database.
      */
     public function checkSubdomain(Request $request)
@@ -190,6 +207,89 @@ class TenantController extends Controller
         ]);
     }
 
+        /**
+     * Clean up and format .herd.yml file.
+     */
+    private function cleanupHerdYml(): void
+    {
+        try {
+            $vhostService = app(VhostService::class);
+
+            // Only update if hosting type is Laravel Herd
+            if ($vhostService->getHostingType() !== 'laravel-herd') {
+                return;
+            }
+
+            // Get current .herd.yml content
+            $herdYmlPath = $vhostService->getHerdYmlPath();
+            $content = file_exists($herdYmlPath) ? file_get_contents($herdYmlPath) : '';
+
+            if (empty($content)) {
+                return;
+            }
+
+            // Parse and clean up the content
+            $lines = explode("\n", $content);
+            $newLines = [];
+            $subdomains = [];
+            $inSubdomainsSection = false;
+
+            foreach ($lines as $line) {
+                $trimmedLine = trim($line);
+
+                // Check if we're in the subdomains section
+                if ($trimmedLine === 'subdomains:') {
+                    $inSubdomainsSection = true;
+                    $newLines[] = $line;
+                    continue;
+                }
+
+                // If we're in subdomains section and find a subdomain
+                if ($inSubdomainsSection && str_starts_with($trimmedLine, '- ')) {
+                    $subdomain = trim(substr($trimmedLine, 2));
+
+                    // Skip empty lines and invalid entries
+                    if (!empty($subdomain)) {
+                        $subdomains[] = $subdomain;
+                    }
+                } else {
+                    // If we were in subdomains section and now we're not, add the cleaned subdomains
+                    if ($inSubdomainsSection && !str_starts_with($trimmedLine, '- ') && !empty($trimmedLine)) {
+                        $inSubdomainsSection = false;
+
+                        // Add all subdomains with proper formatting
+                        foreach ($subdomains as $subdomain) {
+                            $newLines[] = "  - {$subdomain}";
+                        }
+                    }
+                    $newLines[] = $line;
+                }
+            }
+
+            // If we're still in subdomains section at the end, add the cleaned subdomains
+            if ($inSubdomainsSection) {
+                        // Add all subdomains with proper formatting
+                        foreach ($subdomains as $subdomain) {
+                            $newLines[] = "  - {$subdomain}";
+                        }
+            }
+
+            // Update the file with cleaned content
+            $newContent = implode("\n", $newLines);
+            $vhostService->updateHerdYmlContent($newContent);
+
+            Log::info('Herd YAML file cleaned up and formatted', [
+                'path' => $herdYmlPath,
+                'subdomains_count' => count($subdomains)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to cleanup Herd YAML file', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
     /**
      * Update Herd configuration when subdomain changes.
      */
@@ -212,11 +312,12 @@ class TenantController extends Controller
                 return;
             }
 
-            // Parse YAML content
+            // Parse YAML content and clean up formatting
             $lines = explode("\n", $content);
             $subdomainsSection = false;
             $updated = false;
             $newLines = [];
+            $subdomains = [];
 
             foreach ($lines as $line) {
                 $trimmedLine = trim($line);
@@ -232,26 +333,36 @@ class TenantController extends Controller
                 if ($subdomainsSection && str_starts_with($trimmedLine, '- ')) {
                     $existingSubdomain = trim(substr($trimmedLine, 2));
 
+                    // Skip empty lines and invalid entries
+                    if (empty($existingSubdomain)) {
+                        continue;
+                    }
+
                     // Remove old subdomain if it exists
                     if ($oldSubdomain && $existingSubdomain === $oldSubdomain) {
                         $updated = true;
                         continue; // Skip this line (remove old subdomain)
                     }
 
-                    // Add new subdomain if it doesn't exist
-                    if ($existingSubdomain === $newSubdomain) {
-                        $newLines[] = $line;
-                        continue; // Already exists, keep it
+                    // Add to subdomains list if it doesn't exist
+                    if (!in_array($existingSubdomain, $subdomains)) {
+                        $subdomains[] = $existingSubdomain;
                     }
-
-                    // Keep existing subdomains
-                    $newLines[] = $line;
                 } else {
                     // If we were in subdomains section and now we're not, add the new subdomain
                     if ($subdomainsSection && !str_starts_with($trimmedLine, '- ') && !empty($trimmedLine)) {
                         $subdomainsSection = false;
-                        $newLines[] = "  - {$newSubdomain}";
-                        $updated = true;
+
+                        // Add new subdomain if it doesn't exist
+                        if (!in_array($newSubdomain, $subdomains)) {
+                            $subdomains[] = $newSubdomain;
+                            $updated = true;
+                        }
+
+                        // Add all subdomains with proper formatting
+                        foreach ($subdomains as $subdomain) {
+                            $newLines[] = "  - {$subdomain}";
+                        }
                     }
                     $newLines[] = $line;
                 }
@@ -259,14 +370,25 @@ class TenantController extends Controller
 
             // If we're still in subdomains section at the end, add the new subdomain
             if ($subdomainsSection) {
-                $newLines[] = "  - {$newSubdomain}";
-                $updated = true;
+                // Add new subdomain if it doesn't exist
+                if (!in_array($newSubdomain, $subdomains)) {
+                    $subdomains[] = $newSubdomain;
+                    $updated = true;
+                }
+
+                        // Add all subdomains with proper formatting
+                        foreach ($subdomains as $subdomain) {
+                            $newLines[] = "  - {$subdomain}";
+                        }
             }
 
             // Update the file if changes were made
             if ($updated) {
                 $newContent = implode("\n", $newLines);
                 $vhostService->updateHerdYmlContent($newContent);
+
+                // Clean up the file to remove extra spaces and fix formatting
+                $this->cleanupHerdYml();
 
                 Log::info('Herd configuration updated for subdomain change', [
                     'old_subdomain' => $oldSubdomain,

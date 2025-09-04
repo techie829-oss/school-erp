@@ -166,12 +166,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Real-time subdomain validation
     subdomainInput.addEventListener('input', function() {
         const subdomain = this.value.trim();
-        
+
         // Clear previous timeout
         if (validationTimeout) {
             clearTimeout(validationTimeout);
         }
-        
+
         // Validate after 500ms of no typing
         validationTimeout = setTimeout(() => {
             if (subdomain) {
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateSubdomain(subdomain) {
         // Show loading state
         showValidationState('checking', 'Checking availability...');
-        
+
         fetch('{{ route("admin.tenants.check-subdomain") }}', {
             method: 'POST',
             headers: {
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create validation feedback element
         const feedback = document.createElement('div');
         feedback.className = `validation-feedback mt-1 text-sm flex items-center`;
-        
+
         let iconClass, textClass;
         switch (type) {
             case 'success':
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         feedback.innerHTML = `
             <svg class="w-4 h-4 mr-1 ${iconClass}" fill="currentColor" viewBox="0 0 20 20">
-                ${type === 'success' ? 
+                ${type === 'success' ?
                     '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>' :
                     type === 'error' ?
                     '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>' :
