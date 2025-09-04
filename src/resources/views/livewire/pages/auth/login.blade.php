@@ -26,15 +26,26 @@ new #[Layout('layouts.guest')] class extends Component
     }
 
     /**
-     * Get the appropriate redirect route based on the current domain
+     * Get the appropriate redirect route based on the current domain and user type
      */
     protected function getRedirectRoute(): string
     {
         $host = request()->getHost();
         $adminDomain = config('all.domains.admin');
 
-        // If we're on the admin domain, redirect to admin dashboard
+        // If we're on the admin domain, check if user is school_admin
         if ($host === $adminDomain) {
+            $user = auth()->user();
+
+            // If user is school_admin, redirect to their tenant domain
+            if ($user && $user->admin_type === 'school_admin') {
+                $tenantUrl = $user->getTenantUrl();
+                if ($tenantUrl) {
+                    return $tenantUrl;
+                }
+            }
+
+            // For super_admin and super_manager, stay on admin domain
             return route('admin.dashboard', absolute: false);
         }
 

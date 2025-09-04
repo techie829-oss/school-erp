@@ -27,7 +27,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
             return redirect()->route('admin.dashboard');
         }
         return redirect()->route('admin.login');
-    })->name('admin.root');
+    })->middleware('redirect.school.admin')->name('admin.root');
 
     // Auth routes for admin domain (ONLY on admin domain)
     Route::middleware('guest')->group(function () {
@@ -62,7 +62,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
     });
 
     // Super Admin Routes (only accessible on admin domain)
-    Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'verified', 'redirect.school.admin'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/', function () {
             return view('admin.dashboard');

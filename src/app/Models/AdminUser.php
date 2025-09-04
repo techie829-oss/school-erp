@@ -107,4 +107,35 @@ class AdminUser extends Authenticatable
             self::TYPE_SCHOOL_ADMIN => 'School Admin',
         ];
     }
+
+    /**
+     * Get the tenant domain for school admin users
+     */
+    public function getTenantDomain(): ?string
+    {
+        if ($this->admin_type !== self::TYPE_SCHOOL_ADMIN || !$this->tenant_id) {
+            return null;
+        }
+
+        $tenant = $this->tenant;
+        if (!$tenant || !isset($tenant->data['full_domain'])) {
+            return null;
+        }
+
+        return $tenant->data['full_domain'];
+    }
+
+    /**
+     * Get the full tenant URL for school admin users
+     */
+    public function getTenantUrl(string $path = '/admin'): ?string
+    {
+        $domain = $this->getTenantDomain();
+        if (!$domain) {
+            return null;
+        }
+
+        $protocol = request()->secure() ? 'https' : 'http';
+        return $protocol . '://' . $domain . $path;
+    }
 }

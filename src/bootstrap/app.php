@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Configure authentication middleware to use correct guard and login route
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
+            'redirect.school.admin' => \App\Http\Middleware\RedirectSchoolAdminToTenant::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
