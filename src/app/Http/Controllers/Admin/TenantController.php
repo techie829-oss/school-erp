@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Models\AdminUser;
 use App\Services\VhostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Log;
 
 class TenantController extends Controller
@@ -586,7 +589,7 @@ class TenantController extends Controller
         if ($user->tenant_id !== $tenant->id) {
             abort(404);
         }
-        
+
         return view('admin.tenants.users.show', compact('tenant', 'user'));
     }
 
@@ -599,7 +602,7 @@ class TenantController extends Controller
         if ($user->tenant_id !== $tenant->id) {
             abort(404);
         }
-        
+
         return view('admin.tenants.users.edit', compact('tenant', 'user'));
     }
 
@@ -640,7 +643,7 @@ class TenantController extends Controller
         if ($user->tenant_id !== $tenant->id) {
             abort(404);
         }
-        
+
         return view('admin.tenants.users.change-password', compact('tenant', 'user'));
     }
 
