@@ -106,10 +106,6 @@
 
 <!-- Users Table -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-medium text-gray-900">Admin Users</h3>
-        <p class="text-sm text-gray-600">Manage and view all admin users in the system</p>
-    </div>
 
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">

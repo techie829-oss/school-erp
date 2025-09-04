@@ -150,35 +150,35 @@
 
                 <!-- Navigation -->
                 <nav class="space-y-2">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-3 text-white bg-white bg-opacity-20 rounded-lg">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-3 {{ request()->routeIs('admin.dashboard') ? 'text-white bg-white bg-opacity-20' : 'text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10' }} rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
                         </svg>
                         Dashboard
                     </a>
 
-                    <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-3 text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors">
+                    <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-3 {{ request()->routeIs('admin.users.*') ? 'text-white bg-white bg-opacity-20' : 'text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10' }} rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
                         </svg>
                         Admin Users
                     </a>
 
-                    <a href="{{ route('admin.tenants.index') }}" class="flex items-center px-4 py-3 text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors">
+                    <a href="{{ route('admin.tenants.index') }}" class="flex items-center px-4 py-3 {{ request()->routeIs('admin.tenants.*') ? 'text-white bg-white bg-opacity-20' : 'text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10' }} rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
                         Tenants
                     </a>
 
-                    <a href="{{ route('admin.vhost.index') }}" class="flex items-center px-4 py-3 text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors">
+                    <a href="{{ route('admin.vhost.index') }}" class="flex items-center px-4 py-3 {{ request()->routeIs('admin.vhost.*') ? 'text-white bg-white bg-opacity-20' : 'text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10' }} rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
                         </svg>
                         Vhost Management
                     </a>
 
-                    <a href="{{ route('admin.admin.system.overview') }}" class="flex items-center px-4 py-3 text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors">
+                    <a href="{{ route('admin.admin.system.overview') }}" class="flex items-center px-4 py-3 {{ request()->routeIs('admin.admin.system.overview') ? 'text-white bg-white bg-opacity-20' : 'text-purple-200 hover:text-white hover:bg-white hover:bg-opacity-10' }} rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
