@@ -18,6 +18,23 @@ class VhostService
     }
 
     /**
+     * Get the path to the Herd configuration directory.
+     */
+    public function getHerdConfigPath(): string
+    {
+        $homeDir = $_SERVER['HOME'] ?? getenv('HOME');
+        return $homeDir . '/.config/herd';
+    }
+
+    /**
+     * Get the path to the Herd main configuration file.
+     */
+    public function getHerdConfigFile(): string
+    {
+        return $this->getHerdConfigPath() . '/config.json';
+    }
+
+    /**
      * Get the current vhost configuration content.
      */
     public function getVhostContent(): string
@@ -242,6 +259,253 @@ NGINX;
     }
 
     /**
+     * Get Herd configuration content.
+     */
+    public function getHerdConfigContent(): string
+    {
+        $path = $this->getHerdConfigFile();
+
+        if (!File::exists($path)) {
+            return $this->getDefaultHerdConfig();
+        }
+
+        return File::get($path);
+    }
+
+    /**
+     * Update Herd configuration content.
+     */
+    public function updateHerdConfigContent(string $content): bool
+    {
+        try {
+            $path = $this->getHerdConfigFile();
+
+            // Create directory if it doesn't exist
+            $directory = dirname($path);
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            // Backup the current file
+            if (File::exists($path)) {
+                File::copy($path, $path . '.backup.' . date('Y-m-d-H-i-s'));
+            }
+
+            // Write the new content
+            File::put($path, $content);
+
+            // Log the change
+            Log::info('Herd configuration updated', [
+                'path' => $path,
+                'size' => strlen($content)
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to update Herd configuration', [
+                'error' => $e->getMessage(),
+                'path' => $this->getHerdConfigFile()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Get default Herd configuration.
+     */
+    private function getDefaultHerdConfig(): string
+    {
+        return json_encode([
+            'tld' => 'test',
+            'loopback' => '127.0.0.1',
+            'paths' => [
+                '/Users/rohitk/react/lara/school-erp/src'
+            ],
+            'nginx' => [
+                'config' => '/Users/rohitk/.config/herd/config/nginx/valet.conf'
+            ],
+            'php' => [
+                'version' => '8.3'
+            ]
+        ], JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Start Herd service.
+     */
+    public function startHerd(): array
+    {
+        try {
+            $output = shell_exec('herd start 2>&1');
+            $success = $this->isHerdRunning();
+
+            Log::info('Herd start command executed', [
+                'output' => $output,
+                'success' => $success
+            ]);
+
+            return [
+                'success' => $success,
+                'output' => $output,
+                'message' => $success ? 'Herd started successfully' : 'Failed to start Herd'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to start Herd', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'output' => $e->getMessage(),
+                'message' => 'Error starting Herd: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Stop Herd service.
+     */
+    public function stopHerd(): array
+    {
+        try {
+            $output = shell_exec('herd stop 2>&1');
+            $stopped = !$this->isHerdRunning();
+
+            Log::info('Herd stop command executed', [
+                'output' => $output,
+                'stopped' => $stopped
+            ]);
+
+            return [
+                'success' => $stopped,
+                'output' => $output,
+                'message' => $stopped ? 'Herd stopped successfully' : 'Failed to stop Herd'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to stop Herd', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'output' => $e->getMessage(),
+                'message' => 'Error stopping Herd: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Restart Herd service.
+     */
+    public function restartHerd(): array
+    {
+        try {
+            $output = shell_exec('herd restart 2>&1');
+            $running = $this->isHerdRunning();
+
+            Log::info('Herd restart command executed', [
+                'output' => $output,
+                'running' => $running
+            ]);
+
+            return [
+                'success' => $running,
+                'output' => $output,
+                'message' => $running ? 'Herd restarted successfully' : 'Failed to restart Herd'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to restart Herd', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'output' => $e->getMessage(),
+                'message' => 'Error restarting Herd: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Start Nginx service.
+     */
+    public function startNginx(): array
+    {
+        try {
+            $output = shell_exec('sudo nginx 2>&1');
+            $running = $this->isNginxRunning();
+
+            Log::info('Nginx start command executed', [
+                'output' => $output,
+                'running' => $running
+            ]);
+
+            return [
+                'success' => $running,
+                'output' => $output,
+                'message' => $running ? 'Nginx started successfully' : 'Failed to start Nginx'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to start Nginx', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'output' => $e->getMessage(),
+                'message' => 'Error starting Nginx: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Stop Nginx service.
+     */
+    public function stopNginx(): array
+    {
+        try {
+            $output = shell_exec('sudo nginx -s stop 2>&1');
+            $stopped = !$this->isNginxRunning();
+
+            Log::info('Nginx stop command executed', [
+                'output' => $output,
+                'stopped' => $stopped
+            ]);
+
+            return [
+                'success' => $stopped,
+                'output' => $output,
+                'message' => $stopped ? 'Nginx stopped successfully' : 'Failed to stop Nginx'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to stop Nginx', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'output' => $e->getMessage(),
+                'message' => 'Error stopping Nginx: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Restart Nginx service.
+     */
+    public function restartNginx(): array
+    {
+        try {
+            $output = shell_exec('sudo nginx -s reload 2>&1');
+            $running = $this->isNginxRunning();
+
+            Log::info('Nginx restart command executed', [
+                'output' => $output,
+                'running' => $running
+            ]);
+
+            return [
+                'success' => $running,
+                'output' => $output,
+                'message' => $running ? 'Nginx restarted successfully' : 'Failed to restart Nginx'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to restart Nginx', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'output' => $e->getMessage(),
+                'message' => 'Error restarting Nginx: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Get system information for vhost management.
      */
     public function getSystemInfo(): array
@@ -250,6 +514,9 @@ NGINX;
             'vhost_path' => $this->getVhostPath(),
             'vhost_exists' => File::exists($this->getVhostPath()),
             'vhost_writable' => File::isWritable(dirname($this->getVhostPath())),
+            'herd_config_path' => $this->getHerdConfigPath(),
+            'herd_config_exists' => File::exists($this->getHerdConfigFile()),
+            'herd_config_writable' => File::isWritable($this->getHerdConfigPath()),
             'herd_running' => $this->isHerdRunning(),
             'nginx_running' => $this->isNginxRunning(),
             'php_version' => PHP_VERSION,

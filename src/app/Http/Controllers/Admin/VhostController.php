@@ -151,4 +151,118 @@ class VhostController extends Controller
         $backupFiles = $this->vhostService->getBackupFiles();
         return response()->json($backupFiles);
     }
+
+    /**
+     * Show the Herd configuration editor.
+     */
+    public function editHerd(): View
+    {
+        $content = $this->vhostService->getHerdConfigContent();
+        $systemInfo = $this->vhostService->getSystemInfo();
+
+        return view('admin.vhost.edit-herd', [
+            'content' => $content,
+            'systemInfo' => $systemInfo,
+        ]);
+    }
+
+    /**
+     * Update the Herd configuration.
+     */
+    public function updateHerd(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        $content = $request->input('content');
+
+        // Validate JSON format
+        $decoded = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return back()->withErrors([
+                'content' => 'Invalid JSON format: ' . json_last_error_msg()
+            ])->withInput();
+        }
+
+        // Update the configuration
+        $success = $this->vhostService->updateHerdConfigContent($content);
+
+        if ($success) {
+            return redirect()->route('admin.vhost.index')
+                ->with('success', 'Herd configuration updated successfully!');
+        } else {
+            return back()->withErrors([
+                'content' => 'Failed to update Herd configuration. Please check file permissions.'
+            ])->withInput();
+        }
+    }
+
+    /**
+     * Show the Herd configuration viewer.
+     */
+    public function showHerd(): View
+    {
+        $content = $this->vhostService->getHerdConfigContent();
+        $systemInfo = $this->vhostService->getSystemInfo();
+
+        return view('admin.vhost.show-herd', [
+            'content' => $content,
+            'systemInfo' => $systemInfo,
+        ]);
+    }
+
+    /**
+     * Start Herd service.
+     */
+    public function startHerd(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->vhostService->startHerd();
+        return response()->json($result);
+    }
+
+    /**
+     * Stop Herd service.
+     */
+    public function stopHerd(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->vhostService->stopHerd();
+        return response()->json($result);
+    }
+
+    /**
+     * Restart Herd service.
+     */
+    public function restartHerd(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->vhostService->restartHerd();
+        return response()->json($result);
+    }
+
+    /**
+     * Start Nginx service.
+     */
+    public function startNginx(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->vhostService->startNginx();
+        return response()->json($result);
+    }
+
+    /**
+     * Stop Nginx service.
+     */
+    public function stopNginx(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->vhostService->stopNginx();
+        return response()->json($result);
+    }
+
+    /**
+     * Restart Nginx service.
+     */
+    public function restartNginx(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->vhostService->restartNginx();
+        return response()->json($result);
+    }
 }
