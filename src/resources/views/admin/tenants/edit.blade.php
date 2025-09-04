@@ -159,8 +159,106 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // No special JavaScript needed for Shopify-style domain configuration
-    // Subdomain is always visible and required, custom domain is always optional
+    const subdomainInput = document.getElementById('subdomain');
+    const tenantId = '{{ $tenant->id }}';
+    let validationTimeout;
+
+    // Real-time subdomain validation
+    subdomainInput.addEventListener('input', function() {
+        const subdomain = this.value.trim();
+        
+        // Clear previous timeout
+        if (validationTimeout) {
+            clearTimeout(validationTimeout);
+        }
+        
+        // Validate after 500ms of no typing
+        validationTimeout = setTimeout(() => {
+            if (subdomain) {
+                validateSubdomain(subdomain);
+            } else {
+                clearValidation();
+            }
+        }, 500);
+    });
+
+    function validateSubdomain(subdomain) {
+        // Show loading state
+        showValidationState('checking', 'Checking availability...');
+        
+        fetch('{{ route("admin.tenants.check-subdomain") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                subdomain: subdomain,
+                exclude_tenant_id: tenantId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.available) {
+                showValidationState('success', data.message);
+            } else {
+                showValidationState('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Validation error:', error);
+            showValidationState('error', 'Error checking subdomain availability');
+        });
+    }
+
+    function showValidationState(type, message) {
+        // Remove existing validation elements
+        const existingFeedback = subdomainInput.parentNode.querySelector('.validation-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+
+        // Create validation feedback element
+        const feedback = document.createElement('div');
+        feedback.className = `validation-feedback mt-1 text-sm flex items-center`;
+        
+        let iconClass, textClass;
+        switch (type) {
+            case 'success':
+                iconClass = 'text-green-500';
+                textClass = 'text-green-600';
+                break;
+            case 'error':
+                iconClass = 'text-red-500';
+                textClass = 'text-red-600';
+                break;
+            case 'checking':
+                iconClass = 'text-blue-500';
+                textClass = 'text-blue-600';
+                break;
+        }
+
+        feedback.innerHTML = `
+            <svg class="w-4 h-4 mr-1 ${iconClass}" fill="currentColor" viewBox="0 0 20 20">
+                ${type === 'success' ? 
+                    '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>' :
+                    type === 'error' ?
+                    '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>' :
+                    '<path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>'
+                }
+            </svg>
+            <span class="${textClass}">${message}</span>
+        `;
+
+        subdomainInput.parentNode.appendChild(feedback);
+    }
+
+    function clearValidation() {
+        const existingFeedback = subdomainInput.parentNode.querySelector('.validation-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+    }
 });
 </script>
 @endsection

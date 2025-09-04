@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Services\VhostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class TenantController extends Controller
 {
@@ -74,6 +76,9 @@ class TenantController extends Controller
             'data' => $tenantData
         ]);
 
+        // Update Herd configuration if hosting type is Laravel Herd
+        $this->updateHerdConfiguration($validated['subdomain']);
+
         return redirect()->route('admin.tenants.index')
             ->with('success', 'Tenant created successfully!');
     }
@@ -129,6 +134,14 @@ class TenantController extends Controller
             unset($tenantData['custom_domain']);
         }
 
+        // Check if subdomain changed and update Herd configuration
+        $oldSubdomain = $tenant->data['subdomain'] ?? null;
+        $newSubdomain = $validated['subdomain'];
+
+        if ($oldSubdomain !== $newSubdomain) {
+            $this->updateHerdConfiguration($newSubdomain, $oldSubdomain);
+        }
+
         $tenant->update([
             'data' => $tenantData
         ]);
@@ -146,5 +159,128 @@ class TenantController extends Controller
 
         return redirect()->route('admin.tenants.index')
             ->with('success', 'Tenant deleted successfully!');
+    }
+
+    /**
+     * Check if subdomain already exists in database.
+     */
+    public function checkSubdomain(Request $request)
+    {
+        $subdomain = $request->input('subdomain');
+        $excludeTenantId = $request->input('exclude_tenant_id');
+
+        if (empty($subdomain)) {
+            return response()->json([
+                'available' => false,
+                'message' => 'Subdomain is required'
+            ]);
+        }
+
+        $query = Tenant::whereRaw("JSON_EXTRACT(data, '$.subdomain') = ?", [$subdomain]);
+
+        if ($excludeTenantId) {
+            $query->where('id', '!=', $excludeTenantId);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Subdomain already exists' : 'Subdomain is available'
+        ]);
+    }
+
+    /**
+     * Update Herd configuration when subdomain changes.
+     */
+    private function updateHerdConfiguration(string $newSubdomain, ?string $oldSubdomain = null): void
+    {
+        try {
+            $vhostService = app(VhostService::class);
+
+            // Only update if hosting type is Laravel Herd
+            if ($vhostService->getHostingType() !== 'laravel-herd') {
+                return;
+            }
+
+            // Get current .herd.yml content
+            $herdYmlPath = $vhostService->getHerdYmlPath();
+            $content = file_exists($herdYmlPath) ? file_get_contents($herdYmlPath) : '';
+
+            if (empty($content)) {
+                Log::warning('Herd YAML file not found or empty', ['path' => $herdYmlPath]);
+                return;
+            }
+
+            // Parse YAML content
+            $lines = explode("\n", $content);
+            $subdomainsSection = false;
+            $updated = false;
+            $newLines = [];
+
+            foreach ($lines as $line) {
+                $trimmedLine = trim($line);
+
+                // Check if we're in the subdomains section
+                if ($trimmedLine === 'subdomains:') {
+                    $subdomainsSection = true;
+                    $newLines[] = $line;
+                    continue;
+                }
+
+                // If we're in subdomains section and find a subdomain
+                if ($subdomainsSection && str_starts_with($trimmedLine, '- ')) {
+                    $existingSubdomain = trim(substr($trimmedLine, 2));
+
+                    // Remove old subdomain if it exists
+                    if ($oldSubdomain && $existingSubdomain === $oldSubdomain) {
+                        $updated = true;
+                        continue; // Skip this line (remove old subdomain)
+                    }
+
+                    // Add new subdomain if it doesn't exist
+                    if ($existingSubdomain === $newSubdomain) {
+                        $newLines[] = $line;
+                        continue; // Already exists, keep it
+                    }
+
+                    // Keep existing subdomains
+                    $newLines[] = $line;
+                } else {
+                    // If we were in subdomains section and now we're not, add the new subdomain
+                    if ($subdomainsSection && !str_starts_with($trimmedLine, '- ') && !empty($trimmedLine)) {
+                        $subdomainsSection = false;
+                        $newLines[] = "  - {$newSubdomain}";
+                        $updated = true;
+                    }
+                    $newLines[] = $line;
+                }
+            }
+
+            // If we're still in subdomains section at the end, add the new subdomain
+            if ($subdomainsSection) {
+                $newLines[] = "  - {$newSubdomain}";
+                $updated = true;
+            }
+
+            // Update the file if changes were made
+            if ($updated) {
+                $newContent = implode("\n", $newLines);
+                $vhostService->updateHerdYmlContent($newContent);
+
+                Log::info('Herd configuration updated for subdomain change', [
+                    'old_subdomain' => $oldSubdomain,
+                    'new_subdomain' => $newSubdomain,
+                    'path' => $herdYmlPath
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to update Herd configuration for subdomain change', [
+                'old_subdomain' => $oldSubdomain,
+                'new_subdomain' => $newSubdomain,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
