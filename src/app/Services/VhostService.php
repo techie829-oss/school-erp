@@ -35,6 +35,14 @@ class VhostService
     }
 
     /**
+     * Get the path to the project .herd.yml file.
+     */
+    public function getHerdYmlPath(): string
+    {
+        return base_path('.herd.yml');
+    }
+
+    /**
      * Get the current vhost configuration content.
      */
     public function getVhostContent(): string
@@ -332,6 +340,72 @@ NGINX;
     }
 
     /**
+     * Get .herd.yml configuration content.
+     */
+    public function getHerdYmlContent(): string
+    {
+        $path = $this->getHerdYmlPath();
+
+        if (!File::exists($path)) {
+            return $this->getDefaultHerdYml();
+        }
+
+        return File::get($path);
+    }
+
+    /**
+     * Update .herd.yml configuration content.
+     */
+    public function updateHerdYmlContent(string $content): bool
+    {
+        try {
+            $path = $this->getHerdYmlPath();
+
+            // Backup the current file
+            if (File::exists($path)) {
+                File::copy($path, $path . '.backup.' . date('Y-m-d-H-i-s'));
+            }
+
+            // Write the new content
+            File::put($path, $content);
+
+            // Log the change
+            Log::info('.herd.yml configuration updated', [
+                'path' => $path,
+                'size' => strlen($content)
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to update .herd.yml configuration', [
+                'error' => $e->getMessage(),
+                'path' => $this->getHerdYmlPath()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Get default .herd.yml configuration.
+     */
+    private function getDefaultHerdYml(): string
+    {
+        return "name: school-erp
+domain: myschool.test
+subdomains:
+  - app
+  - schoola
+  - schoolb
+  - schoolc
+
+php: 8.3
+mysql: 8.0
+redis: 7.0
+";
+    }
+
+    /**
      * Start Herd service.
      */
     public function startHerd(): array
@@ -517,6 +591,9 @@ NGINX;
             'herd_config_path' => $this->getHerdConfigPath(),
             'herd_config_exists' => File::exists($this->getHerdConfigFile()),
             'herd_config_writable' => File::isWritable($this->getHerdConfigPath()),
+            'herd_yml_path' => $this->getHerdYmlPath(),
+            'herd_yml_exists' => File::exists($this->getHerdYmlPath()),
+            'herd_yml_writable' => File::isWritable(dirname($this->getHerdYmlPath())),
             'herd_running' => $this->isHerdRunning(),
             'nginx_running' => $this->isNginxRunning(),
             'php_version' => PHP_VERSION,

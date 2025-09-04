@@ -265,4 +265,81 @@ class VhostController extends Controller
         $result = $this->vhostService->restartNginx();
         return response()->json($result);
     }
+
+    /**
+     * Show the .herd.yml configuration editor.
+     */
+    public function editHerdYml(): View
+    {
+        $content = $this->vhostService->getHerdYmlContent();
+        $systemInfo = $this->vhostService->getSystemInfo();
+
+        return view('admin.vhost.edit-herd-yml', [
+            'content' => $content,
+            'systemInfo' => $systemInfo,
+        ]);
+    }
+
+    /**
+     * Update the .herd.yml configuration.
+     */
+    public function updateHerdYml(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        $content = $request->input('content');
+
+        // Basic YAML validation (check for common syntax issues)
+        $lines = explode("\n", $content);
+        $errors = [];
+
+        foreach ($lines as $lineNum => $line) {
+            $line = trim($line);
+            if (empty($line) || str_starts_with($line, '#')) {
+                continue;
+            }
+
+            // Check for basic YAML structure
+            if (str_contains($line, ':') && !str_contains($line, '  -')) {
+                // This should be a key-value pair
+                if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*\s*:/', $line)) {
+                    $errors[] = "Line " . ($lineNum + 1) . ": Invalid key format";
+                }
+            }
+        }
+
+        if (!empty($errors)) {
+            return back()->withErrors([
+                'content' => 'YAML validation errors: ' . implode(', ', $errors)
+            ])->withInput();
+        }
+
+        // Update the configuration
+        $success = $this->vhostService->updateHerdYmlContent($content);
+
+        if ($success) {
+            return redirect()->route('admin.vhost.index')
+                ->with('success', '.herd.yml configuration updated successfully!');
+        } else {
+            return back()->withErrors([
+                'content' => 'Failed to update .herd.yml configuration. Please check file permissions.'
+            ])->withInput();
+        }
+    }
+
+    /**
+     * Show the .herd.yml configuration viewer.
+     */
+    public function showHerdYml(): View
+    {
+        $content = $this->vhostService->getHerdYmlContent();
+        $systemInfo = $this->vhostService->getSystemInfo();
+
+        return view('admin.vhost.show-herd-yml', [
+            'content' => $content,
+            'systemInfo' => $systemInfo,
+        ]);
+    }
 }
