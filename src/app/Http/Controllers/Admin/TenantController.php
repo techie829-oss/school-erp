@@ -307,11 +307,11 @@ class TenantController extends Controller
     {
         try {
             $tenant = Tenant::whereRaw("JSON_EXTRACT(data, '$.subdomain') = ?", [$subdomain])->first();
-            
+
             if ($tenant && isset($tenant->data['name'])) {
                 return $tenant->data['name'];
             }
-            
+
             return null;
         } catch (\Exception $e) {
             Log::warning('Failed to get school name for subdomain', [

@@ -7,4 +7,4 @@ subdomains:
   - bta  # Bangalore Tech Academy
 php: 8.3
 mysql: 8.0
-redis: 7.0  # Updated again
+redis: 7.0

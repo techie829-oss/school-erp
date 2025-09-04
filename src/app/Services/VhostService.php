@@ -66,6 +66,41 @@ class VhostService
     }
 
     /**
+     * Get the backup directory path.
+     */
+    public function getBackupDirectory(): string
+    {
+        return base_path('storage/backups/herd');
+    }
+
+    /**
+     * Ensure backup directory exists.
+     */
+    private function ensureBackupDirectory(): string
+    {
+        $backupDir = $this->getBackupDirectory();
+
+        if (!File::exists($backupDir)) {
+            File::makeDirectory($backupDir, 0755, true);
+        }
+
+        return $backupDir;
+    }
+
+            /**
+     * Generate backup filename with timestamp.
+     */
+    private function generateBackupFilename(string $originalFilename): string
+    {
+        $timestamp = date('Y-m-d-H-i-s');
+        $extension = pathinfo($originalFilename, PATHINFO_EXTENSION);
+        $basename = pathinfo($originalFilename, PATHINFO_FILENAME);
+
+        // Always use the full original filename as prefix for backup files
+        return "{$originalFilename}.backup.{$timestamp}";
+    }
+
+    /**
      * Get the current vhost configuration content.
      */
     public function getVhostContent(): string
@@ -95,7 +130,15 @@ class VhostService
 
             // Backup the current file
             if (File::exists($path)) {
-                File::copy($path, $path . '.backup.' . date('Y-m-d-H-i-s'));
+                $backupDir = $this->ensureBackupDirectory();
+                $backupFilename = $this->generateBackupFilename(basename($path));
+                $backupPath = $backupDir . '/' . $backupFilename;
+                File::copy($path, $backupPath);
+
+                Log::info('Vhost configuration backed up', [
+                    'original_path' => $path,
+                    'backup_path' => $backupPath
+                ]);
             }
 
             // Write the new content
@@ -123,27 +166,33 @@ class VhostService
      */
     public function getBackupFiles(): array
     {
-        $path = $this->getVhostPath();
-        $directory = dirname($path);
-        $filename = basename($path);
+        $backupDir = $this->getBackupDirectory();
+        $filename = basename($this->getVhostPath());
 
-        if (!File::exists($directory)) {
+        if (!File::exists($backupDir)) {
             return [];
         }
 
-        $files = File::files($directory);
+                $files = scandir($backupDir);
         $backups = [];
 
-        foreach ($files as $file) {
-            $name = $file->getFilename();
-            if (str_starts_with($name, $filename . '.backup.')) {
-                $backups[] = [
-                    'name' => $name,
-                    'path' => $file->getPathname(),
-                    'size' => $file->getSize(),
-                    'modified' => $file->getMTime(),
-                    'date' => date('Y-m-d H:i:s', $file->getMTime())
-                ];
+        foreach ($files as $name) {
+            if ($name !== '.' && $name !== '..') {
+                $filePath = $backupDir . '/' . $name;
+                if (is_file($filePath)) {
+                    // Look for backup files with pattern: filename.backup.timestamp
+                    // Handle both old pattern (.herd.backup.) and new pattern (.herd.yml.backup.)
+                    if (str_contains($name, '.backup.') &&
+                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))) {
+                        $backups[] = [
+                            'name' => $name,
+                            'path' => $filePath,
+                            'size' => filesize($filePath),
+                            'modified' => filemtime($filePath),
+                            'date' => date('Y-m-d H:i:s', filemtime($filePath))
+                        ];
+                    }
+                }
             }
         }
 
@@ -151,6 +200,146 @@ class VhostService
         usort($backups, fn($a, $b) => $b['modified'] <=> $a['modified']);
 
         return $backups;
+    }
+
+    /**
+     * Get backup files for Herd configuration.
+     */
+    public function getHerdConfigBackupFiles(): array
+    {
+        $backupDir = $this->getBackupDirectory();
+        $filename = basename($this->getHerdConfigFile());
+
+        if (!File::exists($backupDir)) {
+            return [];
+        }
+
+                $files = scandir($backupDir);
+        $backups = [];
+
+        foreach ($files as $name) {
+            if ($name !== '.' && $name !== '..') {
+                $filePath = $backupDir . '/' . $name;
+                if (is_file($filePath)) {
+                    // Look for backup files with pattern: filename.backup.timestamp
+                    // Handle both old pattern (.herd.backup.) and new pattern (.herd.yml.backup.)
+                    if (str_contains($name, '.backup.') &&
+                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))) {
+                        $backups[] = [
+                            'name' => $name,
+                            'path' => $filePath,
+                            'size' => filesize($filePath),
+                            'modified' => filemtime($filePath),
+                            'date' => date('Y-m-d H:i:s', filemtime($filePath))
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Sort by modification time (newest first)
+        usort($backups, fn($a, $b) => $b['modified'] <=> $a['modified']);
+
+        return $backups;
+    }
+
+    /**
+     * Get backup files for .herd.yml configuration.
+     */
+    public function getHerdYmlBackupFiles(): array
+    {
+        $backupDir = $this->getBackupDirectory();
+        $filename = basename($this->getHerdYmlPath());
+
+        if (!File::exists($backupDir)) {
+            return [];
+        }
+
+                $files = scandir($backupDir);
+        $backups = [];
+
+        foreach ($files as $name) {
+            if ($name !== '.' && $name !== '..') {
+                $filePath = $backupDir . '/' . $name;
+                if (is_file($filePath)) {
+                    // Look for backup files with pattern: filename.backup.timestamp
+                    // Handle both old pattern (.herd.backup.) and new pattern (.herd.yml.backup.)
+                    if (str_contains($name, '.backup.') &&
+                        (str_starts_with($name, $filename) || str_starts_with($name, str_replace('.yml', '', $filename)))) {
+                        $backups[] = [
+                            'name' => $name,
+                            'path' => $filePath,
+                            'size' => filesize($filePath),
+                            'modified' => filemtime($filePath),
+                            'date' => date('Y-m-d H:i:s', filemtime($filePath))
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Sort by modification time (newest first)
+        usort($backups, fn($a, $b) => $b['modified'] <=> $a['modified']);
+
+        return $backups;
+    }
+
+    /**
+     * Clean up old backup files (keep only last 10 backups per file type).
+     */
+    public function cleanupOldBackups(): array
+    {
+        $backupDir = $this->getBackupDirectory();
+        $cleaned = [];
+
+        if (!File::exists($backupDir)) {
+            return $cleaned;
+        }
+
+        $files = File::files($backupDir);
+        $backupGroups = [];
+
+        // Group backups by file type
+        foreach ($files as $file) {
+            $name = $file->getFilename();
+            if (str_contains($name, '.backup.')) {
+                $baseName = explode('.backup.', $name)[0];
+                if (!isset($backupGroups[$baseName])) {
+                    $backupGroups[$baseName] = [];
+                }
+                $backupGroups[$baseName][] = [
+                    'file' => $file,
+                    'modified' => $file->getMTime()
+                ];
+            }
+        }
+
+        // Clean up each group (keep only last 10)
+        foreach ($backupGroups as $baseName => $backups) {
+            if (count($backups) > 10) {
+                // Sort by modification time (newest first)
+                usort($backups, fn($a, $b) => $b['modified'] <=> $a['modified']);
+
+                // Remove old backups (keep first 10)
+                $toRemove = array_slice($backups, 10);
+
+                foreach ($toRemove as $backup) {
+                    $file = $backup['file'];
+                    if (File::delete($file->getPathname())) {
+                        $cleaned[] = $file->getFilename();
+                    }
+                }
+            }
+        }
+
+        if (!empty($cleaned)) {
+            Log::info('Old backup files cleaned up', [
+                'backup_dir' => $backupDir,
+                'cleaned_files' => $cleaned
+            ]);
+        }
+
+        return $cleaned;
     }
 
     /**
@@ -319,7 +508,15 @@ NGINX;
 
             // Backup the current file
             if (File::exists($path)) {
-                File::copy($path, $path . '.backup.' . date('Y-m-d-H-i-s'));
+                $backupDir = $this->ensureBackupDirectory();
+                $backupFilename = $this->generateBackupFilename(basename($path));
+                $backupPath = $backupDir . '/' . $backupFilename;
+                File::copy($path, $backupPath);
+
+                Log::info('Herd configuration backed up', [
+                    'original_path' => $path,
+                    'backup_path' => $backupPath
+                ]);
             }
 
             // Write the new content
@@ -386,7 +583,15 @@ NGINX;
 
             // Backup the current file
             if (File::exists($path)) {
-                File::copy($path, $path . '.backup.' . date('Y-m-d-H-i-s'));
+                $backupDir = $this->ensureBackupDirectory();
+                $backupFilename = $this->generateBackupFilename(basename($path));
+                $backupPath = $backupDir . '/' . $backupFilename;
+                File::copy($path, $backupPath);
+
+                Log::info('.herd.yml configuration backed up', [
+                    'original_path' => $path,
+                    'backup_path' => $backupPath
+                ]);
             }
 
             // Write the new content
