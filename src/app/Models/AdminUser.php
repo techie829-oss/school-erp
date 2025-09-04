@@ -57,6 +57,14 @@ class AdminUser extends Authenticatable
     }
 
     /**
+     * Get the active attribute (alias for is_active)
+     */
+    public function getActiveAttribute(): bool
+    {
+        return $this->is_active;
+    }
+
+    /**
      * Check if admin is super admin
      */
     public function isSuperAdmin(): bool

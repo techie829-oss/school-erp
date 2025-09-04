@@ -104,10 +104,11 @@ Route::domain(config('all.domains.admin'))->group(function () {
             Route::post('/nginx/restart', [\App\Http\Controllers\Admin\VhostController::class, 'restartNginx'])->name('nginx.restart');
         });
 
-        // User Management
-        Route::get('/users', function () {
-            return view('admin.users.index');
-        })->name('admin.users.index');
+        // Admin Users Management
+        Route::resource('users', \App\Http\Controllers\Admin\AdminUserController::class)->only(['index', 'show']);
+        Route::get('/users/{user}/change-password', [\App\Http\Controllers\Admin\AdminUserController::class, 'changePassword'])->name('users.change-password');
+        Route::post('/users/{user}/change-password', [\App\Http\Controllers\Admin\AdminUserController::class, 'updatePassword'])->name('users.update-password');
+        Route::post('/users/{user}/toggle-status', [\App\Http\Controllers\Admin\AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
 
         // System Management
         Route::get('/system/overview', function () {
