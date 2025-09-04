@@ -83,26 +83,8 @@
                 @enderror
             </div>
 
-            <!-- Domain Configuration -->
+            <!-- Subdomain (Mandatory) -->
             <div class="mb-6">
-                <label for="domain_type" class="block text-sm font-medium text-gray-700 mb-2">
-                    Domain Type <span class="text-red-500">*</span>
-                </label>
-                <select id="domain_type"
-                        name="domain_type"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('domain_type') border-red-500 @enderror"
-                        required>
-                    <option value="">Select domain type</option>
-                    <option value="subdomain" {{ old('domain_type', $tenant->data['domain_type'] ?? '') == 'subdomain' ? 'selected' : '' }}>Subdomain (e.g., schoola.myschool.test)</option>
-                    <option value="custom" {{ old('domain_type', $tenant->data['domain_type'] ?? '') == 'custom' ? 'selected' : '' }}>Custom Domain (e.g., schoola.com)</option>
-                </select>
-                @error('domain_type')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Subdomain Field -->
-            <div id="subdomain_field" class="mb-6" style="display: none;">
                 <label for="subdomain" class="block text-sm font-medium text-gray-700 mb-2">
                     Subdomain <span class="text-red-500">*</span>
                 </label>
@@ -114,7 +96,8 @@
                            class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('subdomain') border-red-500 @enderror"
                            placeholder="schoola"
                            pattern="[a-z0-9-]+"
-                           title="Only lowercase letters, numbers, and hyphens allowed">
+                           title="Only lowercase letters, numbers, and hyphens allowed"
+                           required>
                     <span class="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-600 text-sm">
                         .{{ config('all.domains.primary') }}
                     </span>
@@ -125,10 +108,10 @@
                 @enderror
             </div>
 
-            <!-- Custom Domain Field -->
-            <div id="custom_domain_field" class="mb-6" style="display: none;">
+            <!-- Custom Domain (Optional) -->
+            <div class="mb-6">
                 <label for="custom_domain" class="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Domain <span class="text-red-500">*</span>
+                    Custom Domain <span class="text-gray-400">(Optional)</span>
                 </label>
                 <input type="text"
                        id="custom_domain"
@@ -138,7 +121,7 @@
                        placeholder="schoola.com"
                        pattern="[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
                        title="Enter a valid domain name">
-                <p class="mt-1 text-xs text-gray-500">Enter the full domain name (e.g., schoola.com)</p>
+                <p class="mt-1 text-xs text-gray-500">Enter the full domain name (e.g., schoola.com) - This is optional</p>
                 @error('custom_domain')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
@@ -176,47 +159,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const domainTypeSelect = document.getElementById('domain_type');
-    const subdomainField = document.getElementById('subdomain_field');
-    const customDomainField = document.getElementById('custom_domain_field');
-    const subdomainInput = document.getElementById('subdomain');
-    const customDomainInput = document.getElementById('custom_domain');
-
-    function toggleDomainFields() {
-        const selectedType = domainTypeSelect.value;
-
-        // Hide both fields initially
-        subdomainField.style.display = 'none';
-        customDomainField.style.display = 'none';
-
-        // Show appropriate field
-        if (selectedType === 'subdomain') {
-            subdomainField.style.display = 'block';
-        } else if (selectedType === 'custom') {
-            customDomainField.style.display = 'block';
-        }
-    }
-
-    // Handle domain type change
-    domainTypeSelect.addEventListener('change', function() {
-        const selectedType = this.value;
-
-        // Hide both fields initially
-        subdomainField.style.display = 'none';
-        customDomainField.style.display = 'none';
-
-        // Clear inputs when switching types
-        if (selectedType === 'subdomain') {
-            customDomainInput.value = '';
-            subdomainField.style.display = 'block';
-        } else if (selectedType === 'custom') {
-            subdomainInput.value = '';
-            customDomainField.style.display = 'block';
-        }
-    });
-
-    // Initialize on page load
-    toggleDomainFields();
+    // No special JavaScript needed for Shopify-style domain configuration
+    // Subdomain is always visible and required, custom domain is always optional
 });
 </script>
 @endsection

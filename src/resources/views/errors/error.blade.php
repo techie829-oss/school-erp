@@ -4,16 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <title>Error {{ $exception->getStatusCode() ?? 'Unknown' }} - {{ config('app.name', 'School ERP') }}</title>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    
+
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <!-- Dynamic Tenant Colors -->
     <style>
         @php
@@ -22,7 +22,7 @@
             $currentTenant = $tenantService->getCurrentTenant(request());
             $colors = $currentTenant ? $colorService->getAllColors(request()) : [];
         @endphp
-        
+
         :root {
             --color-primary-50: {{ $colors['primary']['50'] ?? '#eff6ff' }};
             --color-primary-100: {{ $colors['primary']['100'] ?? '#dbeafe' }};
@@ -45,39 +45,39 @@
             --color-error: {{ $colors['error'] ?? '#ef4444' }};
             --color-info: {{ $colors['info'] ?? '#3b82f6' }};
         }
-        
+
         .bg-primary-50 { background-color: var(--color-primary-50) !important; }
         .bg-primary-100 { background-color: var(--color-primary-100) !important; }
         .bg-primary-500 { background-color: var(--color-primary-500) !important; }
         .bg-primary-600 { background-color: var(--color-primary-600) !important; }
         .bg-primary-700 { background-color: var(--color-primary-700) !important; }
         .bg-primary-900 { background-color: var(--color-primary-900) !important; }
-        
+
         .text-primary-50 { color: var(--color-primary-50) !important; }
         .text-primary-100 { color: var(--color-primary-100) !important; }
         .text-primary-500 { color: var(--color-primary-500) !important; }
         .text-primary-600 { color: var(--color-primary-600) !important; }
         .text-primary-700 { color: var(--color-primary-700) !important; }
         .text-primary-900 { color: var(--color-primary-900) !important; }
-        
+
         .border-primary-500 { border-color: var(--color-primary-500) !important; }
         .border-primary-600 { border-color: var(--color-primary-600) !important; }
-        
+
         .focus\:ring-primary-500:focus { --tw-ring-color: var(--color-primary-500) !important; }
         .focus\:border-primary-500:focus { border-color: var(--color-primary-500) !important; }
-        
+
         .hover\:bg-primary-600:hover { background-color: var(--color-primary-600) !important; }
         .hover\:bg-primary-700:hover { background-color: var(--color-primary-700) !important; }
-        
+
         .bg-secondary-50 { background-color: var(--color-secondary-50) !important; }
         .bg-secondary-100 { background-color: var(--color-secondary-100) !important; }
         .text-secondary-600 { color: var(--color-secondary-600) !important; }
         .text-secondary-700 { color: var(--color-secondary-700) !important; }
         .text-secondary-900 { color: var(--color-secondary-900) !important; }
-        
+
         .bg-accent-50 { background-color: var(--color-accent-50) !important; }
         .text-accent-600 { color: var(--color-accent-600) !important; }
-        
+
         .bg-error-50 { background-color: #fef2f2 !important; }
         .text-error-600 { color: var(--color-error) !important; }
         .text-error-700 { color: #b91c1c !important; }
@@ -93,7 +93,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="relative z-10 text-center max-w-2xl mx-auto px-6">
+        <div class="relative z-10 text-center max-w-2xl py-10 mx-auto px-6">
             <!-- Logo -->
             <div class="mb-8">
                 <div class="w-24 h-24 mx-auto mb-6 bg-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -101,7 +101,7 @@
                         <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17a1 1 0 00-.356.257l-4 1.714a1 1 0 01-1.788-1.838l7-3a1 1 0 00.788 0l7 3a1 1 0 000-1.84L14.75 7.051a.999.999 0 01-.356-.257l-4-1.714a1 1 0 11-.788-1.838l2.727 1.17a1 1 0 00.356.257l4 1.714a1 1 0 001.788-1.838l-7-3z"/>
                     </svg>
                 </div>
-                
+
                 @if($currentTenant)
                     <h1 class="text-2xl font-bold text-primary-900 mb-2">
                         {{ $currentTenant->data['name'] ?? 'School ERP' }}
@@ -176,7 +176,7 @@
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 @if($exception->getStatusCode() == 401)
-                    <a href="{{ route('login') }}" 
+                    <a href="{{ route('login') }}"
                        class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
@@ -184,7 +184,7 @@
                         Login
                     </a>
                 @else
-                    <button onclick="window.history.back()" 
+                    <button onclick="window.history.back()"
                             class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -192,9 +192,9 @@
                         Go Back
                     </button>
                 @endif
-                
+
                 @if($currentTenant)
-                    <a href="{{ route('school.home', ['tenant' => $currentTenant->id]) }}" 
+                    <a href="{{ route('school.home', ['tenant' => $currentTenant->id]) }}"
                        class="inline-flex items-center px-6 py-3 bg-secondary-100 text-secondary-700 font-medium rounded-lg hover:bg-secondary-200 transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -202,7 +202,7 @@
                         Go to Dashboard
                     </a>
                 @else
-                    <a href="{{ route('landing.home') }}" 
+                    <a href="{{ route('landing.home') }}"
                        class="inline-flex items-center px-6 py-3 bg-secondary-100 text-secondary-700 font-medium rounded-lg hover:bg-secondary-200 transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
