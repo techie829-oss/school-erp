@@ -131,7 +131,7 @@
 
             <!-- Login Form Container -->
             <div class="relative z-10 w-full sm:max-w-md px-6 py-8 bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl border border-white/20">
-                {{ $slot }}
+                @yield('content')
             </div>
 
             <!-- Footer -->

@@ -40,7 +40,7 @@ class ValidateTenantDomain
             $user = session('tenant_user');
             $validationService = new TenantUserValidationService();
             
-            if (!$validationService->validateDomainAccess($user->email, $subdomain)) {
+            if ($user && isset($user->email) && !$validationService->validateDomainAccess($user->email, $subdomain)) {
                 // Clear session and redirect to login
                 session()->forget(['tenant_user', 'tenant_id']);
                 return redirect()->route('tenant.login', ['tenant' => $subdomain])
