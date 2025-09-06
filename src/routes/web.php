@@ -215,6 +215,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     // Auth routes for tenants (ONLY on tenant domains)
     Route::middleware('guest')->group(function () {
         Volt::route('login', 'pages.auth.login')->name('tenant.login');
+        Route::post('/login', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'login'])->name('tenant.login.post');
         Volt::route('forgot-password', 'pages.auth.forgot-password')->name('tenant.password.request');
         Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('tenant.password.reset');
     });

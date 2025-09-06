@@ -19,7 +19,7 @@
             </p>
         </div>
 
-        <form class="mt-8 space-y-6" method="POST" action="{{ route('tenant.login', ['tenant' => request()->route('tenant')]) }}">
+        <form class="mt-8 space-y-6" method="POST" action="{{ route('tenant.login.post', ['tenant' => request()->route('tenant')]) }}">
             @csrf
 
             <div class="rounded-md shadow-sm -space-y-px">

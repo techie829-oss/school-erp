@@ -15,7 +15,7 @@ class TenantUserValidationService
      */
     public function validateUserForTenant(string $email, string $password, Tenant $tenant): ?object
     {
-        Log::info("Validating user for tenant", [
+        Log::info("=== VALIDATE USER FOR TENANT START ===", [
             'email' => $email,
             'tenant_id' => $tenant->id,
             'tenant_subdomain' => $tenant->data['subdomain'] ?? 'unknown',
@@ -24,6 +24,17 @@ class TenantUserValidationService
 
         // Check if user exists and belongs to this tenant
         $user = $this->findUserInTenant($email, $tenant);
+
+        Log::info("User lookup result", [
+            'user_found' => $user ? 'yes' : 'no',
+            'user_data' => $user ? [
+                'id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name ?? 'unknown',
+                'admin_type' => $user->admin_type ?? 'unknown',
+                'is_active' => $user->is_active ?? $user->active ?? false
+            ] : null
+        ]);
 
         if (!$user) {
             Log::warning("User not found in tenant", [
@@ -34,7 +45,13 @@ class TenantUserValidationService
         }
 
         // Verify password
-        if (!Hash::check($password, $user->password)) {
+        $passwordValid = Hash::check($password, $user->password);
+        Log::info("Password validation", [
+            'password_valid' => $passwordValid,
+            'password_hash' => substr($user->password, 0, 20) . '...'
+        ]);
+
+        if (!$passwordValid) {
             Log::warning("Invalid password for user in tenant", [
                 'email' => $email,
                 'tenant_id' => $tenant->id
@@ -43,7 +60,13 @@ class TenantUserValidationService
         }
 
         // Check if user is active
-        if (!$this->isUserActive($user)) {
+        $isActive = $this->isUserActive($user);
+        Log::info("User active status", [
+            'is_active' => $isActive,
+            'active_field' => $user->is_active ?? $user->active ?? false
+        ]);
+
+        if (!$isActive) {
             Log::warning("Inactive user attempted login", [
                 'email' => $email,
                 'tenant_id' => $tenant->id,
@@ -52,7 +75,7 @@ class TenantUserValidationService
             return null;
         }
 
-        Log::info("User validation successful", [
+        Log::info("=== USER VALIDATION SUCCESSFUL ===", [
             'email' => $email,
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
@@ -92,19 +115,48 @@ class TenantUserValidationService
     protected function findUserInSeparateDatabase(string $email, Tenant $tenant): ?object
     {
         try {
+            Log::info("=== SEPARATE DATABASE USER LOOKUP START ===", [
+                'email' => $email,
+                'tenant_id' => $tenant->id,
+                'database_name' => $tenant->data['database_name'] ?? 'unknown',
+                'database_host' => $tenant->data['database_host'] ?? 'unknown'
+            ]);
+
             $databaseService = new TenantDatabaseService();
             $connection = $databaseService->getTenantConnection($tenant);
+
+            Log::info("Database connection established", [
+                'connection_name' => $connection->getName(),
+                'database_name' => $connection->getDatabaseName()
+            ]);
 
             $userData = $connection->table('admin_users')
                 ->where('email', $email)
                 ->first();
 
+            Log::info("Database query result", [
+                'user_found' => $userData ? 'yes' : 'no',
+                'user_data' => $userData ? [
+                    'id' => $userData->id,
+                    'email' => $userData->email,
+                    'name' => $userData->name,
+                    'admin_type' => $userData->admin_type,
+                    'is_active' => $userData->is_active ?? $userData->active ?? false,
+                    'password_length' => strlen($userData->password)
+                ] : null
+            ]);
+
             if (!$userData) {
+                Log::warning("User not found in separate database", [
+                    'email' => $email,
+                    'tenant_id' => $tenant->id,
+                    'database_name' => $connection->getDatabaseName()
+                ]);
                 return null;
             }
 
             // Convert to object for consistency
-            return (object) [
+            $user = (object) [
                 'id' => $userData->id,
                 'name' => $userData->name,
                 'email' => $userData->email,
@@ -115,9 +167,18 @@ class TenantUserValidationService
                 'created_at' => \Carbon\Carbon::parse($userData->created_at),
                 'updated_at' => \Carbon\Carbon::parse($userData->updated_at),
             ];
+
+            Log::info("User object created successfully", [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'admin_type' => $user->admin_type
+            ]);
+
+            return $user;
         } catch (\Exception $e) {
-            Log::error('Error accessing tenant database for user validation', [
+            Log::error('=== ERROR accessing tenant database for user validation ===', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'tenant_id' => $tenant->id,
                 'email' => $email
             ]);
