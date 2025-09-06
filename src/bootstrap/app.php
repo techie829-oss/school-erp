@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'redirect.school.admin' => \App\Http\Middleware\RedirectSchoolAdminToTenant::class,
             'switch.tenant.database' => \App\Http\Middleware\SwitchTenantDatabase::class,
             'tenant.auth' => \App\Http\Middleware\TenantAuth::class,
+            'validate.tenant.domain' => \App\Http\Middleware\ValidateTenantDomain::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

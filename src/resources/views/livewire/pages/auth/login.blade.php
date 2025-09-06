@@ -106,6 +106,19 @@ new #[Layout('layouts.guest')] class extends Component
         // Fallback to admin dashboard if tenant detection fails
         return route('admin.dashboard', absolute: false);
     }
+
+    /**
+     * Get allowed domains for current user
+     */
+    public function getAllowedDomains(): array
+    {
+        if (empty($this->form->email)) {
+            return [];
+        }
+
+        $validationService = new \App\Services\TenantUserValidationService();
+        return $validationService->getAllowedDomainsForUser($this->form->email);
+    }
 }; ?>
 
 <div>

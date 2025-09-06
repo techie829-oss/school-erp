@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
+use App\Services\TenantUserValidationService;
+use App\Models\Tenant;
 
 class LoginForm extends Form
 {
@@ -30,6 +32,11 @@ class LoginForm extends Form
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
+
+        // Check if this is a tenant domain login
+        if ($this->isTenantDomain()) {
+            $this->validateTenantDomainAccess();
+        }
 
         // Determine which guard to use based on the current domain
         $guard = $this->getGuardForCurrentDomain();
@@ -90,5 +97,63 @@ class LoginForm extends Form
     protected function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
+    }
+
+    /**
+     * Check if current domain is a tenant domain
+     */
+    protected function isTenantDomain(): bool
+    {
+        $host = request()->getHost();
+        $adminDomain = config('all.domains.admin');
+        $primaryDomain = config('all.domains.primary');
+
+        // Check if it's a tenant subdomain (e.g., school.myschool.test)
+        return $host !== $adminDomain && str_ends_with($host, '.' . $primaryDomain);
+    }
+
+    /**
+     * Validate tenant domain access
+     */
+    protected function validateTenantDomainAccess(): void
+    {
+        $host = request()->getHost();
+        $subdomain = $this->extractSubdomain($host);
+
+        if (!$subdomain) {
+            throw ValidationException::withMessages([
+                'form.email' => 'Invalid tenant domain.',
+            ]);
+        }
+
+        $validationService = new TenantUserValidationService();
+
+        // Check if user has access to this tenant domain
+        if (!$validationService->validateDomainAccess($this->email, $subdomain)) {
+            $allowedDomains = $validationService->getAllowedDomainsForUser($this->email);
+
+            $message = 'You do not have access to this tenant domain.';
+            if (!empty($allowedDomains)) {
+                $message .= ' You can access: ' . implode(', ', $allowedDomains);
+            }
+
+            throw ValidationException::withMessages([
+                'form.email' => $message,
+            ]);
+        }
+    }
+
+    /**
+     * Extract subdomain from host
+     */
+    protected function extractSubdomain(string $host): ?string
+    {
+        $primaryDomain = config('all.domains.primary');
+
+        if (str_ends_with($host, '.' . $primaryDomain)) {
+            return str_replace('.' . $primaryDomain, '', $host);
+        }
+
+        return null;
     }
 }

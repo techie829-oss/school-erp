@@ -203,7 +203,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
 });
 
 // Dynamic Tenant Routes (for any tenant domain matching the pattern)
-Route::domain('{tenant}.' . config('all.domains.primary'))->middleware('switch.tenant.database')->group(function () {
+Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.tenant.database', 'validate.tenant.domain'])->group(function () {
     // Public tenant pages
     Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
     Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');

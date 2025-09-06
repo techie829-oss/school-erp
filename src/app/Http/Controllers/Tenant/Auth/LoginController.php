@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\AdminUser;
 use App\Models\Tenant;
+use App\Services\TenantUserValidationService;
 
 class LoginController extends Controller
 {
@@ -38,54 +39,30 @@ class LoginController extends Controller
             return back()->withErrors(['email' => 'Tenant not found.']);
         }
 
-        // Check if user exists in tenant database
-        if ($tenant->usesSeparateDatabase()) {
-            try {
-                $databaseService = new \App\Services\TenantDatabaseService();
-                $connection = $databaseService->getTenantConnection($tenant);
-                $userData = $connection->table('admin_users')->where('email', $credentials['email'])->first();
+        // Use validation service to check user access
+        $validationService = new TenantUserValidationService();
+        $user = $validationService->validateUserForTenant(
+            $credentials['email'],
+            $credentials['password'],
+            $tenant
+        );
 
-                if ($userData && Hash::check($credentials['password'], $userData->password)) {
-                    // Create a temporary user object for authentication
-                    $user = (object) [
-                        'id' => $userData->id,
-                        'name' => $userData->name,
-                        'email' => $userData->email,
-                        'admin_type' => $userData->admin_type,
-                        'is_active' => $userData->is_active ?? $userData->active ?? false,
-                    ];
-
-                    // Store user in session
-                    session(['tenant_user' => $user]);
-                    session(['tenant_id' => $tenant->id]);
-
-                    if ($tenant && isset($tenant->data['subdomain'])) {
-                        return redirect()->route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']]);
-                    }
-                    return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
-                }
-            } catch (\Exception $e) {
-                \Log::error('Tenant login error: ' . $e->getMessage());
-            }
-        } else {
-            // Use shared database
-            $user = AdminUser::where('email', $credentials['email'])
-                ->where('tenant_id', $tenant->id)
-                ->first();
-
-            if ($user && Hash::check($credentials['password'], $user->password)) {
-                // Store user in session
-                session(['tenant_user' => $user]);
-                session(['tenant_id' => $tenant->id]);
-
-                if ($tenant && isset($tenant->data['subdomain'])) {
-                    return redirect()->route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']]);
-                }
-                return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
-            }
+        if (!$user) {
+            return back()->withErrors(['email' => 'Invalid credentials or access denied.']);
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.']);
+        // Store user in session
+        session(['tenant_user' => $user]);
+        session(['tenant_id' => $tenant->id]);
+
+        // Update last login time
+        $this->updateLastLoginTime($user, $tenant);
+
+        if ($tenant && isset($tenant->data['subdomain'])) {
+            return redirect()->route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']]);
+        }
+
+        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
     }
 
     /**
@@ -96,5 +73,27 @@ class LoginController extends Controller
         session()->forget(['tenant_user', 'tenant_id']);
 
         return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
+    }
+
+    /**
+     * Update last login time for user
+     */
+    protected function updateLastLoginTime(object $user, Tenant $tenant): void
+    {
+        try {
+            if ($tenant->usesSeparateDatabase()) {
+                $databaseService = new \App\Services\TenantDatabaseService();
+                $connection = $databaseService->getTenantConnection($tenant);
+
+                $connection->table('admin_users')
+                    ->where('id', $user->id)
+                    ->update(['last_login_at' => now()]);
+            } else {
+                AdminUser::where('id', $user->id)
+                    ->update(['last_login_at' => now()]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error updating last login time: ' . $e->getMessage());
+        }
     }
 }
