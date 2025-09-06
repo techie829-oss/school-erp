@@ -215,13 +215,27 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     // Auth routes for tenants (ONLY on tenant domains)
     Route::middleware('guest')->group(function () {
         Volt::route('login', 'pages.auth.login')->name('tenant.login');
-        Route::post('/login', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'login'])->name('tenant.login.post');
         Volt::route('forgot-password', 'pages.auth.forgot-password')->name('tenant.password.request');
         Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('tenant.password.reset');
     });
 
     // Logout route (not in guest middleware)
-    Route::post('/logout', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'logout'])->name('tenant.logout');
+    Route::post('/logout', function () {
+        // Clear tenant session data
+        session()->forget(['tenant_user', 'tenant_id', 'tenant_database_switched']);
+        
+        // Also clear Laravel auth session if it exists
+        if (auth()->check()) {
+            auth()->logout();
+        }
+        
+        // Regenerate session for security
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        
+        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')])
+            ->with('success', 'You have been logged out successfully.');
+    })->name('tenant.logout');
 
     Route::middleware('tenant.auth')->group(function () {
         Volt::route('verify-email', 'pages.auth.verify-email')->name('tenant.verification.notice');
