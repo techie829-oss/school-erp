@@ -10,7 +10,7 @@
             <p class="text-gray-600">{{ $tenant->data['name'] ?? 'Unnamed Tenant' }} - {{ $user->name }}</p>
         </div>
         <div class="flex space-x-3">
-            <a href="{{ route('admin.tenants.users.show', [$tenant, $user]) }}" class="btn-secondary">
+            <a href="{{ route('admin.tenants.users.show', [$tenant, $user->id]) }}" class="btn-secondary">
                 <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -47,10 +47,10 @@
     <!-- Edit User Form -->
     <div class="card">
         <div class="p-6">
-            <form method="POST" action="{{ route('admin.tenants.users.update', [$tenant, $user]) }}">
+            <form method="POST" action="{{ route('admin.tenants.users.update', [$tenant, $user->id]) }}">
                 @csrf
                 @method('PUT')
-                
+
                 <!-- User Info -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                     <div class="flex items-center space-x-3">
@@ -72,9 +72,9 @@
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
                             Full Name <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" 
-                               id="name" 
-                               name="name" 
+                        <input type="text"
+                               id="name"
+                               name="name"
                                value="{{ old('name', $user->name) }}"
                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('name') border-red-300 @enderror"
                                placeholder="Enter full name"
@@ -89,9 +89,9 @@
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
                             Email Address <span class="text-red-500">*</span>
                         </label>
-                        <input type="email" 
-                               id="email" 
-                               name="email" 
+                        <input type="email"
+                               id="email"
+                               name="email"
                                value="{{ old('email', $user->email) }}"
                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('email') border-red-300 @enderror"
                                placeholder="Enter email address"
@@ -108,9 +108,9 @@
                         </label>
                         <select id="admin_type" name="admin_type" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('admin_type') border-red-300 @enderror" required>
                             <option value="">Select admin type</option>
-                            <option value="super_admin" {{ old('admin_type', $user->admin_type) === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                            <option value="super_manager" {{ old('admin_type', $user->admin_type) === 'super_manager' ? 'selected' : '' }}>Super Manager</option>
-                            <option value="school_admin" {{ old('admin_type', $user->admin_type) === 'school_admin' ? 'selected' : '' }}>School Admin</option>
+                            <option value="super_admin" {{ old('admin_type', $user->admin_type ?? '') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                            <option value="super_manager" {{ old('admin_type', $user->admin_type ?? '') === 'super_manager' ? 'selected' : '' }}>Super Manager</option>
+                            <option value="school_admin" {{ old('admin_type', $user->admin_type ?? '') === 'school_admin' ? 'selected' : '' }}>School Admin</option>
                         </select>
                         @error('admin_type')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -123,11 +123,11 @@
                             Account Status
                         </label>
                         <div class="flex items-center">
-                            <input type="checkbox" 
-                                   id="is_active" 
-                                   name="is_active" 
+                            <input type="checkbox"
+                                   id="is_active"
+                                   name="is_active"
                                    value="1"
-                                   {{ old('is_active', $user->is_active) ? 'checked' : '' }}
+                                   {{ old('is_active', $user->is_active ?? $user->active ?? false) ? 'checked' : '' }}
                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
                             <label for="is_active" class="ml-2 block text-sm text-gray-900">
                                 Active account
@@ -139,11 +139,16 @@
 
                 <!-- Form Actions -->
                 <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <a href="{{ route('admin.tenants.users.show', [$tenant, $user]) }}" class="btn-secondary">
-                        Cancel
+                    <a href="{{ route('admin.tenants.users.show', [$tenant, $user->id]) }}">
+                        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Cancel
+                        </button>
                     </a>
-                    <button type="submit" class="btn-primary">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
                         Update User

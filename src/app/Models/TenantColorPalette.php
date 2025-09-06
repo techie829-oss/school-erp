@@ -10,6 +10,11 @@ class TenantColorPalette extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     */
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'tenant_id',
         'name',

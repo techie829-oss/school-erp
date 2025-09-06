@@ -50,6 +50,7 @@ class TenantService
             return [
                 'id' => null,
                 'name' => null,
+                'short_name' => 'School ERP',
                 'email' => null,
                 'type' => null,
                 'active' => false,
@@ -57,6 +58,11 @@ class TenantService
                 'full_domain' => null,
                 'subdomain' => null,
                 'custom_domain' => null,
+                'location' => null,
+                'description' => 'Excellence in Education',
+                'student_count' => null,
+                'database_strategy' => 'shared',
+                'status' => 'inactive',
             ];
         }
 
@@ -65,6 +71,7 @@ class TenantService
             return [
                 'id' => null,
                 'name' => null,
+                'short_name' => 'School ERP',
                 'email' => null,
                 'type' => null,
                 'active' => false,
@@ -72,6 +79,11 @@ class TenantService
                 'full_domain' => null,
                 'subdomain' => null,
                 'custom_domain' => null,
+                'location' => null,
+                'description' => 'Excellence in Education',
+                'student_count' => null,
+                'database_strategy' => 'shared',
+                'status' => 'inactive',
             ];
         }
 
@@ -79,6 +91,7 @@ class TenantService
         return [
             'id' => $tenant->id,
             'name' => $data['name'] ?? 'Unnamed Tenant',
+            'short_name' => $data['short_name'] ?? $this->generateShortName($data['name'] ?? 'Unnamed Tenant'),
             'email' => $data['email'] ?? null,
             'type' => $data['type'] ?? 'school',
             'active' => $data['active'] ?? false,
@@ -86,7 +99,42 @@ class TenantService
             'full_domain' => $data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary'),
             'subdomain' => $data['subdomain'] ?? null,
             'custom_domain' => $data['custom_domain'] ?? null,
+            'location' => $data['location'] ?? null,
+            'description' => $data['description'] ?? 'Excellence in Education',
+            'student_count' => $data['student_count'] ?? null,
+            'database_strategy' => $data['database_strategy'] ?? 'shared',
+            'status' => $data['active'] ? 'active' : 'inactive',
         ];
+    }
+
+    /**
+     * Generate a short name from the full school name.
+     */
+    private function generateShortName(string $fullName): string
+    {
+        // Split the name into words
+        $words = explode(' ', $fullName);
+
+        // If it's a long name, take first letters of first 3-4 words
+        if (count($words) > 3) {
+            $shortName = '';
+            $wordCount = min(4, count($words));
+
+            for ($i = 0; $i < $wordCount; $i++) {
+                if ($i < 3) {
+                    // First 3 words: take first letter
+                    $shortName .= strtoupper(substr($words[$i], 0, 1)) . ' ';
+                } else {
+                    // Last word: take the whole word
+                    $shortName .= ucfirst($words[$i]);
+                }
+            }
+
+            return trim($shortName);
+        }
+
+        // If it's already short, return as is
+        return $fullName;
     }
 
     /**

@@ -11,6 +11,11 @@ class AdminUser extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    /**
+     * The database connection that should be used by the model.
+     */
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'name',
         'email',

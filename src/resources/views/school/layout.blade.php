@@ -99,22 +99,48 @@
         <!-- Navigation -->
         <nav class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
+                <!-- Top row with logo and CTA buttons -->
+                <div class="flex justify-between items-center h-16">
                     <!-- Logo and School Name -->
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
-                            <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                                <span class="text-white font-bold text-lg">S</span>
+                            <div class="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
+                                <span class="text-white font-bold text-xl">S</span>
                             </div>
-                            <div class="ml-3">
-                                <h1 class="text-xl font-bold text-gray-900">{{ $tenant['name'] ?? 'School ERP' }}</h1>
-                                <p class="text-sm text-gray-500">{{ $tenant['location'] ?? 'Location' }}</p>
+                            <div class="ml-4">
+                                <h1 class="text-lg font-bold text-gray-900 leading-tight">
+                                    <span class="hidden sm:inline">{{ $tenant['name'] ?? 'School ERP' }}</span>
+                                    <span class="sm:hidden">{{ $tenant['short_name'] ?? 'S V P Inter Collage' }}</span>
+                                </h1>
+                                <p class="text-xs text-gray-500 leading-tight">{{ $tenant['location'] ?? 'Location' }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Desktop Navigation -->
-                    <div class="hidden md:flex items-center space-x-8">
+                    <!-- CTA Buttons -->
+                    <div class="hidden md:flex items-center space-x-3">
+                        <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
+                            Parent Login
+                        </a>
+                        <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
+                            Contact Us
+                        </a>
+                    </div>
+
+                    <!-- Mobile menu button -->
+                    <div class="md:hidden flex items-center">
+                        <button type="button" class="text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 rounded-md p-2" onclick="toggleMobileMenu()">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation row -->
+                <div class="hidden md:flex justify-center border-t border-gray-100 py-3">
+                    <div class="flex items-center space-x-8">
                         <a href="{{ route('tenant.home', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.home') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Home
                         </a>
@@ -133,26 +159,6 @@
                         <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.contact') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Contact
                         </a>
-                    </div>
-
-                    <!-- CTA Buttons -->
-                    <div class="hidden md:flex items-center space-x-4">
-                                            <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
-                        Parent Login
-                    </a>
-                    <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
-                        Contact Us
-                    </a>
-                    </div>
-
-                    <!-- Mobile menu button -->
-                    <div class="md:hidden flex items-center">
-                        <button type="button" class="text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 rounded-md p-2" onclick="toggleMobileMenu()">
-                            <span class="sr-only">Open main menu</span>
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -207,13 +213,13 @@
                             {{ $tenant['description'] ?? 'Excellence in Education' }}
                         </p>
                         <div class="text-gray-400 text-sm space-y-1">
-                            @if($tenant['location'])
+                            @if(isset($tenant['location']) && $tenant['location'])
                             <p><strong>Location:</strong> {{ $tenant['location'] }}</p>
                             @endif
-                            @if($tenant['student_count'])
+                            @if(isset($tenant['student_count']) && $tenant['student_count'])
                             <p><strong>Students:</strong> {{ number_format($tenant['student_count']) }}</p>
                             @endif
-                            @if($tenant['database_strategy'])
+                            @if(isset($tenant['database_strategy']) && $tenant['database_strategy'])
                             <p><strong>Database:</strong> {{ ucfirst($tenant['database_strategy']) }}</p>
                             @endif
                         </div>

@@ -21,6 +21,7 @@ class LoginForm extends Form
     #[Validate('boolean')]
     public bool $remember = false;
 
+
     /**
      * Attempt to authenticate the request's credentials.
      *
@@ -43,6 +44,7 @@ class LoginForm extends Form
 
         RateLimiter::clear($this->throttleKey());
     }
+
 
     /**
      * Get the appropriate guard based on the current domain

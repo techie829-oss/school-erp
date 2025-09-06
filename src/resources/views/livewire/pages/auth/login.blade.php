@@ -10,6 +10,54 @@ new #[Layout('layouts.guest')] class extends Component
     public LoginForm $form;
 
     /**
+     * Check if email belongs to a tenant user (called on email input)
+     */
+    public function checkTenantUser(): void
+    {
+        $host = request()->getHost();
+        $adminDomain = config('all.domains.admin');
+
+        // Only check if we're on admin domain and email is not empty
+        if ($host === $adminDomain && !empty($this->form->email)) {
+            $this->checkForTenantUser();
+        }
+    }
+
+    /**
+     * Check if the user is a tenant user trying to login from admin domain
+     */
+    protected function checkForTenantUser(): void
+    {
+        // Check if user exists in any tenant database
+        $user = \App\Models\AdminUser::where('email', $this->form->email)->first();
+
+        if ($user && $user->admin_type === 'school_admin') {
+            // Get the tenant for this user
+            $tenant = \App\Models\Tenant::find($user->tenant_id);
+
+            if ($tenant) {
+                // Build the tenant login URL
+                $tenantDomain = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
+                $tenantLoginUrl = 'http://' . $tenantDomain . '/login';
+
+                // Store the redirect info in session for display
+                session()->flash('tenant_redirect', [
+                    'message' => 'This is a school administrator account.',
+                    'tenant_name' => $tenant->data['name'] ?? 'Your School',
+                    'login_url' => $tenantLoginUrl,
+                    'tenant_domain' => $tenantDomain
+                ]);
+
+                // Don't throw validation error, just return
+                return;
+            }
+        } else {
+            // Clear any existing tenant redirect message if user is not a tenant
+            session()->forget('tenant_redirect');
+        }
+    }
+
+    /**
      * Handle an incoming authentication request.
      */
     public function login(): void
@@ -49,8 +97,14 @@ new #[Layout('layouts.guest')] class extends Component
             return route('admin.dashboard', absolute: false);
         }
 
-        // For tenant domains, redirect to tenant dashboard
-        return route('tenant.dashboard', absolute: false);
+        // For tenant domains, redirect to tenant admin dashboard
+        $tenant = tenant();
+        if ($tenant && isset($tenant->data['subdomain'])) {
+            return route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']], absolute: false);
+        }
+
+        // Fallback to admin dashboard if tenant detection fails
+        return route('admin.dashboard', absolute: false);
     }
 }; ?>
 
@@ -59,6 +113,44 @@ new #[Layout('layouts.guest')] class extends Component
     @if (session('status'))
         <div class="mb-6 p-4 bg-success/10 border border-success/20 rounded-xl text-success-700 text-sm">
             {{ session('status') }}
+        </div>
+    @endif
+
+    <!-- Tenant Redirect Message -->
+    @if (session('tenant_redirect'))
+        @php $redirect = session('tenant_redirect'); @endphp
+        <div class="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-xl">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 class="text-lg font-medium text-blue-900 mb-2">
+                        {{ $redirect['message'] }}
+                    </h3>
+                    <p class="text-blue-800 mb-4">
+                        You need to login at your school's specific domain: <strong>{{ $redirect['tenant_domain'] }}</strong>
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <a href="{{ $redirect['login_url'] }}"
+                           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            Go to {{ $redirect['tenant_name'] }} Login
+                        </a>
+                        <button onclick="copyToClipboard('{{ $redirect['login_url'] }}')"
+                                class="inline-flex items-center px-4 py-2 bg-white text-blue-600 text-sm font-medium rounded-lg border border-blue-300 hover:bg-blue-50 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            Copy URL
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     @endif
 
@@ -81,7 +173,8 @@ new #[Layout('layouts.guest')] class extends Component
                     </svg>
                 </div>
                 <input
-                    wire:model="form.email"
+                    wire:model.live="form.email"
+                    wire:blur="checkTenantUser"
                     id="email"
                     type="email"
                     name="email"
@@ -174,3 +267,25 @@ new #[Layout('layouts.guest')] class extends Component
 
     </form>
 </div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show a temporary success message
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+        button.classList.add('bg-green-50', 'text-green-600', 'border-green-300');
+        button.classList.remove('bg-white', 'text-blue-600', 'border-blue-300');
+
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('bg-green-50', 'text-green-600', 'border-green-300');
+            button.classList.add('bg-white', 'text-blue-600', 'border-blue-300');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        alert('Could not copy to clipboard');
+    });
+}
+</script>

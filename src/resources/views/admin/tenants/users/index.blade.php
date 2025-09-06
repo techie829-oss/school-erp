@@ -9,12 +9,24 @@
             <h1 class="text-2xl font-bold text-gray-900">{{ $tenant->data['name'] ?? 'Unnamed Tenant' }} - Users</h1>
             <p class="text-gray-600">Manage user accounts for this tenant</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('admin.tenants.show', $tenant) }}" class="btn-secondary">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back to Tenant
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('admin.tenants.users.create', $tenant) }}">
+                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    <span class="hidden sm:inline">Add User</span>
+                    <span class="sm:hidden">Add</span>
+                </button>
+            </a>
+            <a href="{{ route('admin.tenants.show', $tenant) }}">
+                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span class="hidden sm:inline">Back to Tenant</span>
+                    <span class="sm:hidden">Back</span>
+                </button>
             </a>
         </div>
     </div>
@@ -36,6 +48,7 @@
             </div>
         </div>
     @endif
+
 
     <!-- Users Table -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -76,33 +89,51 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                {{ ucfirst(str_replace('_', ' ', $user->admin_type)) }}
+                                {{ ucfirst(str_replace('_', ' ', $user->admin_type ?? 'admin')) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $user->active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $user->active ? 'Active' : 'Inactive' }}
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ ($user->is_active ?? $user->active ?? false) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                {{ ($user->is_active ?? $user->active ?? false) ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}
+                            @if(isset($user->last_login_at) && $user->last_login_at)
+                                {{ is_string($user->last_login_at) ? \Carbon\Carbon::parse($user->last_login_at)->format('M d, Y H:i') : $user->last_login_at->format('M d, Y H:i') }}
+                            @else
+                                Never
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
-                                <a href="{{ route('admin.tenants.users.show', [$tenant, $user]) }}" class="text-primary-600 hover:text-primary-900" title="View user details">
+                                <a href="{{ route('admin.tenants.users.show', [$tenant, $user->id]) }}"
+                                   class="text-primary-600 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
+                                   title="View user details">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </a>
-                                <a href="{{ route('admin.tenants.users.edit', [$tenant, $user]) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit user">
+                                <a href="{{ route('admin.tenants.users.edit', [$tenant, $user->id]) }}"
+                                   class="text-yellow-600 hover:text-yellow-900 p-1 rounded hover:bg-yellow-50"
+                                   title="Edit user">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </a>
-                                <a href="{{ route('admin.tenants.users.change-password', [$tenant, $user]) }}" class="text-blue-600 hover:text-blue-900" title="Change password">
+                                <a href="{{ route('admin.tenants.users.change-password', [$tenant, $user->id]) }}"
+                                   class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                                   title="Change password">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"/>
+                                    </svg>
+                                </a>
+                                <a href="{{ route('admin.tenants.users.delete', [$tenant, $user->id]) }}"
+                                   class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                                   title="Delete user"
+                                   onclick="return confirm('Are you sure you want to delete this user? You will be taken to a confirmation page.')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
                                 </a>
                             </div>
@@ -124,7 +155,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Pagination -->
         @if($users->hasPages())
             <div class="px-6 py-4 border-t border-gray-200">

@@ -11,6 +11,31 @@
             @csrf
             @method('PUT')
 
+            <!-- General Error Display -->
+            @if ($errors->any())
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                There were errors with your submission:
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Name -->
             <div class="mb-6">
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -73,7 +98,8 @@
                 <select id="database_strategy"
                         name="database_strategy"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_strategy') border-red-500 @enderror"
-                        required>
+                        required
+                        onchange="toggleDatabaseConfig()">
                     <option value="">Select database strategy</option>
                     <option value="shared" {{ old('database_strategy', $tenant->data['database_strategy'] ?? '') == 'shared' ? 'selected' : '' }}>Shared Database</option>
                     <option value="separate" {{ old('database_strategy', $tenant->data['database_strategy'] ?? '') == 'separate' ? 'selected' : '' }}>Separate Database</option>
@@ -81,6 +107,128 @@
                 @error('database_strategy')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <!-- Database Configuration (Only for Separate Database) -->
+            <div id="database-config" class="mb-6 p-4 bg-gray-50 rounded-lg border" style="display: {{ old('database_strategy', $tenant->data['database_strategy'] ?? '') == 'separate' ? 'block' : 'none' }};">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Database Configuration</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Database Name -->
+                    <div class="md:col-span-2">
+                        <label for="database_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               id="database_name"
+                               name="database_name"
+                               value="{{ old('database_name', $tenant->database_name ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_name') border-red-500 @enderror"
+                               placeholder="school_erp_tenant_name">
+                        @error('database_name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Database Host -->
+                    <div>
+                        <label for="database_host" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Host <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               id="database_host"
+                               name="database_host"
+                               value="{{ old('database_host', $tenant->database_host ?? 'localhost') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_host') border-red-500 @enderror"
+                               placeholder="localhost">
+                        @error('database_host')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Database Port -->
+                    <div>
+                        <label for="database_port" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Port
+                        </label>
+                        <input type="number"
+                               id="database_port"
+                               name="database_port"
+                               value="{{ old('database_port', $tenant->database_port ?? 3306) }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_port') border-red-500 @enderror"
+                               placeholder="3306"
+                               min="1"
+                               max="65535">
+                        @error('database_port')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Database Username -->
+                    <div>
+                        <label for="database_username" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Username <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               id="database_username"
+                               name="database_username"
+                               value="{{ old('database_username', $tenant->database_username ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_username') border-red-500 @enderror"
+                               placeholder="root">
+                        @error('database_username')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Database Password -->
+                    <div>
+                        <label for="database_password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Password
+                        </label>
+                        <input type="password"
+                               id="database_password"
+                               name="database_password"
+                               value="{{ old('database_password', $tenant->database_password ?? '') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_password') border-red-500 @enderror"
+                               placeholder="Enter database password">
+                        @error('database_password')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Database Charset -->
+                    <div>
+                        <label for="database_charset" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Charset
+                        </label>
+                        <input type="text"
+                               id="database_charset"
+                               name="database_charset"
+                               value="{{ old('database_charset', $tenant->database_charset ?? 'utf8mb4') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_charset') border-red-500 @enderror"
+                               placeholder="utf8mb4">
+                        @error('database_charset')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Database Collation -->
+                    <div>
+                        <label for="database_collation" class="block text-sm font-medium text-gray-700 mb-2">
+                            Database Collation
+                        </label>
+                        <input type="text"
+                               id="database_collation"
+                               name="database_collation"
+                               value="{{ old('database_collation', $tenant->database_collation ?? 'utf8mb4_unicode_ci') }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('database_collation') border-red-500 @enderror"
+                               placeholder="utf8mb4_unicode_ci">
+                        @error('database_collation')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
             </div>
 
             <!-- Subdomain (Mandatory) -->
@@ -158,10 +306,67 @@
 </div>
 
 <script>
+function toggleDatabaseConfig() {
+    const databaseStrategy = document.getElementById('database_strategy');
+    const databaseConfig = document.getElementById('database-config');
+
+    if (databaseStrategy.value === 'separate') {
+        databaseConfig.style.display = 'block';
+
+        // Auto-generate database name from tenant name if not already set
+        const tenantName = document.getElementById('name').value;
+        const databaseName = document.getElementById('database_name');
+        if (tenantName && !databaseName.value) {
+            const slug = tenantName.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/-+/g, '_');
+            databaseName.value = `school_erp_${slug}`;
+        }
+
+    } else {
+        databaseConfig.style.display = 'none';
+    }
+}
+
+
+
+function showNotification(type, message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
+        'bg-red-100 text-red-800 border border-red-300'
+    }`;
+
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                ${type === 'success' ?
+                    '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>' :
+                    '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>'
+                }
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Remove notification after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const subdomainInput = document.getElementById('subdomain');
     const tenantId = '{{ $tenant->id }}';
     let validationTimeout;
+
+    // Initialize database config visibility
+    toggleDatabaseConfig();
+
 
     // Real-time subdomain validation
     subdomainInput.addEventListener('input', function() {

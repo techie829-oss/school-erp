@@ -6,7 +6,7 @@
 
 @section('content')
 <!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
     <!-- Total Tenants -->
     <div class="stat-card p-6">
         <div class="flex items-center">
@@ -69,7 +69,7 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
     <!-- Quick Actions Card -->
     <div class="card p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
@@ -136,41 +136,44 @@
         <a href="{{ route('admin.tenants.index') }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">View All</a>
     </div>
 
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto -mx-4 sm:mx-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Domain</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Type</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Created</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse(\App\Models\Tenant::latest()->take(5)->get() as $tenant)
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ $tenant->data['name'] ?? 'N/A' }}
+                    <td class="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
+                        <div>
+                            <div class="font-medium">{{ $tenant->data['name'] ?? 'N/A' }}</div>
+                            <div class="text-xs text-gray-500 sm:hidden">{{ $tenant->id }}.{{ config('all.domains.primary') }}</div>
+                        </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
                         {{ $tenant->id }}.{{ config('all.domains.primary') }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                         {{ ucfirst($tenant->data['type'] ?? 'school') }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ ($tenant->data['active'] ?? false) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                             {{ ($tenant->data['active'] ?? false) ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $tenant->created_at->format('M d, Y') }}
+                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
+                        {{-- {{ @$tenant->created_at->format('M d, Y') }} --}}
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colspan="5" class="px-3 sm:px-6 py-4 text-center text-sm text-gray-500">
                         No tenants found
                     </td>
                 </tr>

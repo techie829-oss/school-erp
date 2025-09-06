@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
 use App\Models\TenantColorPalette;
 use Illuminate\Database\Seeder;
 
@@ -12,8 +13,17 @@ class ColorPaletteSeeder extends Seeder
      */
     public function run(): void
     {
+        // Only create color palettes for tenants that actually exist
+        $tenantIds = Tenant::pluck('id')->toArray();
+
+        if (empty($tenantIds)) {
+            $this->command->info('No tenants found. Skipping color palette creation.');
+            return;
+        }
+
         // Delhi Public School - Green Theme (Shared DB)
-        TenantColorPalette::create([
+        if (in_array('delhi-public-school-250904', $tenantIds)) {
+            TenantColorPalette::create([
             'tenant_id' => 'delhi-public-school-250904',
             'name' => 'Delhi Green',
             'is_active' => true,
@@ -47,10 +57,12 @@ class ColorPaletteSeeder extends Seeder
                 'error' => '#ef4444',
                 'info' => '#3b82f6',
             ],
-        ]);
+            ]);
+        }
 
         // Mumbai International School - Purple Theme (Separate DB)
-        TenantColorPalette::create([
+        if (in_array('mumbai-international-school-250904', $tenantIds)) {
+            TenantColorPalette::create([
             'tenant_id' => 'mumbai-international-school-250904',
             'name' => 'Mumbai Purple',
             'is_active' => true,
@@ -84,10 +96,12 @@ class ColorPaletteSeeder extends Seeder
                 'error' => '#ef4444',
                 'info' => '#3b82f6',
             ],
-        ]);
+            ]);
+        }
 
         // Bangalore Tech Academy - Blue Theme (Separate DB)
-        TenantColorPalette::create([
+        if (in_array('bangalore-tech-academy-250904', $tenantIds)) {
+            TenantColorPalette::create([
             'tenant_id' => 'bangalore-tech-academy-250904',
             'name' => 'Bangalore Blue',
             'is_active' => true,
@@ -121,10 +135,12 @@ class ColorPaletteSeeder extends Seeder
                 'error' => '#ef4444',
                 'info' => '#3b82f6',
             ],
-        ]);
+            ]);
+        }
 
         // Chennai Central School - Orange Theme (Shared DB)
-        TenantColorPalette::create([
+        if (in_array('chennai-central-school-250904', $tenantIds)) {
+            TenantColorPalette::create([
             'tenant_id' => 'chennai-central-school-250904',
             'name' => 'Chennai Orange',
             'is_active' => true,
@@ -158,10 +174,12 @@ class ColorPaletteSeeder extends Seeder
                 'error' => '#ef4444',
                 'info' => '#3b82f6',
             ],
-        ]);
+            ]);
+        }
 
         // Pune Engineering College - Indigo Theme (Separate DB)
-        TenantColorPalette::create([
+        if (in_array('pune-engineering-college-250904', $tenantIds)) {
+            TenantColorPalette::create([
             'tenant_id' => 'pune-engineering-college-250904',
             'name' => 'Pune Indigo',
             'is_active' => true,
@@ -195,10 +213,12 @@ class ColorPaletteSeeder extends Seeder
                 'error' => '#ef4444',
                 'info' => '#3b82f6',
             ],
-        ]);
+            ]);
+        }
 
         // Hyderabad University - Teal Theme (Separate DB)
-        TenantColorPalette::create([
+        if (in_array('hyderabad-university-250904', $tenantIds)) {
+            TenantColorPalette::create([
             'tenant_id' => 'hyderabad-university-250904',
             'name' => 'Hyderabad Teal',
             'is_active' => true,
@@ -232,7 +252,8 @@ class ColorPaletteSeeder extends Seeder
                 'error' => '#ef4444',
                 'info' => '#3b82f6',
             ],
-        ]);
+            ]);
+        }
 
     }
 }

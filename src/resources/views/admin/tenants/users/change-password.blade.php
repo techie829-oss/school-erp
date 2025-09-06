@@ -1,20 +1,23 @@
 @extends('layouts.admin')
 
-@section('title', 'Change Password')
+@section('title', 'Reset Password')
 
 @section('content')
     <!-- Header Actions -->
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Change Password</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Reset Password</h1>
             <p class="text-gray-600">{{ $tenant->data['name'] ?? 'Unnamed Tenant' }} - {{ $user->name }}</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('admin.tenants.users.show', [$tenant, $user]) }}" class="btn-secondary">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back to User
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('admin.tenants.users.show', [$tenant, $user->id]) }}">
+                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span class="hidden sm:inline">Back to User</span>
+                    <span class="sm:hidden">Back</span>
+                </button>
             </a>
         </div>
     </div>
@@ -47,9 +50,9 @@
     <!-- Change Password Form -->
     <div class="card">
         <div class="p-6">
-            <form method="POST" action="{{ route('admin.tenants.users.update-password', [$tenant, $user]) }}">
+            <form method="POST" action="{{ route('admin.tenants.users.update-password', [$tenant, $user->id]) }}">
                 @csrf
-                
+
                 <!-- User Info -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                     <div class="flex items-center space-x-3">
@@ -65,30 +68,15 @@
                     </div>
                 </div>
 
-                <!-- Current Password -->
-                <div class="mb-6">
-                    <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
-                        Current Password <span class="text-red-500">*</span>
-                    </label>
-                    <input type="password" 
-                           id="current_password" 
-                           name="current_password" 
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('current_password') border-red-300 @enderror"
-                           placeholder="Enter current password"
-                           required>
-                    @error('current_password')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
 
                 <!-- New Password -->
                 <div class="mb-6">
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
                         New Password <span class="text-red-500">*</span>
                     </label>
-                    <input type="password" 
-                           id="password" 
-                           name="password" 
+                    <input type="password"
+                           id="password"
+                           name="password"
                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('password') border-red-300 @enderror"
                            placeholder="Enter new password"
                            required>
@@ -105,9 +93,9 @@
                     <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
                         Confirm New Password <span class="text-red-500">*</span>
                     </label>
-                    <input type="password" 
-                           id="password_confirmation" 
-                           name="password_confirmation" 
+                    <input type="password"
+                           id="password_confirmation"
+                           name="password_confirmation"
                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('password_confirmation') border-red-300 @enderror"
                            placeholder="Confirm new password"
                            required>
@@ -118,14 +106,19 @@
 
                 <!-- Form Actions -->
                 <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <a href="{{ route('admin.tenants.users.show', [$tenant, $user]) }}" class="btn-secondary">
-                        Cancel
+                    <a href="{{ route('admin.tenants.users.show', [$tenant, $user->id]) }}">
+                        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Cancel
+                        </button>
                     </a>
-                    <button type="submit" class="btn-primary">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"/>
                         </svg>
-                        Update Password
+                        Reset Password
                     </button>
                 </div>
             </form>
@@ -143,9 +136,9 @@
                 </svg>
             </div>
             <div class="ml-3">
-                <h3 class="text-sm font-medium text-blue-800">Security Notice</h3>
+                <h3 class="text-sm font-medium text-blue-800">Admin Password Reset</h3>
                 <div class="mt-2 text-sm text-blue-700">
-                    <p>When you change a user's password, they will need to log in again with the new password. Make sure to communicate the new password securely to the user.</p>
+                    <p>As an administrator, you can reset any user's password without knowing their current password. The user will need to log in with the new password. Make sure to communicate the new password securely to the user.</p>
                 </div>
             </div>
         </div>

@@ -1,13 +1,8 @@
 name: school-erp
 domain: myschool.test
 subdomains:
-  - app  # Internal Admin
-  - dps  # Delhi Public School
-  - mis  # Mumbai International School
-  - bta  # Bangalore Tech Academy
-  - ccs  # Chennai Central School
-  - pec  # Pune Engineering College
-  - hu   # Hyderabad University
+  - lps  # Lucknow Public School
+  - svps  # Swami Vivekanand public inter collage
 php: 8.3
 mysql: 8.0
 redis: 7.0

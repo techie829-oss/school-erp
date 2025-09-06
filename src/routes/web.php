@@ -62,25 +62,41 @@ Route::domain(config('all.domains.admin'))->group(function () {
     });
 
     // Super Admin Routes (only accessible on admin domain)
-    Route::middleware(['auth', 'verified', 'redirect.school.admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/', function () {
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // Tenant Management
-        Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
+        // Tenant Users Management (MUST come before resource routes to avoid conflicts)
+        Route::get('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersIndex'])->name('tenants.users.index');
+        Route::get('/tenants/{tenant}/users/count', [\App\Http\Controllers\Admin\TenantController::class, 'usersCount'])->name('tenants.users.count');
+        Route::get('/tenants/{tenant}/users/create', [\App\Http\Controllers\Admin\TenantController::class, 'usersCreate'])->name('tenants.users.create');
+        Route::post('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersStore'])->name('tenants.users.store');
+        Route::get('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersShow'])->name('tenants.users.show');
+        Route::get('/tenants/{tenant}/users/{userId}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'usersEdit'])->name('tenants.users.edit');
+        Route::put('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdate'])->name('tenants.users.update');
+        Route::get('/tenants/{tenant}/users/{userId}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersChangePassword'])->name('tenants.users.change-password');
+        Route::post('/tenants/{tenant}/users/{userId}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdatePassword'])->name('tenants.users.update-password');
+        Route::get('/tenants/{tenant}/users/{userId}/delete', [\App\Http\Controllers\Admin\TenantController::class, 'usersDelete'])->name('tenants.users.delete');
+        Route::delete('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersDestroy'])->name('tenants.users.destroy');
+
+        // Tenant Database Management
+        Route::post('/tenants/{tenant}/test-database', [\App\Http\Controllers\Admin\TenantController::class, 'testDatabaseConnection'])->name('tenants.test-database');
+        Route::post('/tenants/{tenant}/create-database', [\App\Http\Controllers\Admin\TenantController::class, 'createDatabase'])->name('tenants.create-database');
+        Route::post('/tenants/{tenant}/run-migrations', [\App\Http\Controllers\Admin\TenantController::class, 'runMigrations'])->name('tenants.run-migrations');
+        Route::get('/tenants/{tenant}/database-tables', [\App\Http\Controllers\Admin\TenantController::class, 'getDatabaseTables'])->name('tenants.database-tables');
+        Route::get('/tenants/{tenant}/database-info', [\App\Http\Controllers\Admin\TenantController::class, 'getDatabaseInfo'])->name('tenants.database-info');
+
+        // Tenant Management (Resource routes - MUST come after specific routes)
+        Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class)->except(['update']);
         Route::post('/tenants/check-subdomain', [\App\Http\Controllers\Admin\TenantController::class, 'checkSubdomain'])->name('tenants.check-subdomain');
         Route::post('/tenants/cleanup-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'cleanupHerdYml'])->name('tenants.cleanup-herd-yml');
         Route::post('/tenants/sync-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'syncHerdYmlWithDatabase'])->name('tenants.sync-herd-yml');
 
-        // Tenant Users Management
-        Route::get('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersIndex'])->name('tenants.users.index');
-        Route::get('/tenants/{tenant}/users/{user}', [\App\Http\Controllers\Admin\TenantController::class, 'usersShow'])->name('tenants.users.show');
-        Route::get('/tenants/{tenant}/users/{user}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'usersEdit'])->name('tenants.users.edit');
-        Route::put('/tenants/{tenant}/users/{user}', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdate'])->name('tenants.users.update');
-        Route::get('/tenants/{tenant}/users/{user}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersChangePassword'])->name('tenants.users.change-password');
-        Route::post('/tenants/{tenant}/users/{user}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdatePassword'])->name('tenants.users.update-password');
+        // Debug route for tenant database configuration
+        Route::get('/tenants/{tenant}/debug-database', [\App\Http\Controllers\Admin\TenantController::class, 'debugDatabase'])->name('tenants.debug-database');
+
 
         // Tenant Status Management
         Route::post('/tenants/{tenant}/toggle-status', [\App\Http\Controllers\Admin\TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
@@ -187,7 +203,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
 });
 
 // Dynamic Tenant Routes (for any tenant domain matching the pattern)
-Route::domain('{tenant}.' . config('all.domains.primary'))->group(function () {
+Route::domain('{tenant}.' . config('all.domains.primary'))->middleware('switch.tenant.database')->group(function () {
     // Public tenant pages
     Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
     Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');
@@ -202,6 +218,9 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->group(function () {
         Volt::route('forgot-password', 'pages.auth.forgot-password')->name('tenant.password.request');
         Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('tenant.password.reset');
     });
+
+    // Logout route (not in guest middleware)
+    Route::post('/logout', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'logout'])->name('tenant.logout');
 
     Route::middleware('auth')->group(function () {
         Volt::route('verify-email', 'pages.auth.verify-email')->name('tenant.verification.notice');
@@ -223,9 +242,45 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->group(function () {
     // Admin routes for tenants
     Route::middleware(['auth', 'verified'])->prefix('admin')->name('tenant.admin.')->group(function () {
         // Tenant Admin Dashboard
-        Route::get('/', function () {
-            return view('tenant.admin.dashboard');
-        })->name('dashboard');
+        Route::get('/', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        // Student Management
+        Route::resource('students', \App\Http\Controllers\Tenant\Admin\StudentController::class);
+        Route::get('/students/{student}/profile', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'profile'])->name('students.profile');
+
+        // Teacher Management
+        Route::resource('teachers', \App\Http\Controllers\Tenant\Admin\TeacherController::class);
+        Route::get('/teachers/{teacher}/profile', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'profile'])->name('teachers.profile');
+
+        // Class Management
+        Route::resource('classes', \App\Http\Controllers\Tenant\Admin\ClassController::class);
+        Route::get('/classes/{class}/students', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'students'])->name('classes.students');
+        Route::post('/classes/{class}/students', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'addStudent'])->name('classes.add-student');
+        Route::delete('/classes/{class}/students/{student}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'removeStudent'])->name('classes.remove-student');
+
+        // Attendance Management
+        Route::resource('attendance', \App\Http\Controllers\Tenant\Admin\AttendanceController::class);
+        Route::get('/attendance/class/{class}/date/{date}', [\App\Http\Controllers\Tenant\Admin\AttendanceController::class, 'classAttendance'])->name('attendance.class');
+        Route::post('/attendance/mark', [\App\Http\Controllers\Tenant\Admin\AttendanceController::class, 'markAttendance'])->name('attendance.mark');
+
+        // Grades Management
+        Route::resource('grades', \App\Http\Controllers\Tenant\Admin\GradeController::class);
+        Route::get('/grades/student/{student}', [\App\Http\Controllers\Tenant\Admin\GradeController::class, 'studentGrades'])->name('grades.student');
+        Route::get('/grades/class/{class}', [\App\Http\Controllers\Tenant\Admin\GradeController::class, 'classGrades'])->name('grades.class');
+
+        // Reports
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/attendance', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'attendance'])->name('attendance');
+            Route::get('/grades', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'grades'])->name('grades');
+            Route::get('/students', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'students'])->name('students');
+        });
+
+        // Settings
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
+            Route::post('/school', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateSchool'])->name('school');
+            Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('academic');
+        });
 
         Route::resource('color-palettes', ColorPaletteController::class);
         Route::post('color-palettes/apply-scheme', [ColorPaletteController::class, 'applyScheme'])->name('color-palettes.apply-scheme');

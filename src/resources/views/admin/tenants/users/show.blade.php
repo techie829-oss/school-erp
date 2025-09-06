@@ -9,18 +9,33 @@
             <h1 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h1>
             <p class="text-gray-600">{{ $tenant->data['name'] ?? 'Unnamed Tenant' }} - User Details</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('admin.tenants.users.edit', [$tenant, $user]) }}" class="btn-primary">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-                Edit User
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('admin.tenants.users.edit', [$tenant, $user->id]) }}">
+                <button class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Edit User</span>
+                    <span class="sm:hidden">Edit</span>
+                </button>
             </a>
-            <a href="{{ route('admin.tenants.users.index', $tenant) }}" class="btn-secondary">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back to Users
+            <a href="{{ route('admin.tenants.users.change-password', [$tenant, $user->id]) }}">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Change Password</span>
+                    <span class="sm:hidden">Password</span>
+                </button>
+            </a>
+            <a href="{{ route('admin.tenants.users.index', $tenant) }}">
+                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span class="hidden sm:inline">Back to Users</span>
+                    <span class="sm:hidden">Back</span>
+                </button>
             </a>
         </div>
     </div>
@@ -59,11 +74,11 @@
                             <h2 class="text-xl font-semibold text-gray-900">{{ $user->name }}</h2>
                             <p class="text-gray-600">{{ $user->email }}</p>
                             <div class="flex items-center space-x-2 mt-2">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $user->active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $user->active ? 'Active' : 'Inactive' }}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ ($user->is_active ?? $user->active ?? false) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ ($user->is_active ?? $user->active ?? false) ? 'Active' : 'Inactive' }}
                                 </span>
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {{ ucfirst(str_replace('_', ' ', $user->admin_type)) }}
+                                    {{ ucfirst(str_replace('_', ' ', $user->admin_type ?? 'admin')) }}
                                 </span>
                             </div>
                         </div>
@@ -86,7 +101,11 @@
                             <div class="flex justify-between">
                                 <dt class="text-sm text-gray-600">Last Login:</dt>
                                 <dd class="text-sm font-medium text-gray-900">
-                                    {{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}
+                                    @if(isset($user->last_login_at) && $user->last_login_at)
+                                        {{ is_string($user->last_login_at) ? \Carbon\Carbon::parse($user->last_login_at)->format('M d, Y H:i') : $user->last_login_at->format('M d, Y H:i') }}
+                                    @else
+                                        Never
+                                    @endif
                                 </dd>
                             </div>
                             <div class="flex justify-between">
@@ -102,17 +121,25 @@
             <div class="mt-6 pt-6 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                     <div class="flex space-x-3">
-                        <a href="{{ route('admin.tenants.users.edit', [$tenant, $user]) }}" class="btn-secondary">
+                        <a href="{{ route('admin.tenants.users.edit', [$tenant, $user->id]) }}" class="btn-secondary">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
                             Edit User
                         </a>
-                        <a href="{{ route('admin.tenants.users.change-password', [$tenant, $user]) }}" class="btn-secondary">
+                        <a href="{{ route('admin.tenants.users.change-password', [$tenant, $user->id]) }}" class="btn-secondary">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                             </svg>
                             Change Password
+                        </a>
+                        <a href="{{ route('admin.tenants.users.delete', [$tenant, $user->id]) }}"
+                           class="btn-danger"
+                           onclick="return confirm('Are you sure you want to delete this user? You will be taken to a confirmation page.')">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Delete User
                         </a>
                     </div>
                 </div>

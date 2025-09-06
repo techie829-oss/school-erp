@@ -23,7 +23,7 @@ class AdminUserMiddleware
             if ($host === $adminDomain) {
                 return redirect()->route('admin.login');
             } else {
-                return redirect()->route('tenant.login');
+                return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
             }
         }
 
