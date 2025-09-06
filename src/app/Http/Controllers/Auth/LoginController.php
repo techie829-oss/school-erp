@@ -65,7 +65,7 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $isTenantDomain = $this->isTenantDomain();
-        
+
         // Clear tenant session data if on tenant domain
         if ($isTenantDomain) {
             session()->forget(['tenant_user', 'tenant_id', 'tenant_database_switched']);
