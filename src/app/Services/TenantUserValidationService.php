@@ -251,10 +251,17 @@ class TenantUserValidationService
         // Check separate database tenants
         $tenants = Tenant::where('data->database_strategy', 'separate')->get();
         foreach ($tenants as $tenant) {
-            if ($this->findUserInTenant($email, $tenant)) {
-                if (isset($tenant->data['subdomain'])) {
+            try {
+                $databaseService = new TenantDatabaseService();
+                $connection = $databaseService->getTenantConnection($tenant);
+                $userData = $connection->table('admin_users')->where('email', $email)->first();
+                
+                if ($userData && isset($tenant->data['subdomain'])) {
                     $allowedDomains[] = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
                 }
+            } catch (\Exception $e) {
+                // Continue checking other tenants
+                continue;
             }
         }
 
