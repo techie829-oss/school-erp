@@ -223,16 +223,16 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     Route::post('/logout', function () {
         // Clear tenant session data
         session()->forget(['tenant_user', 'tenant_id', 'tenant_database_switched']);
-        
+
         // Also clear Laravel auth session if it exists
         if (auth()->check()) {
             auth()->logout();
         }
-        
+
         // Regenerate session for security
         request()->session()->invalidate();
         request()->session()->regenerateToken();
-        
+
         return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')])
             ->with('success', 'You have been logged out successfully.');
     })->name('tenant.logout');
