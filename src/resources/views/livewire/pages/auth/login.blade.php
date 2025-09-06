@@ -52,6 +52,36 @@ new #[Layout('layouts.guest')] class extends Component
                 return;
             }
         } else {
+            // Check if user exists in separate database tenants
+            $tenants = \App\Models\Tenant::where('data->database_strategy', 'separate')->get();
+            
+            foreach ($tenants as $tenant) {
+                try {
+                    $databaseService = new \App\Services\TenantDatabaseService();
+                    $connection = $databaseService->getTenantConnection($tenant);
+                    $userData = $connection->table('admin_users')->where('email', $this->form->email)->first();
+                    
+                    if ($userData) {
+                        // Build the tenant login URL
+                        $tenantDomain = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
+                        $tenantLoginUrl = 'http://' . $tenantDomain . '/login';
+
+                        // Store the redirect info in session for display
+                        session()->flash('tenant_redirect', [
+                            'message' => 'This is a school administrator account.',
+                            'tenant_name' => $tenant->data['name'] ?? 'Your School',
+                            'login_url' => $tenantLoginUrl,
+                            'tenant_domain' => $tenantDomain
+                        ]);
+
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    // Continue checking other tenants
+                    continue;
+                }
+            }
+            
             // Clear any existing tenant redirect message if user is not a tenant
             session()->forget('tenant_redirect');
         }

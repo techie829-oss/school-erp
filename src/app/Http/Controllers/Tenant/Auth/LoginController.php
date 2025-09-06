@@ -79,7 +79,7 @@ class LoginController extends Controller
 
         // Clear all tenant-related session data
         session()->forget([
-            'tenant_user', 
+            'tenant_user',
             'tenant_id',
             'tenant_database_switched'
         ]);
