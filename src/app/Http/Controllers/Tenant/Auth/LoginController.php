@@ -70,9 +70,32 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-        session()->forget(['tenant_user', 'tenant_id']);
+        // Log the logout attempt
+        \Log::info('Tenant user logout', [
+            'user_email' => session('tenant_user')->email ?? 'unknown',
+            'tenant_id' => session('tenant_id'),
+            'tenant_subdomain' => request()->route('tenant')
+        ]);
 
-        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
+        // Clear all tenant-related session data
+        session()->forget([
+            'tenant_user', 
+            'tenant_id',
+            'tenant_database_switched'
+        ]);
+
+        // Also clear any Laravel auth session if it exists
+        if (auth()->check()) {
+            auth()->logout();
+        }
+
+        // Regenerate session ID for security
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        // Redirect to login with success message
+        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')])
+            ->with('success', 'You have been logged out successfully.');
     }
 
     /**

@@ -223,7 +223,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     // Logout route (not in guest middleware)
     Route::post('/logout', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'logout'])->name('tenant.logout');
 
-    Route::middleware('auth')->group(function () {
+    Route::middleware('tenant.auth')->group(function () {
         Volt::route('verify-email', 'pages.auth.verify-email')->name('tenant.verification.notice');
         Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
             ->middleware(['signed', 'throttle:6,1'])
@@ -241,7 +241,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     });
 
     // Admin routes for tenants
-    Route::middleware(['auth', 'verified'])->prefix('admin')->name('tenant.admin.')->group(function () {
+    Route::middleware(['tenant.auth'])->prefix('admin')->name('tenant.admin.')->group(function () {
         // Tenant Admin Dashboard
         Route::get('/', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
 

@@ -250,7 +250,7 @@
                         <!-- User Menu -->
                         <div class="relative">
                             <div class="flex items-center space-x-4">
-                                <span class="text-sm text-gray-700">{{ auth()->user()->name ?? 'Admin' }}</span>
+                                <span class="text-sm text-gray-700">{{ session('tenant_user')->name ?? 'Admin' }}</span>
                                 <form method="POST" action="{{ route('tenant.logout', ['tenant' => request()->route('tenant')]) }}" class="inline">
                                     @csrf
                                     <button type="submit" class="text-sm text-red-600 hover:text-red-800">Logout</button>
