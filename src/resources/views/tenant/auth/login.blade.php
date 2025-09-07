@@ -69,7 +69,7 @@
                                type="email"
                                autocomplete="email"
                                required
-                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('email') border-red-500 @enderror"
+                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-yellow-50 @error('email') border-red-500 @enderror"
                                placeholder="svps@gmail.com"
                                value="{{ old('email', 'svps@gmail.com') }}">
                     </div>
@@ -94,7 +94,7 @@
                                type="password"
                                autocomplete="current-password"
                                required
-                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('password') border-red-500 @enderror"
+                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-yellow-50 @error('password') border-red-500 @enderror"
                                placeholder="••••••••">
                     </div>
                     @error('password')

@@ -167,10 +167,10 @@ class LoginController extends Controller
     {
         $user = auth()->user();
         $policy = new AdminAccessPolicy();
-        
+
         // Get the appropriate redirect URL based on user role and current domain
         $redirectUrl = $policy->getRedirectUrl($user);
-        
+
         if ($redirectUrl) {
             return $redirectUrl;
         }
