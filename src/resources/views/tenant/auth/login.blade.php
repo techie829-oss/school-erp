@@ -21,22 +21,20 @@
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                 </div>
-
+                
                 <!-- School Name -->
-                <h2 class="text-xl font-bold text-blue-900 mb-2">{{ $tenant->data['name'] ?? 'School Management System' }}</h2>
+                <h2 class="text-2xl font-bold text-blue-900 mb-2">{{ $tenant->data['name'] ?? 'School Management System' }}</h2>
                 <p class="text-gray-600 text-sm mb-3">School Management System</p>
-
+                
                 <!-- Database Badge -->
-                @if(isset($tenant->data['database_strategy']))
-                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 border border-yellow-200">
-                        <svg class="w-3 h-3 text-yellow-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-yellow-800 text-xs font-medium">
-                            {{ ucfirst($tenant->data['database_strategy'] ?? 'shared') }} Database
-                        </span>
-                    </div>
-                @endif
+                <div class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 border border-yellow-200">
+                    <svg class="w-3 h-3 text-yellow-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-yellow-800 text-xs font-medium">
+                        {{ ucfirst($tenant->data['database_strategy'] ?? 'shared') }} Database
+                    </span>
+                </div>
             </div>
             @if (session('success'))
                 <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
