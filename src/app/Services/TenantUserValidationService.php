@@ -208,29 +208,16 @@ class TenantUserValidationService
     {
         $allowedDomains = [];
 
-        // Check shared database tenants
-        $sharedUsers = AdminUser::where('email', $email)->get();
-        foreach ($sharedUsers as $user) {
+        // All admin users (both shared and separate DB tenants) are stored in main database
+        $users = AdminUser::where('email', $email)->get();
+        foreach ($users as $user) {
             $tenant = Tenant::find($user->tenant_id);
             if ($tenant && isset($tenant->data['subdomain'])) {
-                $allowedDomains[] = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
-            }
-        }
-
-        // Check separate database tenants
-        $tenants = Tenant::where('data->database_strategy', 'separate')->get();
-        foreach ($tenants as $tenant) {
-            try {
-                $databaseService = new TenantDatabaseService();
-                $connection = $databaseService->getTenantConnection($tenant);
-                $userData = $connection->table('admin_users')->where('email', $email)->first();
-                
-                if ($userData && isset($tenant->data['subdomain'])) {
-                    $allowedDomains[] = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
+                $domain = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
+                // Avoid duplicates
+                if (!in_array($domain, $allowedDomains)) {
+                    $allowedDomains[] = $domain;
                 }
-            } catch (\Exception $e) {
-                // Continue checking other tenants
-                continue;
             }
         }
 

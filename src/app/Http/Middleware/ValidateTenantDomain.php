@@ -35,16 +35,20 @@ class ValidateTenantDomain
             abort(404, 'Tenant not found');
         }
 
-        // If user is authenticated, validate they belong to this tenant
-        if (session('tenant_user')) {
-            $user = session('tenant_user');
+        // If user is authenticated via admin guard, validate they belong to this tenant
+        if (auth('admin')->check()) {
+            $user = auth('admin')->user();
             $validationService = new TenantUserValidationService();
             
-            if ($user && isset($user->email) && !$validationService->validateDomainAccess($user->email, $subdomain)) {
+            if ($user && !$validationService->validateDomainAccess($user->email, $subdomain)) {
+                // Get allowed domains for better error message
+                $allowedDomains = $validationService->getAllowedDomainsForUser($user->email);
+                $allowedDomainsStr = implode(', ', $allowedDomains);
+                
                 // Clear session and redirect to login
-                session()->forget(['tenant_user', 'tenant_id']);
+                auth('admin')->logout();
                 return redirect()->route('tenant.login', ['tenant' => $subdomain])
-                    ->withErrors(['email' => 'You do not have access to this tenant domain.']);
+                    ->withErrors(['email' => "You do not have access to this tenant domain. You can access: {$allowedDomainsStr}"]);
             }
         }
 
