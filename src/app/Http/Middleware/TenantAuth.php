@@ -15,11 +15,17 @@ class TenantAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if tenant user is authenticated
-        if (!session('tenant_user')) {
-            return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
+        // Check if user is authenticated via admin guard (for AdminUser model)
+        if (auth('admin')->check()) {
+            return $next($request);
         }
 
-        return $next($request);
+        // Fallback: Check if tenant user is authenticated via session (legacy)
+        if (session('tenant_user')) {
+            return $next($request);
+        }
+
+        // No authentication found, redirect to login
+        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
     }
 }

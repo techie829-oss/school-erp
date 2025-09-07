@@ -23,7 +23,13 @@ class EnforceAdminAccessPolicy
      */
     public function handle(Request $request, Closure $next)
     {
-        $user = Auth::user();
+        // Check admin guard first (for AdminUser model)
+        $user = Auth::guard('admin')->user();
+        
+        // Fallback to default guard if admin guard has no user
+        if (!$user) {
+            $user = Auth::user();
+        }
         
         if (!$user) {
             return $next($request);
