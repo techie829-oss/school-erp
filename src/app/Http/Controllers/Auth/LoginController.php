@@ -177,26 +177,26 @@ class LoginController extends Controller
         try {
             $databaseService = new \App\Services\TenantDatabaseService();
             $connection = $databaseService->getTenantConnection($tenant);
-            
+
             $userData = $connection->table('admin_users')
                 ->where('email', $credentials['email'])
                 ->first();
-            
+
             if (!$userData) {
                 return false;
             }
-            
+
             // Verify password
             if (!\Illuminate\Support\Facades\Hash::check($credentials['password'], $userData->password)) {
                 return false;
             }
-            
+
             // Check if user is active
             $isActive = $userData->is_active ?? $userData->active ?? false;
             if (!$isActive) {
                 return false;
             }
-            
+
             // Create a fake user object for session
             $user = (object) [
                 'id' => $userData->id,
@@ -206,12 +206,12 @@ class LoginController extends Controller
                 'is_active' => $isActive,
                 'tenant_id' => $tenant->id,
             ];
-            
+
             // Manually log in the user using the admin guard
             \Illuminate\Support\Facades\Auth::guard('admin')->login($user);
-            
+
             return true;
-            
+
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Error authenticating against tenant database', [
                 'error' => $e->getMessage(),
@@ -228,11 +228,11 @@ class LoginController extends Controller
     protected function extractSubdomain(string $host): ?string
     {
         $primaryDomain = config('all.domains.primary');
-        
+
         if (str_ends_with($host, '.' . $primaryDomain)) {
             return str_replace('.' . $primaryDomain, '', $host);
         }
-        
+
         return null;
     }
 
