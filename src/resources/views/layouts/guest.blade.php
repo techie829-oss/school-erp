@@ -80,78 +80,8 @@
         </style>
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 py-10 sm:pt-0 bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-            <!-- Background Pattern -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-                <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-50 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-                <div class="absolute top-40 left-40 w-80 h-80 bg-secondary-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-            </div>
-
-            <!-- Logo and Tenant Info -->
-            <div class="relative z-10 my-10 text-center mb-8">
-                <a href="/" wire:navigate class="inline-block">
-                    <div class="w-20 h-20 mx-auto mb-4 bg-primary-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17a1 1 0 00-.356.257l-4 1.714a1 1 0 01-1.788-1.838l7-3a1 1 0 00.788 0l7 3a1 1 0 000-1.84L14.75 7.051a.999.999 0 01-.356-.257l-4-1.714a1 1 0 11-.788-1.838l2.727 1.17a1 1 0 00.356.257l4 1.714a1 1 0 001.788-1.838l-7-3z"/>
-                        </svg>
-                    </div>
-                </a>
-
-                @if($currentTenant)
-                    <div class="mb-6">
-                        <h1 class="text-3xl font-bold text-primary-900 mb-2">
-                            {{ $currentTenant->data['name'] ?? 'School ERP' }}
-                        </h1>
-                        <p class="text-secondary-600 text-lg">
-                            @if($currentTenant->data['type'] === 'internal')
-                                Super Admin Portal
-                            @elseif($currentTenant->data['type'] === 'school')
-                                School Management System
-                            @else
-                                Welcome Back
-                            @endif
-                        </p>
-                        @if($currentTenant->data['type'] === 'school')
-                            <div class="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent-50 text-accent-600">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                {{ ucfirst($currentTenant->data['database_strategy'] ?? 'shared') }} Database
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="mb-6">
-                        <h1 class="text-3xl font-bold text-primary-900 mb-2">School ERP</h1>
-                        <p class="text-secondary-600 text-lg">Welcome Back</p>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Login Form Container -->
-            <div class="relative z-10 w-full sm:max-w-md px-6 py-8 bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl border border-white/20">
-                @yield('content')
-            </div>
-
-            <!-- Footer -->
-            <div class="relative z-10 mt-8 text-center">
-                <p class="text-secondary-600 text-sm">
-                    © {{ date('Y') }} {{ config('all.company.name', 'School ERP') }}. All rights reserved.
-                </p>
-            </div>
+        <div class="min-h-screen">
+            @yield('content')
         </div>
-
-        <style>
-            @keyframes blob {
-                0% { transform: translate(0px, 0px) scale(1); }
-                33% { transform: translate(30px, -50px) scale(1.1); }
-                66% { transform: translate(-20px, 20px) scale(0.9); }
-                100% { transform: translate(0px, 0px) scale(1); }
-            }
-            .animate-blob { animation: blob 7s infinite; }
-            .animation-delay-2000 { animation-delay: 2s; }
-            .animation-delay-4000 { animation-delay: 4s; }
-        </style>
     </body>
 </html>

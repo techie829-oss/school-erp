@@ -1,15 +1,52 @@
 @extends('layouts.guest')
 
 @section('content')
-        <!-- Admin Badge -->
-        <div class="text-center mb-6">
-            <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 border border-blue-200">
-                <svg class="w-3 h-3 text-blue-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-                <span class="text-blue-800 text-xs font-medium">Admin Access</span>
-            </div>
+<div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 py-10 sm:pt-0 bg-gradient-to-br from-blue-50 via-white to-gray-50">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute top-40 left-40 w-80 h-80 bg-gray-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Top Header Section -->
+    <div class="relative z-10 text-center mb-8">
+        <!-- Logo -->
+        <div class="mx-auto w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
         </div>
+        
+        <!-- School Name -->
+        <h1 class="text-2xl font-bold text-blue-900 mb-2">School ERP</h1>
+        <p class="text-gray-600 text-sm">Welcome Back</p>
+    </div>
+
+    <!-- Login Form Card -->
+    <div class="relative z-10 w-full max-w-md px-6">
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <!-- Card Header -->
+            <div class="text-center mb-8">
+                <!-- Logo -->
+                <div class="mx-auto w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                
+                <!-- School Name -->
+                <h2 class="text-xl font-bold text-blue-900 mb-2">School ERP</h2>
+                <p class="text-gray-600 text-sm mb-3">Admin Portal</p>
+                
+                <!-- Admin Badge -->
+                <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 border border-blue-200">
+                    <svg class="w-3 h-3 text-blue-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-blue-800 text-xs font-medium">Admin Access</span>
+                </div>
+            </div>
 
         @if (session('tenant_redirect'))
             <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -114,7 +151,26 @@
             </form>
         </div>
     </div>
+
+    <!-- Footer -->
+    <div class="relative z-10 mt-8 text-center">
+        <p class="text-gray-600 text-sm">
+            © {{ date('Y') }} School ERP. All rights reserved.
+        </p>
+    </div>
 </div>
+
+<style>
+    @keyframes blob {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+    }
+    .animate-blob { animation: blob 7s infinite; }
+    .animation-delay-2000 { animation-delay: 2s; }
+    .animation-delay-4000 { animation-delay: 4s; }
+</style>
 
 <script>
 // Check for tenant user on email input
