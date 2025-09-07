@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'switch.tenant.database' => \App\Http\Middleware\SwitchTenantDatabase::class,
             'tenant.auth' => \App\Http\Middleware\TenantAuth::class,
             'validate.tenant.domain' => \App\Http\Middleware\ValidateTenantDomain::class,
+            'enforce.admin.access' => \App\Http\Middleware\EnforceAdminAccessPolicy::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

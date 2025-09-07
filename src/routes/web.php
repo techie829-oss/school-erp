@@ -65,7 +65,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
     Route::post('/check-tenant-user', [\App\Http\Controllers\Auth\TenantCheckController::class, 'checkTenantUser'])->name('check.tenant.user');
 
     // Super Admin Routes (only accessible on admin domain)
-    Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'verified', 'enforce.admin.access'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/', function () {
             return view('admin.dashboard');
@@ -251,7 +251,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     });
 
     // Admin routes for tenants
-    Route::middleware(['tenant.auth'])->prefix('admin')->name('tenant.admin.')->group(function () {
+    Route::middleware(['tenant.auth', 'enforce.admin.access'])->prefix('admin')->name('tenant.admin.')->group(function () {
         // Tenant Admin Dashboard
         Route::get('/', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
 

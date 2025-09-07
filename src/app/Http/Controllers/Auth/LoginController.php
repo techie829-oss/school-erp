@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\TenantUserValidationService;
+use App\Policies\AdminAccessPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -164,22 +165,21 @@ class LoginController extends Controller
      */
     protected function getRedirectRoute(): string
     {
+        $user = auth()->user();
+        $policy = new AdminAccessPolicy();
+        
+        // Get the appropriate redirect URL based on user role and current domain
+        $redirectUrl = $policy->getRedirectUrl($user);
+        
+        if ($redirectUrl) {
+            return $redirectUrl;
+        }
+
+        // Default redirects based on current domain
         $host = request()->getHost();
         $adminDomain = config('all.domains.admin');
 
-        // If we're on the admin domain, check if user is school_admin
         if ($host === $adminDomain) {
-            $user = auth()->user();
-
-            // If user is school_admin, redirect to their tenant domain
-            if ($user && $user->admin_type === 'school_admin') {
-                $tenantUrl = $user->getTenantUrl();
-                if ($tenantUrl) {
-                    return $tenantUrl;
-                }
-            }
-
-            // For super_admin and super_manager, stay on admin domain
             return route('admin.dashboard', absolute: false);
         }
 
@@ -189,7 +189,7 @@ class LoginController extends Controller
             return route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']], absolute: false);
         }
 
-        // Fallback to admin dashboard if tenant detection fails
+        // Fallback to admin dashboard
         return route('admin.dashboard', absolute: false);
     }
 
