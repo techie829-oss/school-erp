@@ -9,19 +9,6 @@
         <div class="absolute top-40 left-40 w-80 h-80 bg-gray-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
     </div>
 
-    <!-- Top Header Section -->
-    <div class="relative z-10 text-center mb-8">
-        <!-- Logo -->
-        <div class="mx-auto w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-        </div>
-
-        <!-- School Name -->
-        <h1 class="text-2xl font-bold text-blue-900 mb-2">School ERP</h1>
-        <p class="text-gray-600 text-sm">Welcome Back</p>
-    </div>
 
     <!-- Login Form Card -->
     <div class="relative z-10 w-full max-w-md px-6">
