@@ -2,21 +2,35 @@
 
 @section('content')
 <div class="w-full max-w-md px-6">
+    <!-- Top Header Section (Outside Card) -->
+    <div class="text-center mb-8">
+        <!-- Logo -->
+        <div class="mx-auto w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        
+        <!-- School Name -->
+        <h1 class="text-2xl font-bold text-blue-900 mb-2">School ERP</h1>
+        <p class="text-gray-600 text-sm">Welcome Back</p>
+    </div>
+
     <!-- Login Form Card -->
     <div class="bg-white rounded-2xl shadow-xl p-8">
         <!-- Card Header -->
         <div class="text-center mb-8">
             <!-- Logo -->
-            <div class="mx-auto w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <div class="mx-auto w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>
             </div>
-
+            
             <!-- School Name -->
-            <h1 class="text-2xl font-bold text-blue-900 mb-2">School ERP</h1>
+            <h2 class="text-xl font-bold text-blue-900 mb-2">School ERP</h2>
             <p class="text-gray-600 text-sm mb-3">Admin Portal</p>
-
+            
             <!-- Admin Badge -->
             <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 border border-blue-200">
                 <svg class="w-3 h-3 text-blue-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -25,37 +39,38 @@
                 <span class="text-blue-800 text-xs font-medium">Admin Access</span>
             </div>
         </div>
-            @if (session('tenant_redirect'))
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-blue-800">
-                                {{ session('tenant_redirect.message') }}
-                            </h3>
-                            <div class="mt-2 text-sm text-blue-700">
-                                <p>Please login at: <strong>{{ session('tenant_redirect.tenant_name') }}</strong></p>
-                                <p class="mt-1">
-                                    <a href="{{ session('tenant_redirect.login_url') }}"
-                                       class="font-medium underline text-blue-600 hover:text-blue-500">
-                                        {{ session('tenant_redirect.tenant_domain') }}/login
-                                    </a>
-                                </p>
-                            </div>
+
+        @if (session('tenant_redirect'))
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">
+                            {{ session('tenant_redirect.message') }}
+                        </h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>Please login at: <strong>{{ session('tenant_redirect.tenant_name') }}</strong></p>
+                            <p class="mt-1">
+                                <a href="{{ session('tenant_redirect.login_url') }}"
+                                   class="font-medium underline text-blue-600 hover:text-blue-500">
+                                    {{ session('tenant_redirect.tenant_domain') }}/login
+                                </a>
+                            </p>
                         </div>
                     </div>
                 </div>
-            @endif
-
-            <!-- Welcome Message -->
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">Welcome Back</h3>
-                <p class="text-gray-600 text-sm">Sign in to your account to continue</p>
             </div>
+        @endif
+
+        <!-- Welcome Message -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Welcome Back</h3>
+            <p class="text-gray-600 text-sm">Sign in to your account to continue</p>
+        </div>
 
             <form method="POST" action="{{ route('login') }}" class="space-y-4">
                 @csrf
