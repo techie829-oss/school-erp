@@ -114,45 +114,76 @@ class TenantUserValidationService
      */
     protected function findUserInSeparateDatabase(string $email, Tenant $tenant): ?object
     {
-        Log::info("=== SEPARATE DATABASE USER LOOKUP START ===", [
-            'email' => $email,
-            'tenant_id' => $tenant->id,
-            'note' => 'Admin users for separate DB tenants are stored in main database'
-        ]);
-
-        // For separate database tenants, admin users are stored in the main database
-        // with the correct tenant_id
-        $user = AdminUser::where('email', $email)
-            ->where('tenant_id', $tenant->id)
-            ->first();
-
-        Log::info("Main database query result", [
-            'user_found' => $user ? 'yes' : 'no',
-            'user_data' => $user ? [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-                'admin_type' => $user->admin_type,
-                'is_active' => $user->is_active,
-                'tenant_id' => $user->tenant_id
-            ] : null
-        ]);
-
-        if (!$user) {
-            Log::warning("User not found in main database for separate database tenant", [
+        try {
+            Log::info("=== SEPARATE DATABASE USER LOOKUP START ===", [
                 'email' => $email,
-                'tenant_id' => $tenant->id
+                'tenant_id' => $tenant->id,
+                'database_name' => $tenant->data['database_name'] ?? 'unknown',
+                'database_host' => $tenant->data['database_host'] ?? 'unknown'
+            ]);
+
+            $databaseService = new TenantDatabaseService();
+            $connection = $databaseService->getTenantConnection($tenant);
+
+            Log::info("Database connection established", [
+                'connection_name' => $connection->getName(),
+                'database_name' => $connection->getDatabaseName()
+            ]);
+
+            $userData = $connection->table('admin_users')
+                ->where('email', $email)
+                ->first();
+
+            Log::info("Database query result", [
+                'user_found' => $userData ? 'yes' : 'no',
+                'user_data' => $userData ? [
+                    'id' => $userData->id,
+                    'email' => $userData->email,
+                    'name' => $userData->name,
+                    'admin_type' => $userData->admin_type,
+                    'is_active' => $userData->is_active ?? $userData->active ?? false,
+                    'password_length' => strlen($userData->password)
+                ] : null
+            ]);
+
+            if (!$userData) {
+                Log::warning("User not found in separate database", [
+                    'email' => $email,
+                    'tenant_id' => $tenant->id,
+                    'database_name' => $connection->getDatabaseName()
+                ]);
+                return null;
+            }
+
+            // Convert to object for consistency
+            $user = (object) [
+                'id' => $userData->id,
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $userData->password,
+                'admin_type' => $userData->admin_type,
+                'is_active' => $userData->is_active ?? $userData->active ?? false,
+                'last_login_at' => $userData->last_login_at ? \Carbon\Carbon::parse($userData->last_login_at) : null,
+                'created_at' => \Carbon\Carbon::parse($userData->created_at),
+                'updated_at' => \Carbon\Carbon::parse($userData->updated_at),
+            ];
+
+            Log::info("User object created successfully", [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'admin_type' => $user->admin_type
+            ]);
+
+            return $user;
+        } catch (\Exception $e) {
+            Log::error('=== ERROR accessing tenant database for user validation ===', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'tenant_id' => $tenant->id,
+                'email' => $email
             ]);
             return null;
         }
-
-        Log::info("=== SEPARATE DATABASE USER LOOKUP SUCCESS ===", [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'admin_type' => $user->admin_type
-        ]);
-
-        return $user;
     }
 
     /**
@@ -208,9 +239,9 @@ class TenantUserValidationService
     {
         $allowedDomains = [];
 
-        // All admin users (both shared and separate DB tenants) are stored in main database
-        $users = AdminUser::where('email', $email)->get();
-        foreach ($users as $user) {
+        // Check shared database tenants (admin users in main database)
+        $sharedUsers = AdminUser::where('email', $email)->get();
+        foreach ($sharedUsers as $user) {
             $tenant = Tenant::find($user->tenant_id);
             if ($tenant && isset($tenant->data['subdomain'])) {
                 $domain = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
@@ -218,6 +249,27 @@ class TenantUserValidationService
                 if (!in_array($domain, $allowedDomains)) {
                     $allowedDomains[] = $domain;
                 }
+            }
+        }
+
+        // Check separate database tenants (admin users in tenant database)
+        $tenants = Tenant::where('data->database_strategy', 'separate')->get();
+        foreach ($tenants as $tenant) {
+            try {
+                $databaseService = new TenantDatabaseService();
+                $connection = $databaseService->getTenantConnection($tenant);
+                $userData = $connection->table('admin_users')->where('email', $email)->first();
+                
+                if ($userData && isset($tenant->data['subdomain'])) {
+                    $domain = $tenant->data['subdomain'] . '.' . config('all.domains.primary');
+                    // Avoid duplicates
+                    if (!in_array($domain, $allowedDomains)) {
+                        $allowedDomains[] = $domain;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Continue checking other tenants
+                continue;
             }
         }
 

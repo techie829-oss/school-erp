@@ -39,12 +39,35 @@ class LoginController extends Controller
         // Determine which guard to use based on the current domain
         $guard = $this->getGuardForCurrentDomain();
 
-        if (!Auth::guard($guard)->attempt($credentials, $remember)) {
-            RateLimiter::hit($this->throttleKey($request));
-
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+        // For tenant domains, check if it's a separate database tenant
+        if ($this->isTenantDomain()) {
+            $tenant = tenant();
+            if ($tenant && $tenant->usesSeparateDatabase()) {
+                // For separate database tenants, authenticate against tenant database
+                $authResult = $this->authenticateAgainstTenantDatabase($credentials, $tenant);
+                if (!$authResult) {
+                    RateLimiter::hit($this->throttleKey($request));
+                    throw ValidationException::withMessages([
+                        'email' => trans('auth.failed'),
+                    ]);
+                }
+            } else {
+                // For shared database tenants, use normal authentication
+                if (!Auth::guard($guard)->attempt($credentials, $remember)) {
+                    RateLimiter::hit($this->throttleKey($request));
+                    throw ValidationException::withMessages([
+                        'email' => trans('auth.failed'),
+                    ]);
+                }
+            }
+        } else {
+            // For admin domain, use normal authentication
+            if (!Auth::guard($guard)->attempt($credentials, $remember)) {
+                RateLimiter::hit($this->throttleKey($request));
+                throw ValidationException::withMessages([
+                    'email' => trans('auth.failed'),
+                ]);
+            }
         }
 
         // After successful authentication, validate tenant domain access if needed
@@ -147,16 +170,69 @@ class LoginController extends Controller
     }
 
     /**
+     * Authenticate against tenant database for separate database tenants
+     */
+    protected function authenticateAgainstTenantDatabase(array $credentials, $tenant): bool
+    {
+        try {
+            $databaseService = new \App\Services\TenantDatabaseService();
+            $connection = $databaseService->getTenantConnection($tenant);
+            
+            $userData = $connection->table('admin_users')
+                ->where('email', $credentials['email'])
+                ->first();
+            
+            if (!$userData) {
+                return false;
+            }
+            
+            // Verify password
+            if (!\Illuminate\Support\Facades\Hash::check($credentials['password'], $userData->password)) {
+                return false;
+            }
+            
+            // Check if user is active
+            $isActive = $userData->is_active ?? $userData->active ?? false;
+            if (!$isActive) {
+                return false;
+            }
+            
+            // Create a fake user object for session
+            $user = (object) [
+                'id' => $userData->id,
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'admin_type' => $userData->admin_type,
+                'is_active' => $isActive,
+                'tenant_id' => $tenant->id,
+            ];
+            
+            // Manually log in the user using the admin guard
+            \Illuminate\Support\Facades\Auth::guard('admin')->login($user);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error authenticating against tenant database', [
+                'error' => $e->getMessage(),
+                'tenant_id' => $tenant->id,
+                'email' => $credentials['email']
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Extract subdomain from host
      */
     protected function extractSubdomain(string $host): ?string
     {
         $primaryDomain = config('all.domains.primary');
-
+        
         if (str_ends_with($host, '.' . $primaryDomain)) {
             return str_replace('.' . $primaryDomain, '', $host);
         }
-
+        
         return null;
     }
 
