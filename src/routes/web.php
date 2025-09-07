@@ -219,6 +219,12 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
     Route::middleware('guest')->group(function () {
         Route::get('/login', function () {
             $tenant = tenant();
+            // Debug: Check if tenant is loaded correctly
+            if (!$tenant) {
+                // Try to get tenant by subdomain
+                $subdomain = request()->route('tenant');
+                $tenant = \App\Models\Tenant::where('data->subdomain', $subdomain)->first();
+            }
             return view('tenant.auth.login', compact('tenant'));
         })->name('tenant.login');
         Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('tenant.login.post');

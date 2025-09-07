@@ -21,11 +21,11 @@
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                 </div>
-                
+
                 <!-- School Name -->
                 <h2 class="text-2xl font-bold text-blue-900 mb-2">{{ $tenant->data['name'] ?? 'School Management System' }}</h2>
                 <p class="text-gray-600 text-sm mb-3">School Management System</p>
-                
+
                 <!-- Database Badge -->
                 <div class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 border border-yellow-200">
                     <svg class="w-3 h-3 text-yellow-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
