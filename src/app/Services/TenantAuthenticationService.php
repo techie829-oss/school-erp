@@ -112,12 +112,25 @@ class TenantAuthenticationService
 
         // For separate database, create authenticatable user object
         return new class($userData, $tenant->id) implements \Illuminate\Contracts\Auth\Authenticatable {
+            public $id;
+            public $name;
+            public $email;
+            public $admin_type;
+            public $is_active;
+            public $tenant_id;
             private $userData;
-            private $tenantId;
 
             public function __construct($userData, $tenantId) {
                 $this->userData = $userData;
                 $this->tenantId = $tenantId;
+                
+                // Expose properties directly for easy access
+                $this->id = $userData->id;
+                $this->name = $userData->name;
+                $this->email = $userData->email;
+                $this->admin_type = $userData->admin_type ?? 'school_admin';
+                $this->is_active = $userData->is_active ?? $userData->active ?? false;
+                $this->tenant_id = $tenantId;
             }
 
             public function getAuthIdentifierName() { return 'id'; }
@@ -129,12 +142,10 @@ class TenantAuthenticationService
             public function getRememberTokenName() { return 'remember_token'; }
 
             public function __get($key) {
-                if ($key === 'tenant_id') return $this->tenantId;
                 return $this->userData->$key ?? null;
             }
 
             public function __isset($key) {
-                if ($key === 'tenant_id') return true;
                 return isset($this->userData->$key);
             }
         };
