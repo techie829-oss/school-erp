@@ -189,6 +189,85 @@ Comprehensive overview and management for {{ $tenant->data['name'] ?? 'Unnamed T
 
                 </div>
             </div>
+
+            <!-- Environment File Management (for separate database tenants) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Environment File</h3>
+                    <span id="env-file-status" class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">Checking...</span>
+                </div>
+
+                <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-blue-900">Domain-Based Environment</p>
+                            <p class="text-xs text-blue-700 mt-1">File: <code class="font-mono bg-white px-1 rounded">.env.{{ $tenant->data['subdomain'] ?? 'unknown' }}.{{ config('all.domains.primary') }}</code></p>
+                            <p class="text-xs text-blue-700 mt-1">This file is a full copy of your main .env with only database settings changed.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button type="button"
+                            onclick="viewEnvFile()"
+                            class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200">
+                        <div class="p-2 bg-gray-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">View File</h4>
+                            <p class="text-sm text-gray-600">View contents</p>
+                        </div>
+                    </button>
+
+                    <button type="button"
+                            onclick="downloadEnvFile()"
+                            class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors border border-green-200">
+                        <div class="p-2 bg-green-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Download</h4>
+                            <p class="text-sm text-gray-600">Download file</p>
+                        </div>
+                    </button>
+
+                    <button type="button"
+                            onclick="regenerateEnvFile()"
+                            class="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors border border-yellow-200">
+                        <div class="p-2 bg-yellow-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Regenerate</h4>
+                            <p class="text-sm text-gray-600">Recreate file</p>
+                        </div>
+                    </button>
+
+                    <a href="{{ route('admin.tenants.edit', $tenant) }}"
+                       class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200">
+                        <div class="p-2 bg-blue-100 rounded-lg mr-3">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Edit Settings</h4>
+                            <p class="text-sm text-gray-600">Update DB config</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
             @endif
         </div>
 
@@ -371,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
     @if(($tenant->data['database_strategy'] ?? 'shared') === 'separate')
     checkDatabaseStatus();
     loadDatabaseInfo();
+    checkEnvFileStatus();
     @endif
 });
 
@@ -772,6 +852,7 @@ function showNotification(type, message) {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
         type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
+        type === 'info' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
         'bg-red-100 text-red-800 border border-red-300'
     }`;
 
@@ -780,6 +861,8 @@ function showNotification(type, message) {
             <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 ${type === 'success' ?
                     '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>' :
+                    type === 'info' ?
+                    '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>' :
                     '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>'
                 }
             </svg>
@@ -793,6 +876,74 @@ function showNotification(type, message) {
     setTimeout(() => {
         notification.remove();
     }, 5000);
+}
+
+// Environment File Management Functions
+function checkEnvFileStatus() {
+    const tenantId = '{{ $tenant->id }}';
+    const statusBadge = document.getElementById('env-file-status');
+
+    fetch(`/admin/tenants/${tenantId}/env-file-status`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.exists) {
+            statusBadge.className = 'text-xs px-2 py-1 rounded-full bg-green-100 text-green-800';
+            statusBadge.textContent = '✓ File Exists';
+        } else {
+            statusBadge.className = 'text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800';
+            statusBadge.textContent = '⚠ Not Found';
+        }
+    })
+    .catch(error => {
+        console.error('Error checking env file status:', error);
+        statusBadge.className = 'text-xs px-2 py-1 rounded-full bg-red-100 text-red-800';
+        statusBadge.textContent = '✗ Error';
+    });
+}
+
+function viewEnvFile() {
+    const tenantId = '{{ $tenant->id }}';
+    window.open(`/admin/tenants/${tenantId}/view-env-file`, '_blank');
+}
+
+function downloadEnvFile() {
+    const tenantId = '{{ $tenant->id }}';
+    window.location.href = `/admin/tenants/${tenantId}/download-env-file`;
+}
+
+function regenerateEnvFile() {
+    if (!confirm('This will recreate the environment file from the main .env with your database settings. Continue?')) {
+        return;
+    }
+
+    const tenantId = '{{ $tenant->id }}';
+
+    fetch(`/admin/tenants/${tenantId}/regenerate-env-file`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            checkEnvFileStatus(); // Refresh status
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error regenerating env file:', error);
+        showNotification('error', 'Error regenerating environment file');
+    });
 }
 </script>
 @endsection

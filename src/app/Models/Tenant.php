@@ -149,11 +149,12 @@ class Tenant extends Model
 
         return [
             'driver' => 'mysql',
-            'host' => $this->database_host ?? $this->data['database_host'] ?? 'localhost',
+            'host' => $this->database_host ?? $this->data['database_host'] ?? '127.0.0.1',
             'port' => $this->database_port ?? $this->data['database_port'] ?? 3306,
             'database' => $this->database_name ?? $this->data['database_name'] ?? '',
             'username' => $this->database_username ?? $this->data['database_username'] ?? 'root',
             'password' => $this->database_password ?? $this->data['database_password'] ?? '',
+            'unix_socket' => '', // Force TCP/IP connection instead of socket
             'charset' => $this->database_charset ?? $this->data['database_charset'] ?? 'utf8mb4',
             'collation' => $this->database_collation ?? $this->data['database_collation'] ?? 'utf8mb4_unicode_ci',
             'prefix' => '',

@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\AdminUser;
 use App\Services\VhostService;
 use App\Services\TenantDatabaseService;
+use App\Services\TenantEnvironmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -79,9 +80,15 @@ class TenantController extends Controller
         // Prepare database configuration if separate strategy
         $databaseConfig = [];
         if ($validated['database_strategy'] === 'separate') {
+            // Force 127.0.0.1 instead of localhost for TCP/IP connection
+            $dbHost = $validated['database_host'];
+            if ($dbHost === 'localhost') {
+                $dbHost = '127.0.0.1';
+            }
+
             $databaseConfig = [
                 'database_name' => $validated['database_name'],
-                'database_host' => $validated['database_host'],
+                'database_host' => $dbHost,
                 'database_port' => $validated['database_port'] ?? 3306,
                 'database_username' => $validated['database_username'],
                 'database_password' => $validated['database_password'] ?? '',
@@ -95,6 +102,11 @@ class TenantController extends Controller
             'data' => $tenantData,
             ...$databaseConfig
         ]);
+
+        // Auto-create tenant environment file for separate database strategy
+        if ($validated['database_strategy'] === 'separate') {
+            $this->createTenantEnvironmentFile($tenant, $validated);
+        }
 
         // Update Herd configuration if hosting type is Laravel Herd
         $this->updateHerdConfiguration($validated['subdomain']);
@@ -164,9 +176,15 @@ class TenantController extends Controller
         // Prepare database configuration
         $databaseConfig = [];
         if ($validated['database_strategy'] === 'separate') {
+            // Force 127.0.0.1 instead of localhost for TCP/IP connection
+            $dbHost = $validated['database_host'];
+            if ($dbHost === 'localhost') {
+                $dbHost = '127.0.0.1';
+            }
+
             $databaseConfig = [
                 'database_name' => $validated['database_name'],
-                'database_host' => $validated['database_host'],
+                'database_host' => $dbHost,
                 'database_port' => $validated['database_port'] ?? 3306,
                 'database_username' => $validated['database_username'],
                 'database_password' => $validated['database_password'] ?? '',
@@ -198,6 +216,14 @@ class TenantController extends Controller
             'data' => $tenantData
         ], $databaseConfig));
 
+        // Auto-create or update tenant environment file for separate database strategy
+        if ($validated['database_strategy'] === 'separate') {
+            $this->createTenantEnvironmentFile($tenant, $validated);
+        } else {
+            // Delete environment file if switching to shared database
+            $this->deleteTenantEnvironmentFile($tenant);
+        }
+
         return redirect()->route('admin.tenants.show', $tenant)
             ->with('success', 'Tenant updated successfully!');
     }
@@ -207,6 +233,11 @@ class TenantController extends Controller
      */
     public function destroy(Tenant $tenant)
     {
+        // Delete tenant environment file if it exists
+        if ($tenant->usesSeparateDatabase()) {
+            $this->deleteTenantEnvironmentFile($tenant);
+        }
+
         $tenant->delete();
 
         return redirect()->route('admin.tenants.index')
@@ -1463,6 +1494,234 @@ class TenantController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error getting database info: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Automatically create tenant environment file for separate database
+     */
+    private function createTenantEnvironmentFile(Tenant $tenant, array $validated): void
+    {
+        try {
+            $envService = new TenantEnvironmentService();
+            $subdomain = $validated['subdomain'] ?? $tenant->data['subdomain'];
+
+            if (!$subdomain) {
+                Log::warning('Cannot create tenant env file without subdomain', [
+                    'tenant_id' => $tenant->id
+                ]);
+                return;
+            }
+
+            // Build environment configuration from validated input (use standard DB_ prefix)
+            // Force 127.0.0.1 instead of localhost to use TCP/IP connection
+            $dbHost = $validated['database_host'] ?? '127.0.0.1';
+            if ($dbHost === 'localhost') {
+                $dbHost = '127.0.0.1';
+            }
+
+            $envConfig = [
+                'DB_CONNECTION' => 'mysql',
+                'DB_HOST' => $dbHost,
+                'DB_PORT' => $validated['database_port'] ?? '3306',
+                'DB_DATABASE' => $validated['database_name'] ?? '',
+                'DB_USERNAME' => $validated['database_username'] ?? 'root',
+                'DB_PASSWORD' => $validated['database_password'] ?? '',
+                'DB_CHARSET' => $validated['database_charset'] ?? 'utf8mb4',
+                'DB_COLLATION' => $validated['database_collation'] ?? 'utf8mb4_unicode_ci',
+            ];
+
+            // Create the environment file
+            $created = $envService->createTenantEnvironmentFile($tenant, $envConfig);
+
+            if ($created) {
+                Log::info('Tenant environment file auto-created', [
+                    'tenant_id' => $tenant->id,
+                    'subdomain' => $subdomain,
+                    'file' => ".env.tenant.{$subdomain}",
+                    'database' => $envConfig['TENANT_DB_DATABASE']
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to auto-create tenant environment file', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            // Don't throw exception - this is a convenience feature
+        }
+    }
+
+    /**
+     * Delete tenant environment file when switching to shared database
+     */
+    private function deleteTenantEnvironmentFile(Tenant $tenant): void
+    {
+        try {
+            $envService = new TenantEnvironmentService();
+
+            if ($envService->hasTenantEnvironmentFile($tenant)) {
+                $deleted = $envService->deleteTenantEnvironmentFile($tenant);
+
+                if ($deleted) {
+                    Log::info('Tenant environment file auto-deleted (switched to shared database)', [
+                        'tenant_id' => $tenant->id,
+                        'subdomain' => $tenant->data['subdomain'] ?? 'unknown'
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to auto-delete tenant environment file', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage()
+            ]);
+            // Don't throw exception - this is a convenience feature
+        }
+    }
+
+    /**
+     * Check if tenant environment file exists
+     */
+    public function getEnvFileStatus(Tenant $tenant)
+    {
+        try {
+            $envService = new TenantEnvironmentService();
+            $exists = $envService->hasTenantEnvironmentFile($tenant);
+
+            $subdomain = $tenant->data['subdomain'] ?? null;
+            $primaryDomain = config('all.domains.primary');
+            $filename = $subdomain ? ".env.{$subdomain}.{$primaryDomain}" : null;
+
+            return response()->json([
+                'success' => true,
+                'exists' => $exists,
+                'filename' => $filename,
+                'path' => $exists ? base_path($filename) : null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'exists' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * View tenant environment file
+     */
+    public function viewEnvFile(Tenant $tenant)
+    {
+        try {
+            $envService = new TenantEnvironmentService();
+
+            if (!$envService->hasTenantEnvironmentFile($tenant)) {
+                abort(404, 'Environment file not found');
+            }
+
+            $subdomain = $tenant->data['subdomain'] ?? null;
+            if (!$subdomain) {
+                abort(400, 'Tenant has no subdomain');
+            }
+
+            $primaryDomain = config('all.domains.primary');
+            $filename = ".env.{$subdomain}.{$primaryDomain}";
+            $filePath = base_path($filename);
+
+            $content = \File::get($filePath);
+
+            // Return as plain text view
+            return response($content)
+                ->header('Content-Type', 'text/plain')
+                ->header('X-Filename', $filename);
+        } catch (\Exception $e) {
+            abort(500, 'Error reading environment file: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download tenant environment file
+     */
+    public function downloadEnvFile(Tenant $tenant)
+    {
+        try {
+            $envService = new TenantEnvironmentService();
+
+            if (!$envService->hasTenantEnvironmentFile($tenant)) {
+                abort(404, 'Environment file not found');
+            }
+
+            $subdomain = $tenant->data['subdomain'] ?? null;
+            if (!$subdomain) {
+                abort(400, 'Tenant has no subdomain');
+            }
+
+            $primaryDomain = config('all.domains.primary');
+            $filename = ".env.{$subdomain}.{$primaryDomain}";
+            $filePath = base_path($filename);
+
+            return response()->download($filePath, $filename);
+        } catch (\Exception $e) {
+            abort(500, 'Error downloading environment file: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenerate tenant environment file
+     */
+    public function regenerateEnvFile(Tenant $tenant)
+    {
+        try {
+            if (!$tenant->usesSeparateDatabase()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This tenant does not use separate database'
+                ]);
+            }
+
+            $envService = new TenantEnvironmentService();
+            $subdomain = $tenant->data['subdomain'] ?? null;
+
+            if (!$subdomain) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tenant has no subdomain defined'
+                ]);
+            }
+
+            // Build environment configuration
+            $envConfig = [
+                'DB_CONNECTION' => 'mysql',
+                'DB_HOST' => $tenant->database_host ?? '127.0.0.1',
+                'DB_PORT' => $tenant->database_port ?? '3306',
+                'DB_DATABASE' => $tenant->database_name ?? '',
+                'DB_USERNAME' => $tenant->database_username ?? 'root',
+                'DB_PASSWORD' => $tenant->database_password ?? '',
+                'DB_CHARSET' => $tenant->database_charset ?? 'utf8mb4',
+                'DB_COLLATION' => $tenant->database_collation ?? 'utf8mb4_unicode_ci',
+            ];
+
+            // Create/recreate the environment file
+            $created = $envService->createTenantEnvironmentFile($tenant, $envConfig);
+
+            if ($created) {
+                $primaryDomain = config('all.domains.primary');
+                $filename = ".env.{$subdomain}.{$primaryDomain}";
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Environment file regenerated successfully: {$filename}"
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to regenerate environment file'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error regenerating environment file: ' . $e->getMessage()
             ]);
         }
     }

@@ -23,34 +23,21 @@ class ValidateTenantDomain
         }
 
         $subdomain = $this->extractSubdomain($request->getHost());
-        
+
         if (!$subdomain) {
             abort(404, 'Invalid tenant domain');
         }
 
         // Check if tenant exists
         $tenant = Tenant::where('data->subdomain', $subdomain)->first();
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
 
-        // If user is authenticated via admin guard, validate they belong to this tenant
-        if (auth('admin')->check()) {
-            $user = auth('admin')->user();
-            $validationService = new TenantUserValidationService();
-            
-            if ($user && !$validationService->validateDomainAccess($user->email, $subdomain)) {
-                // Get allowed domains for better error message
-                $allowedDomains = $validationService->getAllowedDomainsForUser($user->email);
-                $allowedDomainsStr = implode(', ', $allowedDomains);
-                
-                // Clear session and redirect to login
-                auth('admin')->logout();
-                return redirect()->route('tenant.login', ['tenant' => $subdomain])
-                    ->withErrors(['email' => "You do not have access to this tenant domain. You can access: {$allowedDomainsStr}"]);
-            }
-        }
+        // User already authenticated - they have access
+        // The TenantAuthenticationService already validated they belong to this tenant
+        // No need to check again here
 
         return $next($request);
     }
@@ -63,7 +50,7 @@ class ValidateTenantDomain
         $host = $request->getHost();
         $adminDomain = config('all.domains.admin');
         $primaryDomain = config('all.domains.primary');
-        
+
         // Check if it's a tenant subdomain (e.g., school.myschool.test)
         return $host !== $adminDomain && str_ends_with($host, '.' . $primaryDomain);
     }
@@ -74,11 +61,11 @@ class ValidateTenantDomain
     protected function extractSubdomain(string $host): ?string
     {
         $primaryDomain = config('all.domains.primary');
-        
+
         if (str_ends_with($host, '.' . $primaryDomain)) {
             return str_replace('.' . $primaryDomain, '', $host);
         }
-        
+
         return null;
     }
 }

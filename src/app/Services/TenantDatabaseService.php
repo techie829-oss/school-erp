@@ -95,6 +95,14 @@ class TenantDatabaseService
             // Add a default database to prevent Laravel connector warnings
             $serverConfig['database'] = 'mysql';
 
+            // Force TCP/IP connection instead of socket
+            $serverConfig['unix_socket'] = '';
+
+            // Ensure host is set for TCP connection
+            if (empty($serverConfig['host'])) {
+                $serverConfig['host'] = '127.0.0.1';
+            }
+
             $connectionName = "temp_test_{$tenant->id}";
             Config::set("database.connections.{$connectionName}", $serverConfig);
 
@@ -177,6 +185,14 @@ class TenantDatabaseService
             }
             // Add a default database to prevent Laravel connector warnings
             $serverConfig['database'] = 'mysql';
+
+            // Force TCP/IP connection instead of socket
+            $serverConfig['unix_socket'] = '';
+
+            // Ensure host is set for TCP connection
+            if (empty($serverConfig['host'])) {
+                $serverConfig['host'] = '127.0.0.1';
+            }
 
             $connectionName = "temp_{$tenant->id}";
             Config::set("database.connections.{$connectionName}", $serverConfig);
@@ -359,7 +375,7 @@ class TenantDatabaseService
             $adminUser = [
                 'name' => $tenant->data['name'] . ' Admin',
                 'email' => $tenant->data['email'],
-                'admin_type' => 'super_admin', // Primary admin should be super_admin
+                'admin_type' => 'school_admin', // Separate database tenant admin
                 'password' => Hash::make('admin123'), // Default password
                 'is_active' => true,
                 'created_at' => now(),

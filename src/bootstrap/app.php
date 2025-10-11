@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \App\Http\Middleware\Authenticate::class,
             'redirect.school.admin' => \App\Http\Middleware\RedirectSchoolAdminToTenant::class,
             'switch.tenant.database' => \App\Http\Middleware\SwitchTenantDatabase::class,
+            'tenant.context' => \App\Http\Middleware\InitializeTenantContext::class,
             'tenant.auth' => \App\Http\Middleware\TenantAuth::class,
             'validate.tenant.domain' => \App\Http\Middleware\ValidateTenantDomain::class,
             'enforce.admin.access' => \App\Http\Middleware\EnforceAdminAccessPolicy::class,

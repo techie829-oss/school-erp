@@ -91,6 +91,12 @@ Route::domain(config('all.domains.admin'))->group(function () {
         Route::get('/tenants/{tenant}/database-tables', [\App\Http\Controllers\Admin\TenantController::class, 'getDatabaseTables'])->name('tenants.database-tables');
         Route::get('/tenants/{tenant}/database-info', [\App\Http\Controllers\Admin\TenantController::class, 'getDatabaseInfo'])->name('tenants.database-info');
 
+        // Tenant Environment File Management
+        Route::get('/tenants/{tenant}/env-file-status', [\App\Http\Controllers\Admin\TenantController::class, 'getEnvFileStatus'])->name('tenants.env-file-status');
+        Route::get('/tenants/{tenant}/view-env-file', [\App\Http\Controllers\Admin\TenantController::class, 'viewEnvFile'])->name('tenants.view-env-file');
+        Route::get('/tenants/{tenant}/download-env-file', [\App\Http\Controllers\Admin\TenantController::class, 'downloadEnvFile'])->name('tenants.download-env-file');
+        Route::post('/tenants/{tenant}/regenerate-env-file', [\App\Http\Controllers\Admin\TenantController::class, 'regenerateEnvFile'])->name('tenants.regenerate-env-file');
+
         // Tenant Management (Resource routes - MUST come after specific routes)
         Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class)->except(['update']);
         Route::post('/tenants/check-subdomain', [\App\Http\Controllers\Admin\TenantController::class, 'checkSubdomain'])->name('tenants.check-subdomain');

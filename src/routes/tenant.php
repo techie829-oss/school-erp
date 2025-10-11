@@ -22,6 +22,7 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\InitializeTenantContext::class,
 ])->group(function () {
     // Public routes
     Route::get('/', function () {
@@ -33,10 +34,10 @@ Route::middleware([
     });
 
     // Authentication routes
-    Route::middleware('guest')->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'showLoginForm'])->name('tenant.login');
-        Route::post('/login', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'login']);
-        Route::post('/logout', [\App\Http\Controllers\Tenant\Auth\LoginController::class, 'logout'])->name('tenant.logout');
+    Route::middleware(['guest'])->group(function () {
+        Route::get('/login', [\App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('tenant.login');
+        Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('tenant.login.post');
+        Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('tenant.logout');
     });
 
     // Protected admin routes

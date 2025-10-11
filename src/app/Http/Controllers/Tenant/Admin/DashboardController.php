@@ -28,7 +28,7 @@ class DashboardController extends Controller
             $upcoming_events = $this->getUpcomingEvents();
 
             // Get current tenant information
-            $tenant = tenant();
+            $tenant = $this->resolveTenantFromSubdomain();
             $tenantSubdomain = $tenant ? $tenant->data['subdomain'] ?? 'default' : 'default';
 
             return view('tenant.admin.dashboard', compact('stats', 'recent_activities', 'upcoming_events', 'tenantSubdomain'));
@@ -50,7 +50,7 @@ class DashboardController extends Controller
             $upcoming_events = [];
 
             // Get current tenant information
-            $tenant = tenant();
+            $tenant = $this->resolveTenantFromSubdomain();
             $tenantSubdomain = $tenant ? $tenant->data['subdomain'] ?? 'default' : 'default';
 
             return view('tenant.admin.dashboard', compact('stats', 'recent_activities', 'upcoming_events', 'tenantSubdomain'));
@@ -165,5 +165,35 @@ class DashboardController extends Controller
                 'type' => 'exam'
             ],
         ];
+    }
+
+    /**
+     * Resolve tenant from subdomain manually
+     */
+    protected function resolveTenantFromSubdomain()
+    {
+        $host = request()->getHost();
+        $subdomain = $this->extractSubdomain($host);
+
+        if (!$subdomain) {
+            return null;
+        }
+
+        // Find tenant by subdomain
+        return \App\Models\Tenant::where('data->subdomain', $subdomain)->first();
+    }
+
+    /**
+     * Extract subdomain from host
+     */
+    protected function extractSubdomain(string $host): ?string
+    {
+        $primaryDomain = config('all.domains.primary');
+
+        if (str_ends_with($host, '.' . $primaryDomain)) {
+            return str_replace('.' . $primaryDomain, '', $host);
+        }
+
+        return null;
     }
 }

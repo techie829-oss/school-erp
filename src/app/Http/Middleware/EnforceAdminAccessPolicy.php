@@ -25,12 +25,12 @@ class EnforceAdminAccessPolicy
     {
         // Check admin guard first (for AdminUser model)
         $user = Auth::guard('admin')->user();
-        
+
         // Fallback to default guard if admin guard has no user
         if (!$user) {
             $user = Auth::user();
         }
-        
+
         if (!$user) {
             return $next($request);
         }
@@ -50,8 +50,8 @@ class EnforceAdminAccessPolicy
             }
         } else {
             // We're on a tenant domain
-            $currentTenant = tenant();
-            
+            $currentTenant = $this->resolveTenantFromSubdomain($request);
+
             if ($currentTenant) {
                 // Check if user should be redirected from tenant domain
                 if ($this->policy->shouldRedirectFromTenant($user, $currentTenant)) {
@@ -64,5 +64,35 @@ class EnforceAdminAccessPolicy
         }
 
         return $next($request);
+    }
+
+    /**
+     * Resolve tenant from subdomain manually
+     */
+    protected function resolveTenantFromSubdomain(Request $request)
+    {
+        $host = $request->getHost();
+        $subdomain = $this->extractSubdomain($host);
+
+        if (!$subdomain) {
+            return null;
+        }
+
+        // Find tenant by subdomain
+        return \App\Models\Tenant::where('data->subdomain', $subdomain)->first();
+    }
+
+    /**
+     * Extract subdomain from host
+     */
+    protected function extractSubdomain(string $host): ?string
+    {
+        $primaryDomain = config('all.domains.primary');
+
+        if (str_ends_with($host, '.' . $primaryDomain)) {
+            return str_replace('.' . $primaryDomain, '', $host);
+        }
+
+        return null;
     }
 }
