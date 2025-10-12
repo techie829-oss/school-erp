@@ -3,8 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,24 +10,18 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 |--------------------------------------------------------------------------
 |
 | Here you can register the tenant routes for your application.
-| These routes are loaded by the TenantRouteServiceProvider.
-|
-| Feel free to customize them however you want. Good luck!
+| These routes use custom tenant context middleware (not Stancl auto-resolution).
 |
 */
 
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-    \App\Http\Middleware\InitializeTenantContext::class,
-])->group(function () {
+// Tenant routes - loaded for ALL requests, tenant context initialized by middleware
+Route::middleware('web')->group(function () {
     // Public routes
     Route::get('/', function () {
         if (auth('tadmin')->check()) {
             return redirect('/admin/dashboard');  // Use relative path
         }
-        return redirect()->route('tenant.login');
+        return redirect('/login');
     })->name('tenant.home');
 
     // Authentication routes
@@ -39,10 +31,6 @@ Route::middleware([
         Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('tenant.logout');
     });
 
-    // Test route without middleware
-    Route::get('/test-admin', function () {
-        return 'Tenant admin route is working!';
-    });
 
     // Protected admin routes
     Route::middleware(['tenant.auth'])->prefix('admin')->name('tenant.admin.')->group(function () {

@@ -48,7 +48,7 @@
                 <p class="text-gray-600 text-sm">Sign in to your account to continue</p>
             </div>
 
-            <form method="POST" action="{{ route('tenant.login.post', ['tenant' => request()->route('tenant')]) }}" class="space-y-4">
+            <form method="POST" action="{{ url('/login') }}" class="space-y-4">
                 @csrf
 
                 <!-- Email Address -->

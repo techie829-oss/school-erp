@@ -26,6 +26,6 @@ class TenantAuth
         }
 
         // No authentication found, redirect to login
-        return redirect()->route('tenant.login');
+        return redirect('/login');
     }
 }

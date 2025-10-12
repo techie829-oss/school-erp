@@ -116,7 +116,7 @@ class LoginController extends Controller
 
         // Redirect based on domain
         if ($this->isTenantDomain()) {
-            return redirect()->route('tenant.login');
+            return redirect('/login');
         }
 
         return redirect()->route('admin.login');
