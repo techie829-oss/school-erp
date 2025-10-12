@@ -84,5 +84,8 @@ Route::middleware('web')->group(function () {
             Route::post('/school', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateSchool'])->name('school');
             Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('academic');
         });
+
+        // Color Palettes
+        Route::resource('color-palettes', \App\Http\Controllers\Tenant\Admin\ColorPaletteController::class);
     });
 });
