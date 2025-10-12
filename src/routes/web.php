@@ -142,6 +142,22 @@ Route::domain(config('all.domains.admin'))->group(function () {
         Route::post('/system/route-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearRoutes'])->name('system.route.clear');
         Route::post('/system/view-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearViews'])->name('system.view.clear');
         Route::post('/system/logs-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearLogs'])->name('system.logs.clear');
+
+        // Ticket Management
+        Route::resource('tickets', \App\Http\Controllers\Admin\TicketController::class);
+        Route::post('/tickets/{ticket}/comments', [\App\Http\Controllers\Admin\TicketController::class, 'addComment'])->name('tickets.comments');
+        Route::patch('/tickets/{ticket}/status', [\App\Http\Controllers\Admin\TicketController::class, 'updateStatus'])->name('tickets.status');
+
+        // Activity Logs
+        Route::get('/activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('/activity-logs/{activityLog}', [\App\Http\Controllers\Admin\ActivityLogController::class, 'show'])->name('activity-logs.show');
+        Route::get('/activity-logs/export', [\App\Http\Controllers\Admin\ActivityLogController::class, 'export'])->name('activity-logs.export');
+        Route::delete('/activity-logs/clear', [\App\Http\Controllers\Admin\ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+
+        // Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/api', [\App\Http\Controllers\Admin\NotificationController::class, 'getNotifications'])->name('notifications.api');
+        Route::post('/notifications/mark-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     });
 
     // Catch-all routes for admin domain - prevent undefined routes from falling through
