@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\AdminUser;
+use App\Models\User;
 use App\Services\VhostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -45,7 +46,7 @@ class TenantController extends Controller
             'email' => $validated['email'],
             'type' => $validated['type'],
             'subdomain' => $validated['subdomain'],
-            'active' => $validated['active'] ?? true,
+            'is_active' => $validated['active'] ?? true,
             'created_at' => now()->toISOString(),
         ];
 
@@ -105,7 +106,7 @@ class TenantController extends Controller
             'email' => $validated['email'],
             'type' => $validated['type'],
             'subdomain' => $validated['subdomain'],
-            'active' => $validated['active'] ?? true,
+            'is_active' => $validated['active'] ?? true,
             'updated_at' => now()->toISOString(),
         ];
 
@@ -134,15 +135,17 @@ class TenantController extends Controller
     // User Management Methods
     public function usersIndex(Tenant $tenant)
     {
-        $users = AdminUser::where('tenant_id', $tenant->id)->paginate(10);
+        // Get school users from users table (not admin_users)
+        $users = User::where('tenant_id', $tenant->id)->paginate(10);
         return view('admin.tenants.users.index', compact('tenant', 'users'));
     }
 
     public function usersCount(Tenant $tenant)
     {
-                $count = AdminUser::where('tenant_id', $tenant->id)->count();
-            return response()->json([
-                'success' => true,
+        // Count school users from users table (not admin_users)
+        $count = User::where('tenant_id', $tenant->id)->count();
+        return response()->json([
+            'success' => true,
                 'count' => $count
             ]);
     }
@@ -156,19 +159,20 @@ class TenantController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:admin_users,email',
+            'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Password::defaults()],
-            'admin_type' => 'required|in:super_admin,super_manager,school_admin',
-            'is_active' => 'boolean',
+            'user_type' => 'required|in:school_admin,teacher,staff,student',
+            'is_active' => 'sometimes|boolean',
         ]);
 
-                $user = AdminUser::create([
+                // Create school admin in users table (not admin_users)
+                $user = User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
                     'password' => Hash::make($validated['password']),
                     'tenant_id' => $tenant->id,
-            'admin_type' => $validated['admin_type'],
-            'is_active' => $validated['is_active'] ?? true,
+                    'user_type' => 'school_admin',
+                    'is_active' => $validated['is_active'] ?? true,
                 ]);
 
         return redirect()->route('admin.tenants.users.show', [$tenant, $user->id])
@@ -177,19 +181,19 @@ class TenantController extends Controller
 
     public function usersShow(Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
         return view('admin.tenants.users.show', compact('tenant', 'user'));
     }
 
     public function usersEdit(Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
         return view('admin.tenants.users.edit', compact('tenant', 'user'));
     }
 
     public function usersUpdate(Request $request, Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -197,17 +201,17 @@ class TenantController extends Controller
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('admin_users', 'email')->ignore($user->id)
+                Rule::unique('users', 'email')->ignore($user->id)
             ],
             'password' => 'nullable|confirmed|min:8',
-            'admin_type' => 'required|in:super_admin,super_manager,school_admin',
-            'is_active' => 'boolean',
+            'user_type' => 'required|in:school_admin,teacher,staff,student',
+            'is_active' => 'sometimes|boolean',
         ]);
 
         $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'admin_type' => $validated['admin_type'],
+            'user_type' => $validated['user_type'],
             'is_active' => $validated['is_active'] ?? true,
         ];
 
@@ -223,13 +227,13 @@ class TenantController extends Controller
 
     public function usersChangePassword(Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
         return view('admin.tenants.users.change-password', compact('tenant', 'user'));
     }
 
     public function usersUpdatePassword(Request $request, Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
 
         $validated = $request->validate([
             'current_password' => 'required',
@@ -250,13 +254,13 @@ class TenantController extends Controller
 
     public function usersDelete(Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
         return view('admin.tenants.users.delete', compact('tenant', 'user'));
     }
 
     public function usersDestroy(Tenant $tenant, $userId)
     {
-        $user = AdminUser::where('tenant_id', $tenant->id)->findOrFail($userId);
+        $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
         $user->delete();
 
         return redirect()->route('admin.tenants.users.index', $tenant)
@@ -332,10 +336,13 @@ class TenantController extends Controller
     public function toggleStatus(Tenant $tenant)
     {
         $tenantData = $tenant->data;
-        $tenantData['active'] = !($tenantData['active'] ?? true);
+        // Use 'is_active' to match the isActive() method in Tenant model
+        $tenantData['is_active'] = !($tenantData['is_active'] ?? true);
         $tenant->update(['data' => $tenantData]);
 
+        $status = $tenantData['is_active'] ? 'activated' : 'deactivated';
+
         return redirect()->route('admin.tenants.show', $tenant)
-            ->with('success', 'Tenant status updated successfully!');
+            ->with('success', "Tenant {$status} successfully!");
     }
 }

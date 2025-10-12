@@ -15,13 +15,9 @@ class TenantAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if tenant admin is authenticated (using tadmin guard with admin_users table)
-        if (auth('tadmin')->check()) {
-            return $next($request);
-        }
-
-        // Fallback: Check regular users (staff, teachers, students) via web guard
-        if (auth('web')->check()) {
+        // Check if user is authenticated (using web guard with users table)
+        // This includes school_admin, teachers, staff, students
+        if (auth()->check()) {
             return $next($request);
         }
 

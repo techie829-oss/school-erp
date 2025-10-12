@@ -29,6 +29,21 @@ class InitializeTenantContext
             $tenant = $this->tenantService->getCurrentTenant($request);
 
             if ($tenant) {
+                // Check if tenant is active
+                if (!$tenant->isActive()) {
+                    // If user is logged in, log them out
+                    if (auth()->check()) {
+                        auth()->logout();
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                    }
+
+                    // Show error page
+                    return response()->view('errors.tenant-inactive', [
+                        'tenant' => $tenant
+                    ], 403);
+                }
+
                 // Initialize tenant context
                 $this->contextService->initializeContext($tenant);
 

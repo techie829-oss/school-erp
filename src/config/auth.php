@@ -44,10 +44,6 @@ return [
             'driver' => 'session',
             'provider' => 'admin_users',
         ],
-        'tadmin' => [
-            'driver' => 'session',
-            'provider' => 'admin_users',
-        ],
     ],
 
     /*

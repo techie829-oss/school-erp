@@ -6,27 +6,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable;
 
     /**
-     * Check if user is a super admin
+     * Check if user is a school admin
      */
-    public function isSuperAdmin(): bool
+    public function isSchoolAdmin(): bool
     {
-        return $this->hasRole('super_admin');
+        return $this->user_type === 'school_admin';
     }
 
     /**
-     * Check if user is an admin
+     * Check if user is a teacher
      */
-    public function isAdmin(): bool
+    public function isTeacher(): bool
     {
-        return $this->hasRole(['admin', 'super_admin']);
+        return $this->user_type === 'teacher';
+    }
+
+    /**
+     * Check if user is staff
+     */
+    public function isStaff(): bool
+    {
+        return $this->user_type === 'staff';
+    }
+
+    /**
+     * Check if user is a student
+     */
+    public function isStudent(): bool
+    {
+        return $this->user_type === 'student';
     }
 
     /**
@@ -49,6 +64,8 @@ class User extends Authenticatable
         'email',
         'password',
         'tenant_id',
+        'user_type',
+        'is_active',
     ];
 
     /**

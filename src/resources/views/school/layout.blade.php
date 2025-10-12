@@ -119,9 +119,15 @@
 
                     <!-- CTA Buttons -->
                     <div class="hidden md:flex items-center space-x-3">
-                        <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
-                            Parent Login
-                        </a>
+                        @auth
+                            <a href="{{ url('/admin/dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
+                                Dashboard
+                            </a>
+                        @else
+                            <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
+                                Parent Login
+                            </a>
+                        @endauth
                         <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
                             Contact Us
                         </a>
@@ -186,9 +192,15 @@
                     </a>
                 </div>
                 <div class="pt-4 pb-3 border-t border-gray-200 px-2 sm:px-3 space-y-3">
-                    <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
-                        Parent Login
-                    </a>
+                    @auth
+                        <a href="{{ url('/admin/dashboard') }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
+                            Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
+                            Parent Login
+                        </a>
+                    @endauth
                     <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-6 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors rounded-lg">
                         Contact Us
                     </a>
@@ -236,7 +248,11 @@
                     <div>
                         <h4 class="text-md font-semibold mb-4 text-white">Connect</h4>
                         <ul class="space-y-2">
-                            <li><a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Parent Portal</a></li>
+                            @auth
+                                <li><a href="{{ url('/admin/dashboard') }}" class="text-gray-300 hover:text-white transition-colors">Dashboard</a></li>
+                            @else
+                                <li><a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Parent Portal</a></li>
+                            @endauth
                             <li><a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
                             <li><a href="#" class="text-gray-300 hover:text-white transition-colors">Newsletter</a></li>
                         </ul>

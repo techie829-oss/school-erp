@@ -213,13 +213,13 @@
                             </a>
 
                             <form method="POST" action="{{ route('admin.tenants.toggle-status', $tenant) }}"
-                                class="flex items-center p-3 {{ $tenant->data['active'] ?? true ? 'bg-red-50 hover:bg-red-100 border-red-200' : 'bg-green-50 hover:bg-green-100 border-green-200' }} rounded-lg transition-colors cursor-pointer border"
-                                onsubmit="return confirm('Are you sure you want to {{ $tenant->data['active'] ?? true ? 'deactivate' : 'activate' }} this tenant?')">
+                                class="flex items-center p-3 {{ $tenant->data['is_active'] ?? true ? 'bg-red-50 hover:bg-red-100 border-red-200' : 'bg-green-50 hover:bg-green-100 border-green-200' }} rounded-lg transition-colors cursor-pointer border"
+                                onsubmit="return confirm('Are you sure you want to {{ $tenant->data['is_active'] ?? true ? 'deactivate' : 'activate' }} this tenant?')">
                                 @csrf
                                 <button type="submit" class="flex items-center w-full">
                                     <div
-                                        class="p-2 {{ $tenant->data['active'] ?? true ? 'bg-red-100' : 'bg-green-100' }} rounded-lg mr-3">
-                                        @if ($tenant->data['active'] ?? true)
+                                        class="p-2 {{ $tenant->data['is_active'] ?? true ? 'bg-red-100' : 'bg-green-100' }} rounded-lg mr-3">
+                                        @if ($tenant->data['is_active'] ?? true)
                                             <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -235,10 +235,10 @@
                                     </div>
                                     <div class="text-left">
                                         <h4 class="font-medium text-gray-900">
-                                            {{ $tenant->data['active'] ?? true ? 'Deactivate Tenant' : 'Activate Tenant' }}
+                                            {{ $tenant->data['is_active'] ?? true ? 'Deactivate Tenant' : 'Activate Tenant' }}
                                         </h4>
                                         <p class="text-sm text-gray-600">
-                                            {{ $tenant->data['active'] ?? true ? 'Disable tenant access' : 'Enable tenant access' }}
+                                            {{ $tenant->data['is_active'] ?? true ? 'Disable tenant access' : 'Enable tenant access' }}
                                         </p>
                                     </div>
                                 </button>
@@ -253,8 +253,8 @@
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium text-gray-600">Status</span>
                                 <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $tenant->data['active'] ?? false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $tenant->data['active'] ?? false ? 'Active' : 'Inactive' }}
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $tenant->data['is_active'] ?? false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $tenant->data['is_active'] ?? false ? 'Active' : 'Inactive' }}
                                 </span>
                             </div>
                             <div class="flex items-center justify-between">

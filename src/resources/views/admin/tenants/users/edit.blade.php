@@ -101,18 +101,19 @@
                         @enderror
                     </div>
 
-                    <!-- Admin Type -->
+                    <!-- User Type -->
                     <div>
-                        <label for="admin_type" class="block text-sm font-medium text-gray-700 mb-2">
-                            Admin Type <span class="text-red-500">*</span>
+                        <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">
+                            User Type <span class="text-red-500">*</span>
                         </label>
-                        <select id="admin_type" name="admin_type" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('admin_type') border-red-300 @enderror" required>
-                            <option value="">Select admin type</option>
-                            <option value="super_admin" {{ old('admin_type', $user->admin_type ?? '') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                            <option value="super_manager" {{ old('admin_type', $user->admin_type ?? '') === 'super_manager' ? 'selected' : '' }}>Super Manager</option>
-                            <option value="school_admin" {{ old('admin_type', $user->admin_type ?? '') === 'school_admin' ? 'selected' : '' }}>School Admin</option>
+                        <select id="user_type" name="user_type" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm @error('user_type') border-red-300 @enderror" required>
+                            <option value="">Select user type</option>
+                            <option value="school_admin" {{ old('user_type', $user->user_type ?? '') === 'school_admin' ? 'selected' : '' }}>School Admin</option>
+                            <option value="teacher" {{ old('user_type', $user->user_type ?? '') === 'teacher' ? 'selected' : '' }}>Teacher</option>
+                            <option value="staff" {{ old('user_type', $user->user_type ?? '') === 'staff' ? 'selected' : '' }}>Staff</option>
+                            <option value="student" {{ old('user_type', $user->user_type ?? '') === 'student' ? 'selected' : '' }}>Student</option>
                         </select>
-                        @error('admin_type')
+                        @error('user_type')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>

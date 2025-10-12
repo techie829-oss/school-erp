@@ -320,7 +320,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::post('/school', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateSchool'])->name('school');
             Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('academic');
         });
-        
+
         // Color Palettes
         Route::get('/color-palettes', function() {
             return view('tenant.admin.color-palettes.index');

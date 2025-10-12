@@ -94,7 +94,7 @@ class TenantService
             'short_name' => $data['short_name'] ?? $this->generateShortName($data['name'] ?? 'Unnamed Tenant'),
             'email' => $data['email'] ?? null,
             'type' => $data['type'] ?? 'school',
-            'active' => $data['active'] ?? false,
+            'is_active' => $data['active'] ?? false,
             'domain_type' => $data['domain_type'] ?? 'subdomain',
             'full_domain' => $data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary'),
             'subdomain' => $data['subdomain'] ?? null,
@@ -103,7 +103,7 @@ class TenantService
             'description' => $data['description'] ?? 'Excellence in Education',
             'student_count' => $data['student_count'] ?? null,
             'database_strategy' => $data['database_strategy'] ?? 'shared',
-            'status' => $data['active'] ? 'active' : 'inactive',
+            'status' => $data['is_active'] ? 'active' : 'inactive',
         ];
     }
 
@@ -297,7 +297,7 @@ class TenantService
                 'short_name' => $data['short_name'] ?? $this->generateShortName($data['name'] ?? 'Unnamed Tenant'),
                 'email' => $data['email'] ?? null,
                 'type' => $data['type'] ?? 'school',
-                'active' => $data['active'] ?? false,
+                'is_active' => $data['active'] ?? false,
                 'domain_type' => $data['domain_type'] ?? 'subdomain',
                 'domain' => $data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary'),
                 'subdomain' => $data['subdomain'] ?? null,
@@ -306,7 +306,7 @@ class TenantService
                 'description' => $data['description'] ?? 'Excellence in Education',
                 'student_count' => $data['student_count'] ?? null,
                 'database_strategy' => 'shared', // All tenants now use shared database
-                'status' => $data['active'] ? 'active' : 'inactive',
+                'status' => $data['is_active'] ? 'active' : 'inactive',
             ];
         }
 

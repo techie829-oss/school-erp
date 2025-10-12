@@ -28,6 +28,16 @@ class TenantAuthenticationService
             'database_strategy' => $tenant->data['database_strategy'] ?? 'shared'
         ]);
 
+        // Check if tenant is active
+        if (!$tenant->isActive()) {
+            Log::warning('Authentication failed - tenant is inactive', [
+                'email' => $credentials['email'],
+                'tenant_id' => $tenant->id,
+                'tenant_name' => $tenant->data['name'] ?? 'Unknown'
+            ]);
+            return false;
+        }
+
         // Initialize tenant context (automatically handles env file loading and database setup)
 
         try {
@@ -35,8 +45,8 @@ class TenantAuthenticationService
             $user = $this->authenticateUser($credentials, $tenant);
 
             if ($user) {
-                // Log in the user using tadmin guard (tenant admin)
-                Auth::guard('tadmin')->login($user, $remember);
+                // Log in the user using web guard (all tenant users)
+                Auth::login($user, $remember);
 
                 Log::info('User authenticated successfully', [
                     'email' => $credentials['email'],
@@ -71,24 +81,46 @@ class TenantAuthenticationService
     /**
      * Authenticate user (shared database only)
      */
-    protected function authenticateUser(array $credentials, Tenant $tenant): ?AdminUser
+    protected function authenticateUser(array $credentials, Tenant $tenant): ?\App\Models\User
     {
-        // Query admin_users table in main database with tenant_id filter
-        $user = AdminUser::where('email', $credentials['email'])
+        // First, verify tenant is active (double-check)
+        if (!$tenant->isActive()) {
+            Log::warning('Tenant is inactive during user authentication', [
+                'tenant_id' => $tenant->id,
+                'email' => $credentials['email']
+            ]);
+            return null;
+        }
+
+        // Query users table with tenant_id filter (school admins, teachers, staff, students)
+        $user = \App\Models\User::where('email', $credentials['email'])
             ->where('tenant_id', $tenant->id)
             ->first();
 
         if (!$user) {
+            Log::info('User not found for tenant', [
+                'email' => $credentials['email'],
+                'tenant_id' => $tenant->id
+            ]);
+            return null;
+        }
+
+        // Check if user is active BEFORE verifying password (security best practice)
+        if (!$user->is_active) {
+            Log::warning('User account is inactive', [
+                'email' => $credentials['email'],
+                'user_id' => $user->id,
+                'tenant_id' => $tenant->id
+            ]);
             return null;
         }
 
         // Verify password
         if (!Hash::check($credentials['password'], $user->password)) {
-            return null;
-        }
-
-        // Check if user is active
-        if (!$user->is_active) {
+            Log::info('Invalid password for user', [
+                'email' => $credentials['email'],
+                'tenant_id' => $tenant->id
+            ]);
             return null;
         }
 

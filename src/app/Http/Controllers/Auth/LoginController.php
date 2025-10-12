@@ -55,6 +55,13 @@ class LoginController extends Controller
                 ]);
             }
 
+            // Check if tenant is active
+            if (!$tenant->isActive()) {
+                throw ValidationException::withMessages([
+                    'email' => 'This institution is currently inactive. Please contact support.',
+                ]);
+            }
+
             $authService = new TenantAuthenticationService();
             if ($authService->authenticateForTenant($credentials, $tenant)) {
                 // Regenerate session for security
@@ -107,9 +114,9 @@ class LoginController extends Controller
     {
         // Logout from appropriate guard based on domain
         if ($this->isTenantDomain()) {
-            Auth::guard('tadmin')->logout();
+            Auth::logout(); // Default 'web' guard for tenant users
         } else {
-            Auth::guard('admin')->logout();
+            Auth::guard('admin')->logout(); // 'admin' guard for super admins
         }
         $request->session()->invalidate();
         $request->session()->regenerateToken();

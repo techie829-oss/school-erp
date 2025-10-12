@@ -40,8 +40,8 @@ class Authenticate extends Middleware
         if ($host === $adminDomain) {
             $guards = ['admin'];
         } else {
-            // For tenant domains, use tadmin guard (tenant admin with admin_users table)
-            $guards = ['tadmin'];
+            // For tenant domains, use web guard (users table)
+            $guards = ['web'];
         }
 
         return parent::authenticate($request, $guards);
