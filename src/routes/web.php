@@ -65,7 +65,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
     Route::post('/check-tenant-user', [\App\Http\Controllers\Auth\TenantCheckController::class, 'checkTenantUser'])->name('check.tenant.user');
 
     // Super Admin Routes (only accessible on admin domain)
-    Route::middleware(['auth', 'verified', 'enforce.admin.access'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth:admin', 'verified', 'enforce.admin.access'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/', function () {
             return view('admin.dashboard');
@@ -84,21 +84,10 @@ Route::domain(config('all.domains.admin'))->group(function () {
         Route::get('/tenants/{tenant}/users/{userId}/delete', [\App\Http\Controllers\Admin\TenantController::class, 'usersDelete'])->name('tenants.users.delete');
         Route::delete('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersDestroy'])->name('tenants.users.destroy');
 
-        // Tenant Database Management
-        Route::post('/tenants/{tenant}/test-database', [\App\Http\Controllers\Admin\TenantController::class, 'testDatabaseConnection'])->name('tenants.test-database');
-        Route::post('/tenants/{tenant}/create-database', [\App\Http\Controllers\Admin\TenantController::class, 'createDatabase'])->name('tenants.create-database');
-        Route::post('/tenants/{tenant}/run-migrations', [\App\Http\Controllers\Admin\TenantController::class, 'runMigrations'])->name('tenants.run-migrations');
-        Route::get('/tenants/{tenant}/database-tables', [\App\Http\Controllers\Admin\TenantController::class, 'getDatabaseTables'])->name('tenants.database-tables');
-        Route::get('/tenants/{tenant}/database-info', [\App\Http\Controllers\Admin\TenantController::class, 'getDatabaseInfo'])->name('tenants.database-info');
 
-        // Tenant Environment File Management
-        Route::get('/tenants/{tenant}/env-file-status', [\App\Http\Controllers\Admin\TenantController::class, 'getEnvFileStatus'])->name('tenants.env-file-status');
-        Route::get('/tenants/{tenant}/view-env-file', [\App\Http\Controllers\Admin\TenantController::class, 'viewEnvFile'])->name('tenants.view-env-file');
-        Route::get('/tenants/{tenant}/download-env-file', [\App\Http\Controllers\Admin\TenantController::class, 'downloadEnvFile'])->name('tenants.download-env-file');
-        Route::post('/tenants/{tenant}/regenerate-env-file', [\App\Http\Controllers\Admin\TenantController::class, 'regenerateEnvFile'])->name('tenants.regenerate-env-file');
 
         // Tenant Management (Resource routes - MUST come after specific routes)
-        Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class)->except(['update']);
+        Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
         Route::post('/tenants/check-subdomain', [\App\Http\Controllers\Admin\TenantController::class, 'checkSubdomain'])->name('tenants.check-subdomain');
         Route::post('/tenants/cleanup-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'cleanupHerdYml'])->name('tenants.cleanup-herd-yml');
         Route::post('/tenants/sync-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'syncHerdYmlWithDatabase'])->name('tenants.sync-herd-yml');
@@ -147,9 +136,12 @@ Route::domain(config('all.domains.admin'))->group(function () {
         Route::post('/users/{user}/toggle-status', [\App\Http\Controllers\Admin\AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
 
         // System Management
-        Route::get('/system/overview', function () {
-            return view('admin.system.overview');
-        })->name('admin.system.overview');
+        Route::get('/system/overview', [\App\Http\Controllers\Admin\SystemController::class, 'overview'])->name('system.overview');
+        Route::get('/system/logs', [\App\Http\Controllers\Admin\SystemController::class, 'logs'])->name('system.logs');
+        Route::post('/system/cache-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearCache'])->name('system.cache.clear');
+        Route::post('/system/route-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearRoutes'])->name('system.route.clear');
+        Route::post('/system/view-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearViews'])->name('system.view.clear');
+        Route::post('/system/logs-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearLogs'])->name('system.logs.clear');
     });
 
     // Catch-all routes for admin domain - prevent undefined routes from falling through
@@ -212,7 +204,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
 });
 
 // Dynamic Tenant Routes (for any tenant domain matching the pattern)
-Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.tenant.database', 'validate.tenant.domain'])->group(function () {
+Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.context', 'validate.tenant.domain'])->group(function () {
     // Public tenant pages
     Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
     Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');
@@ -262,50 +254,6 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['switch.
         })->name('tenant.profile');
     });
 
-    // Admin routes for tenants
-    Route::middleware(['tenant.auth', 'enforce.admin.access'])->prefix('admin')->name('tenant.admin.')->group(function () {
-        // Tenant Admin Dashboard
-        Route::get('/', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
-
-        // Student Management
-        Route::resource('students', \App\Http\Controllers\Tenant\Admin\StudentController::class);
-        Route::get('/students/{student}/profile', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'profile'])->name('students.profile');
-
-        // Teacher Management
-        Route::resource('teachers', \App\Http\Controllers\Tenant\Admin\TeacherController::class);
-        Route::get('/teachers/{teacher}/profile', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'profile'])->name('teachers.profile');
-
-        // Class Management
-        Route::resource('classes', \App\Http\Controllers\Tenant\Admin\ClassController::class);
-        Route::get('/classes/{class}/students', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'students'])->name('classes.students');
-        Route::post('/classes/{class}/students', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'addStudent'])->name('classes.add-student');
-        Route::delete('/classes/{class}/students/{student}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'removeStudent'])->name('classes.remove-student');
-
-        // Attendance Management
-        Route::resource('attendance', \App\Http\Controllers\Tenant\Admin\AttendanceController::class);
-        Route::get('/attendance/class/{class}/date/{date}', [\App\Http\Controllers\Tenant\Admin\AttendanceController::class, 'classAttendance'])->name('attendance.class');
-        Route::post('/attendance/mark', [\App\Http\Controllers\Tenant\Admin\AttendanceController::class, 'markAttendance'])->name('attendance.mark');
-
-        // Grades Management
-        Route::resource('grades', \App\Http\Controllers\Tenant\Admin\GradeController::class);
-        Route::get('/grades/student/{student}', [\App\Http\Controllers\Tenant\Admin\GradeController::class, 'studentGrades'])->name('grades.student');
-        Route::get('/grades/class/{class}', [\App\Http\Controllers\Tenant\Admin\GradeController::class, 'classGrades'])->name('grades.class');
-
-        // Reports
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/attendance', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'attendance'])->name('attendance');
-            Route::get('/grades', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'grades'])->name('grades');
-            Route::get('/students', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'students'])->name('students');
-        });
-
-        // Settings
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
-            Route::post('/school', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateSchool'])->name('school');
-            Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('academic');
-        });
-
-        Route::resource('color-palettes', ColorPaletteController::class);
-        Route::post('color-palettes/apply-scheme', [ColorPaletteController::class, 'applyScheme'])->name('color-palettes.apply-scheme');
-    });
+    // Note: Tenant admin routes are now handled by tenant.php (Stancl Tenancy)
+    // This keeps the routes cleaner and properly isolated per tenant
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern

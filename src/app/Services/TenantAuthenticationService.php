@@ -10,11 +10,10 @@ use Illuminate\Support\Facades\Log;
 
 class TenantAuthenticationService
 {
-    protected $contextService;
 
-    public function __construct(TenantContextService $contextService)
+    public function __construct()
     {
-        $this->contextService = $contextService;
+        // No dependencies needed for simplified shared database approach
     }
 
     /**
@@ -30,7 +29,6 @@ class TenantAuthenticationService
         ]);
 
         // Initialize tenant context (automatically handles env file loading and database setup)
-        $this->contextService->initializeContext($tenant);
 
         try {
             // Unified authentication - context service handles the database connection
@@ -71,84 +69,30 @@ class TenantAuthenticationService
     }
 
     /**
-     * Authenticate user (unified for both shared and separate databases)
-     * TenantContextService has already set up the correct database connection
+     * Authenticate user (shared database only)
      */
-    protected function authenticateUser(array $credentials, Tenant $tenant): ?object
+    protected function authenticateUser(array $credentials, Tenant $tenant): ?AdminUser
     {
-        // Get the correct database connection (already configured by contextService)
-        $connection = TenantContextService::getDatabaseConnection($tenant);
+        // Query admin_users table in main database with tenant_id filter
+        $user = AdminUser::where('email', $credentials['email'])
+            ->where('tenant_id', $tenant->id)
+            ->first();
 
-        // Query admin_users table (works for both shared and separate databases)
-        $query = $connection->table('admin_users')
-            ->where('email', $credentials['email']);
-
-        // For shared database, also filter by tenant_id
-        if (!$tenant->usesSeparateDatabase()) {
-            $query->where('tenant_id', $tenant->id);
-        }
-
-        $userData = $query->first();
-
-        if (!$userData) {
+        if (!$user) {
             return null;
         }
 
         // Verify password
-        if (!Hash::check($credentials['password'], $userData->password)) {
+        if (!Hash::check($credentials['password'], $user->password)) {
             return null;
         }
 
         // Check if user is active
-        $isActive = $userData->is_active ?? $userData->active ?? false;
-        if (!$isActive) {
+        if (!$user->is_active) {
             return null;
         }
 
-        // For shared database, return AdminUser model
-        if (!$tenant->usesSeparateDatabase()) {
-            return AdminUser::find($userData->id);
-        }
-
-        // For separate database, create authenticatable user object
-        return new class($userData, $tenant->id) implements \Illuminate\Contracts\Auth\Authenticatable {
-            public $id;
-            public $name;
-            public $email;
-            public $admin_type;
-            public $is_active;
-            public $tenant_id;
-            private $userData;
-
-            public function __construct($userData, $tenantId) {
-                $this->userData = $userData;
-                $this->tenantId = $tenantId;
-                
-                // Expose properties directly for easy access
-                $this->id = $userData->id;
-                $this->name = $userData->name;
-                $this->email = $userData->email;
-                $this->admin_type = $userData->admin_type ?? 'school_admin';
-                $this->is_active = $userData->is_active ?? $userData->active ?? false;
-                $this->tenant_id = $tenantId;
-            }
-
-            public function getAuthIdentifierName() { return 'id'; }
-            public function getAuthIdentifier() { return $this->userData->id; }
-            public function getAuthPassword() { return $this->userData->password; }
-            public function getAuthPasswordName() { return 'password'; }
-            public function getRememberToken() { return null; }
-            public function setRememberToken($value) { }
-            public function getRememberTokenName() { return 'remember_token'; }
-
-            public function __get($key) {
-                return $this->userData->$key ?? null;
-            }
-
-            public function __isset($key) {
-                return isset($this->userData->$key);
-            }
-        };
+        return $user;
     }
 
     /**
@@ -156,24 +100,21 @@ class TenantAuthenticationService
      */
     public function validateDomainAccess(string $email, Tenant $tenant): bool
     {
-        $this->contextService->initializeContext($tenant);
-
         try {
-            // Get the correct database connection
-            $connection = TenantContextService::getDatabaseConnection($tenant);
+            // Query admin_users table in main database with tenant_id filter
+            $userExists = AdminUser::where('email', $email)
+                ->where('tenant_id', $tenant->id)
+                ->exists();
 
-            // Query admin_users table
-            $query = $connection->table('admin_users')->where('email', $email);
+            Log::info('Domain access validation', [
+                'email' => $email,
+                'tenant_id' => $tenant->id,
+                'user_exists' => $userExists
+            ]);
 
-            // For shared database, also filter by tenant_id
-            if (!$tenant->usesSeparateDatabase()) {
-                $query->where('tenant_id', $tenant->id);
-            }
-
-            $user = $query->first();
-            return $user !== null;
+            return $userExists;
         } catch (\Exception $e) {
-            Log::error('Domain access validation error', [
+            Log::error('Domain access validation failed', [
                 'email' => $email,
                 'tenant_id' => $tenant->id,
                 'error' => $e->getMessage()
@@ -187,7 +128,6 @@ class TenantAuthenticationService
      */
     public function getUserForTenant(string $email, Tenant $tenant): ?object
     {
-        $this->contextService->initializeContext($tenant);
 
         try {
             // Get the correct database connection

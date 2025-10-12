@@ -45,8 +45,8 @@
                 <div class="text-gray-600">Success Rate</div>
             </div>
             <div class="p-6">
-                <div class="text-4xl font-bold text-primary-600 mb-2">{{ ucfirst($tenant['database_strategy'] ?? 'shared') }}</div>
-                <div class="text-gray-600">Database Strategy</div>
+                <div class="text-4xl font-bold text-primary-600 mb-2">{{ ucfirst($tenant['type'] ?? 'School') }}</div>
+                <div class="text-gray-600">Institution Type</div>
             </div>
         </div>
     </div>

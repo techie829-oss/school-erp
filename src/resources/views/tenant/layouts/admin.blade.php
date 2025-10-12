@@ -262,7 +262,7 @@
                                         <p class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', auth()->user()->admin_type ?? 'Admin')) }}</p>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Logout -->
                                 <form method="POST" action="{{ route('tenant.logout', ['tenant' => request()->route('tenant')]) }}" class="inline">
                                     @csrf

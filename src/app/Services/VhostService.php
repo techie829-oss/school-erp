@@ -891,4 +891,172 @@ redis: 7.0
             return false;
         }
     }
+
+    /**
+     * Update Herd configuration with new subdomain.
+     */
+    public function updateHerdConfiguration(string $subdomain): array
+    {
+        try {
+            // Get current .herd.yml content
+            $content = $this->getHerdYmlContent();
+
+            // Check if subdomain already exists
+            if (str_contains($content, "  - {$subdomain}")) {
+                return [
+                    'success' => true,
+                    'message' => 'Subdomain already exists in Herd configuration'
+                ];
+            }
+
+            // Add new subdomain to the subdomains section
+            if (preg_match('/subdomains:\s*\n((?:  - .+\n)*)/s', $content, $matches)) {
+                $newContent = str_replace(
+                    $matches[0],
+                    $matches[0] . "  - {$subdomain}\n",
+                    $content
+                );
+
+                $this->updateHerdYmlContent($newContent);
+
+                Log::info('Herd configuration updated with new subdomain', [
+                    'subdomain' => $subdomain
+                ]);
+
+                return [
+                    'success' => true,
+                    'message' => "Subdomain '{$subdomain}' added to Herd configuration"
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Could not find subdomains section in .herd.yml'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to update Herd configuration', [
+                'subdomain' => $subdomain,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Error updating Herd configuration: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Cleanup .herd.yml by removing invalid/missing tenants.
+     */
+    public function cleanupHerdYml(): array
+    {
+        try {
+            $content = $this->getHerdYmlContent();
+            $tenants = \App\Models\Tenant::all();
+
+            // Get all valid subdomains from database
+            $validSubdomains = ['app']; // Always keep 'app' subdomain
+            foreach ($tenants as $tenant) {
+                if (isset($tenant->data['subdomain'])) {
+                    $validSubdomains[] = $tenant->data['subdomain'];
+                }
+            }
+
+            // Extract current subdomains from .herd.yml
+            if (preg_match('/subdomains:\s*\n((?:  - .+\n)*)/s', $content, $matches)) {
+                $currentSubdomains = [];
+                preg_match_all('/  - (.+)/', $matches[1], $subdomainMatches);
+                $currentSubdomains = array_map('trim', $subdomainMatches[1]);
+
+                // Find subdomains to remove
+                $toRemove = array_diff($currentSubdomains, $validSubdomains);
+
+                if (empty($toRemove)) {
+                    return [
+                        'success' => true,
+                        'message' => 'No cleanup needed - all subdomains are valid'
+                    ];
+                }
+
+                // Remove invalid subdomains
+                $newSubdomainsList = implode("\n", array_map(fn($s) => "  - {$s}", $validSubdomains));
+                $newContent = preg_replace(
+                    '/subdomains:\s*\n(?:  - .+\n)*/s',
+                    "subdomains:\n{$newSubdomainsList}\n",
+                    $content
+                );
+
+                $this->updateHerdYmlContent($newContent);
+
+                return [
+                    'success' => true,
+                    'message' => 'Cleaned up ' . count($toRemove) . ' invalid subdomain(s) from .herd.yml',
+                    'removed' => $toRemove
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Could not find subdomains section in .herd.yml'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to cleanup .herd.yml', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'message' => 'Error cleaning up .herd.yml: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Sync .herd.yml with database tenants.
+     */
+    public function syncHerdYmlWithDatabase(): array
+    {
+        try {
+            $tenants = \App\Models\Tenant::all();
+
+            // Get all subdomains from database
+            $subdomains = ['app']; // Always include 'app' subdomain
+            foreach ($tenants as $tenant) {
+                if (isset($tenant->data['subdomain'])) {
+                    $subdomains[] = $tenant->data['subdomain'];
+                }
+            }
+
+            // Sort subdomains alphabetically
+            sort($subdomains);
+
+            // Get current content
+            $content = $this->getHerdYmlContent();
+
+            // Replace subdomains section
+            $newSubdomainsList = implode("\n", array_map(fn($s) => "  - {$s}", $subdomains));
+            $newContent = preg_replace(
+                '/subdomains:\s*\n(?:  - .+\n)*/s',
+                "subdomains:\n{$newSubdomainsList}\n",
+                $content
+            );
+
+            $this->updateHerdYmlContent($newContent);
+
+            Log::info('.herd.yml synced with database', [
+                'subdomain_count' => count($subdomains),
+                'subdomains' => $subdomains
+            ]);
+
+            return [
+                'success' => true,
+                'message' => "Synced " . count($subdomains) . " subdomain(s) with .herd.yml",
+                'subdomains' => $subdomains
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to sync .herd.yml with database', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'message' => 'Error syncing .herd.yml: ' . $e->getMessage()
+            ];
+        }
+    }
 }

@@ -1,0 +1,9 @@
+name: school-erp
+domain: myschool.test
+subdomains:
+  - lps  # Lucknow Public School
+  - svps  # Swami Vivekanand public inter collage
+  - abc  # ABC
+php: 8.3
+mysql: 8.0
+redis: 7.0

@@ -47,77 +47,17 @@ class TenantContextService
     }
 
     /**
-     * Configure database based on tenant strategy
+     * Configure database (always use main database)
      */
     private function configureDatabase(Tenant $tenant): void
     {
-        if ($tenant->usesSeparateDatabase()) {
-            // Separate database tenant
-            $connectionName = $tenant->getConnectionName();
+        // Always use main database for shared approach
+        Config::set('database.default', 'mysql');
 
-            // Check if we're on tenant domain (not admin domain)
-            $currentHost = request()->getHost();
-            $adminDomain = config('all.domains.admin');
-            $isAdminContext = ($currentHost === $adminDomain);
-
-            $databaseConfig = null;
-            $envLoaded = false;
-
-            // Only load env file if we're on tenant domain (not admin)
-            if (!$isAdminContext) {
-                $envService = new TenantEnvironmentService();
-                $tenantEnv = $envService->loadTenantEnvironment($tenant);
-
-                if (!empty($tenantEnv)) {
-                    $databaseConfig = $envService->buildDatabaseConfig($tenantEnv);
-                    $envLoaded = true;
-                }
-            }
-
-            // Fallback to tenant model configuration (always used in admin context)
-            if (empty($databaseConfig)) {
-                $databaseConfig = $tenant->getDatabaseConfig();
-            }
-
-            // Validate database configuration
-            if (empty($databaseConfig['database'])) {
-                Log::error('Invalid database configuration for tenant', [
-                    'tenant_id' => $tenant->id,
-                    'config' => $databaseConfig,
-                    'is_admin_context' => $isAdminContext
-                ]);
-                throw new \RuntimeException("Invalid database configuration for tenant {$tenant->id}");
-            }
-
-            // Add the connection to the database configuration
-            Config::set("database.connections.{$connectionName}", $databaseConfig);
-
-            // Set as default connection
-            Config::set('database.default', $connectionName);
-
-            // Reconnect database to apply new configuration
-            DB::purge($connectionName);
-
-            Log::info('Configured separate database', [
-                'tenant_id' => $tenant->id,
-                'connection' => $connectionName,
-                'database' => $databaseConfig['database'] ?? 'unknown',
-                'host' => $databaseConfig['host'] ?? 'unknown',
-                'source' => $envLoaded ? 'env_file' : 'tenant_model',
-                'is_admin_context' => $isAdminContext
-            ]);
-
-            // Don't test connection here - will be tested on actual use
-            Log::info('Database connection configured (will connect on first use)');
-        } else {
-            // Shared database tenant - use main connection
-            Config::set('database.default', 'mysql');
-
-            Log::info('Configured shared database', [
-                'tenant_id' => $tenant->id,
-                'connection' => 'mysql'
-            ]);
-        }
+        Log::info('Configured shared database', [
+            'tenant_id' => $tenant->id,
+            'connection' => 'mysql'
+        ]);
     }
 
     /**
@@ -151,8 +91,10 @@ class TenantContextService
      */
     private function configureSession(Tenant $tenant): void
     {
-        // Always use main database for sessions to avoid conflicts
+        // Always use main database for sessions
+        // This ensures auth()->user() works consistently
         Config::set('session.connection', 'mysql');
+        Config::set('session.prefix', 'main_session_');
 
         // Add tenant context to session
         session(['tenant_context' => [
@@ -162,9 +104,11 @@ class TenantContextService
             'subdomain' => $tenant->data['subdomain'] ?? null
         ]]);
 
-        Log::info('Configured session for tenant', [
+        Log::info('Configured session for tenant (using main database)', [
             'tenant_id' => $tenant->id,
-            'database_strategy' => $tenant->data['database_strategy'] ?? 'shared'
+            'database_strategy' => $tenant->data['database_strategy'] ?? 'shared',
+            'session_connection' => 'mysql',
+            'session_prefix' => 'main_session_'
         ]);
     }
 
@@ -254,11 +198,7 @@ class TenantContextService
             return $key;
         }
 
-        if ($tenant->usesSeparateDatabase()) {
-            return "tenant_{$tenant->id}_{$key}";
-        } else {
-            return "shared_tenant_{$tenant->id}_{$key}";
-        }
+        return "shared_tenant_{$tenant->id}_{$key}";
     }
 
     /**

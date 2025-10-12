@@ -10,7 +10,7 @@
         <div class="text-center mb-16">
             <h1 class="text-4xl font-bold text-secondary-900 mb-4">About School ERP</h1>
             <p class="text-xl text-secondary-600 max-w-3xl mx-auto">
-                We're on a mission to transform how schools manage their operations, 
+                We're on a mission to transform how schools manage their operations,
                 making education administration more efficient, transparent, and student-focused.
             </p>
         </div>
@@ -25,8 +25,8 @@
                 </div>
                 <h2 class="text-2xl font-bold text-primary-900 mb-4">Our Mission</h2>
                 <p class="text-primary-700 leading-relaxed">
-                    To empower educational institutions with innovative technology solutions that streamline 
-                    administrative processes, enhance communication, and ultimately improve student outcomes. 
+                    To empower educational institutions with innovative technology solutions that streamline
+                    administrative processes, enhance communication, and ultimately improve student outcomes.
                     We believe that when schools run efficiently, teachers can focus on what matters most: teaching.
                 </p>
             </div>
@@ -40,8 +40,8 @@
                 </div>
                 <h2 class="text-2xl font-bold text-accent-900 mb-4">Our Vision</h2>
                 <p class="text-accent-700 leading-relaxed">
-                    To become the leading School ERP solution globally, recognized for our commitment to 
-                    innovation, reliability, and customer success. We envision a future where every school, 
+                    To become the leading School ERP solution globally, recognized for our commitment to
+                    innovation, reliability, and customer success. We envision a future where every school,
                     regardless of size, can access enterprise-grade management tools.
                 </p>
             </div>
@@ -50,7 +50,7 @@
         <!-- Company Story -->
         <div class="bg-secondary-50 rounded-2xl p-8 mb-16">
             <h2 class="text-3xl font-bold text-secondary-900 mb-8 text-center">Our Story</h2>
-            
+
             <div class="max-w-4xl mx-auto space-y-8">
                 <div class="flex items-start space-x-4">
                     <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -59,8 +59,8 @@
                     <div>
                         <h3 class="text-xl font-semibold text-secondary-900 mb-2">The Beginning</h3>
                         <p class="text-secondary-600">
-                            Founded by a team of educators and technologists who experienced firsthand the 
-                            challenges of managing school operations with outdated systems. We started with 
+                            Founded by a team of educators and technologists who experienced firsthand the
+                            challenges of managing school operations with outdated systems. We started with
                             a simple goal: make school management easier.
                         </p>
                     </div>
@@ -73,7 +73,7 @@
                     <div>
                         <h3 class="text-xl font-semibold text-secondary-900 mb-2">First Major Release</h3>
                         <p class="text-secondary-600">
-                            Launched our comprehensive School ERP system, serving our first 50 schools. 
+                            Launched our comprehensive School ERP system, serving our first 50 schools.
                             The feedback was overwhelming, and we knew we were on the right track.
                         </p>
                     </div>
@@ -86,8 +86,8 @@
                     <div>
                         <h3 class="text-xl font-semibold text-secondary-900 mb-2">Multi-Tenancy Innovation</h3>
                         <p class="text-secondary-600">
-                            Introduced our revolutionary multi-tenancy architecture, allowing schools to 
-                            choose between shared and separate database strategies based on their needs.
+                            Introduced our revolutionary multi-tenancy architecture with secure data isolation,
+                            supporting schools, colleges, and universities with custom domain mapping.
                         </p>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                     <div>
                         <h3 class="text-xl font-semibold text-secondary-900 mb-2">Today & Beyond</h3>
                         <p class="text-secondary-600">
-                            Serving over 500+ schools across India and expanding globally. We continue to 
+                            Serving over 500+ schools across India and expanding globally. We continue to
                             innovate, always keeping our customers' needs at the heart of everything we do.
                         </p>
                     </div>
@@ -110,7 +110,7 @@
         <!-- Core Values -->
         <div class="mb-16">
             <h2 class="text-3xl font-bold text-secondary-900 mb-8 text-center">Our Core Values</h2>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="text-center">
                     <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -165,7 +165,7 @@
         <!-- Team Section -->
         <div class="bg-white rounded-2xl p-8 border border-secondary-200 mb-16">
             <h2 class="text-3xl font-bold text-secondary-900 mb-8 text-center">Our Leadership Team</h2>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="text-center">
                     <div class="w-24 h-24 bg-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">

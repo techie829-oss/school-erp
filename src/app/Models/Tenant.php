@@ -13,13 +13,6 @@ class Tenant extends Model
     protected $fillable = [
         'id',
         'data',
-        'database_name',
-        'database_host',
-        'database_port',
-        'database_username',
-        'database_password',
-        'database_charset',
-        'database_collation',
     ];
 
     /**
@@ -40,7 +33,6 @@ class Tenant extends Model
     protected $casts = [
         'id' => 'string',
         'data' => 'array',
-        'database_port' => 'integer',
     ];
 
     /**
@@ -48,7 +40,15 @@ class Tenant extends Model
      */
     public function colorPalettes(): HasMany
     {
-        return $this->hasMany(TenantColorPalette::class, 'tenant_id', 'id');
+        return $this->hasMany(TenantColorPalette::class);
+    }
+
+    /**
+     * Get the admin users for this tenant.
+     */
+    public function adminUsers(): HasMany
+    {
+        return $this->hasMany(AdminUser::class);
     }
 
     /**
@@ -60,7 +60,7 @@ class Tenant extends Model
     }
 
     /**
-     * Get tenant name from data array.
+     * Get tenant name from data.
      */
     public function getNameAttribute(): string
     {
@@ -68,118 +68,33 @@ class Tenant extends Model
     }
 
     /**
-     * Get tenant domain from data array.
+     * Get tenant subdomain from data.
      */
-    public function getDomainAttribute(): string
+    public function getSubdomainAttribute(): ?string
     {
-        return $this->data['domain'] ?? 'unknown.test';
+        return $this->data['subdomain'] ?? null;
     }
 
     /**
-     * Get tenant status from data array.
+     * Get tenant full domain from data.
      */
-    public function getStatusAttribute(): string
+    public function getFullDomainAttribute(): ?string
     {
-        return $this->data['status'] ?? 'inactive';
+        $subdomain = $this->getSubdomainAttribute();
+        if (!$subdomain) {
+            return null;
+        }
+
+        $primaryDomain = config('all.domains.primary');
+        return "{$subdomain}.{$primaryDomain}";
     }
 
     /**
-     * Check if tenant uses separate database.
+     * Check if tenant is active.
      */
-    public function usesSeparateDatabase(): bool
+    public function isActive(): bool
     {
-        // During console operations (seeding, commands), check if we're in a tenant management context
-        // This prevents issues during database seeding but allows tenant management operations
-        if (app()->runningInConsole()) {
-            // Allow separate database for tenant management commands
-            $argv = request()->server('argv') ?? [];
-            $command = $argv[1] ?? '';
-
-            // Allow separate database for tenant-related commands or when not in seeding context
-            if (str_contains($command, 'tenant') ||
-                str_contains($command, 'test:') ||
-                str_contains($command, 'debug') ||
-                !str_contains($command, 'seed')) {
-                // Allow separate database for tenant-related commands
-            } else {
-                return false;
-            }
-        }
-
-        // In admin context (admin domain), allow separate database operations
-        // but the model itself will use shared database (handled in getConnection methods)
-        try {
-            if (request() && request()->getHost() === config('all.domains.admin')) {
-                // Allow separate database operations in admin context
-                // The actual database switching will be handled by the service layer
-            }
-        } catch (\Exception $e) {
-            // If request is not available, continue with normal logic
-        }
-
-        // Check if database strategy is separate and has required configuration
-        $strategy = $this->data['database_strategy'] ?? 'shared';
-        if ($strategy !== 'separate') {
-            return false;
-        }
-
-        // Check if we have database configuration (either in columns or data)
-        $dbName = $this->database_name ?? $this->data['database_name'] ?? null;
-        $dbHost = $this->database_host ?? $this->data['database_host'] ?? null;
-
-        return !empty($dbName) && !empty($dbHost);
-    }
-
-    /**
-     * Get database strategy from data array.
-     */
-    public function getDatabaseStrategyAttribute(): string
-    {
-        return $this->data['database_strategy'] ?? 'shared';
-    }
-
-    /**
-     * Get database configuration array.
-     */
-    public function getDatabaseConfig(): array
-    {
-        if (!$this->usesSeparateDatabase()) {
-            return [];
-        }
-
-        return [
-            'driver' => 'mysql',
-            'host' => $this->database_host ?? $this->data['database_host'] ?? '127.0.0.1',
-            'port' => $this->database_port ?? $this->data['database_port'] ?? 3306,
-            'database' => $this->database_name ?? $this->data['database_name'] ?? '',
-            'username' => $this->database_username ?? $this->data['database_username'] ?? 'root',
-            'password' => $this->database_password ?? $this->data['database_password'] ?? '',
-            'unix_socket' => '', // Force TCP/IP connection instead of socket
-            'charset' => $this->database_charset ?? $this->data['database_charset'] ?? 'utf8mb4',
-            'collation' => $this->database_collation ?? $this->data['database_collation'] ?? 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ];
-    }
-
-    /**
-     * Get connection name for this tenant.
-     */
-    public function getConnectionName(): string
-    {
-        // Check if we have complete database configuration for separate database
-        if ($this->usesSeparateDatabase()) {
-            // Double-check that we have valid database configuration
-            $config = $this->getDatabaseConfig();
-            if (empty($config) || !isset($config['database']) || empty($config['database'])) {
-                return 'mysql';
-            }
-
-            return "tenant_{$this->id}";
-        }
-
-        return 'mysql';
+        return $this->data['is_active'] ?? true;
     }
 
     /**
@@ -187,31 +102,7 @@ class Tenant extends Model
      */
     public function getConnection()
     {
-        // In admin context, always use shared database
-        try {
-            if (request() && request()->getHost() === config('all.domains.admin')) {
-                return $this->resolveConnection('mysql');
-            }
-        } catch (\Exception $e) {
-            // If request is not available, continue with normal logic
-        }
-
-        // Check if we should use separate database and if it's properly configured
-        if ($this->usesSeparateDatabase()) {
-            $config = $this->getDatabaseConfig();
-            if (empty($config) || !isset($config['database']) || empty($config['database'])) {
-                // If database configuration is incomplete, use shared database
-                return $this->resolveConnection('mysql');
-            }
-
-            // Check if the tenant connection is already registered
-            $connectionName = "tenant_{$this->id}";
-            if (!\Config::has("database.connections.{$connectionName}")) {
-                // If connection is not registered, use shared database
-                return $this->resolveConnection('mysql');
-            }
-        }
-
-        return parent::getConnection();
+        // Always use the default MySQL connection for shared database tenants
+        return $this->resolveConnection('mysql');
     }
 }

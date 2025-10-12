@@ -114,8 +114,8 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Database</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status & Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                     </tr>
@@ -173,32 +173,16 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @php
-                                    $databaseStrategy = $tenant->data['database_strategy'] ?? 'shared';
-                                    $isSeparate = $databaseStrategy === 'separate';
-                                @endphp
                                 <div class="flex items-center">
-                                    <span
-                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $isSeparate ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800' }}">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            @if ($isSeparate)
-                                                <path fill-rule="evenodd"
-                                                    d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                                    clip-rule="evenodd" />
-                                            @else
-                                                <path fill-rule="evenodd"
-                                                    d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                                    clip-rule="evenodd" />
-                                            @endif
+                                            <path fill-rule="evenodd"
+                                                d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                                                clip-rule="evenodd" />
                                         </svg>
-                                        {{ ucfirst($databaseStrategy) }}
+                                        {{ ucfirst($tenant->data['type'] ?? 'School') }}
                                     </span>
                                 </div>
-                                @if ($isSeparate && $tenant->database_name)
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        {{ $tenant->database_name }}
-                                    </div>
-                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="space-y-1">

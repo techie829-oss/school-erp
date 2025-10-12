@@ -219,9 +219,7 @@
                             @if(isset($tenant['student_count']) && $tenant['student_count'])
                             <p><strong>Students:</strong> {{ number_format($tenant['student_count']) }}</p>
                             @endif
-                            @if(isset($tenant['database_strategy']) && $tenant['database_strategy'])
-                            <p><strong>Database:</strong> {{ ucfirst($tenant['database_strategy']) }}</p>
-                            @endif
+                            <p><strong>Type:</strong> {{ ucfirst($tenant['type'] ?? 'School') }}</p>
                         </div>
                     </div>
 

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\TenantUserValidationService;
 use App\Services\TenantAuthenticationService;
-use App\Services\TenantContextService;
 use App\Policies\AdminAccessPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,42 +49,55 @@ class LoginController extends Controller
         // For tenant domains, use tenant authentication service
         if ($this->isTenantDomain()) {
             $tenant = $this->resolveTenantFromSubdomain();
+            if (!$tenant) {
+                throw ValidationException::withMessages([
+                    'email' => 'Invalid tenant domain.',
+                ]);
+            }
 
-            if ($tenant) {
-                $authService = new TenantAuthenticationService(app(TenantContextService::class));
-                $authResult = $authService->authenticateForTenant($credentials, $tenant, $remember);
+            $authService = new TenantAuthenticationService();
+            if ($authService->authenticateForTenant($credentials, $tenant)) {
+                // Regenerate session for security
+                $request->session()->regenerate();
 
-                if (!$authResult) {
-                    RateLimiter::hit($this->throttleKey($request));
-                    throw ValidationException::withMessages([
-                        'email' => trans('auth.failed'),
+                // Store user info in session for easy access
+                $user = auth()->user();
+                if ($user) {
+                    session([
+                        'tenant_user' => [
+                            'id' => $user->id,
+                            'name' => $user->name ?? 'Admin',
+                            'email' => $user->email,
+                            'admin_type' => $user->admin_type ?? 'school_admin',
+                        ]
                     ]);
                 }
+
+                RateLimiter::clear($this->throttleKey($request));
+
+                // Redirect to appropriate dashboard
+                $redirectRoute = $this->getRedirectRoute();
+                return redirect()->intended($redirectRoute);
             } else {
                 RateLimiter::hit($this->throttleKey($request));
                 throw ValidationException::withMessages([
-                    'email' => trans('auth.failed'),
+                    'email' => 'These credentials do not match our records.',
                 ]);
             }
         } else {
-            // For admin domain, use normal authentication
-            if (!Auth::guard($guard)->attempt($credentials, $remember)) {
+            // For admin domain, use admin guard
+            if (Auth::guard('admin')->attempt($credentials, $remember)) {
+                $request->session()->regenerate();
+                RateLimiter::clear($this->throttleKey($request));
+
+                return redirect()->intended(route('admin.dashboard'));
+            } else {
                 RateLimiter::hit($this->throttleKey($request));
                 throw ValidationException::withMessages([
-                    'email' => trans('auth.failed'),
+                    'email' => 'These credentials do not match our records.',
                 ]);
             }
         }
-
-        // Regenerate session for security
-        // The TenantContextService ensures sessions are handled in the main database
-        $request->session()->regenerate();
-
-        RateLimiter::clear($this->throttleKey($request));
-
-        // Redirect to appropriate dashboard
-        $redirectRoute = $this->getRedirectRoute();
-        return redirect()->intended($redirectRoute);
     }
 
     /**
@@ -93,41 +105,16 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-        $isTenantDomain = $this->isTenantDomain();
-
-        // Clear tenant session data if on tenant domain
-        if ($isTenantDomain) {
-            session()->forget(['tenant_user', 'tenant_id', 'tenant_database_switched']);
-        }
-
-        Auth::guard($this->getGuardForCurrentDomain())->logout();
-
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        if ($isTenantDomain) {
-            return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')])
-                ->with('success', 'You have been logged out successfully.');
+        // Redirect based on domain
+        if ($this->isTenantDomain()) {
+            return redirect()->route('tenant.login');
         }
 
         return redirect()->route('admin.login');
-    }
-
-    /**
-     * Get the appropriate guard based on the current domain
-     */
-    protected function getGuardForCurrentDomain(): string
-    {
-        $host = request()->getHost();
-        $adminDomain = config('all.domains.admin');
-
-        // If we're on the admin domain, use admin guard
-        if ($host === $adminDomain) {
-            return 'admin';
-        }
-
-        // For tenant domains, use admin guard (school admins are also admin users)
-        return 'admin';
     }
 
     /**
@@ -136,209 +123,52 @@ class LoginController extends Controller
     protected function isTenantDomain(): bool
     {
         $host = request()->getHost();
-        $adminDomain = config('all.domains.admin');
         $primaryDomain = config('all.domains.primary');
+        $adminDomain = config('all.domains.admin');
 
-        // Check if it's a tenant subdomain (e.g., school.myschool.test)
+        // Check if it's not the admin domain and has the primary domain pattern
         return $host !== $adminDomain && str_ends_with($host, '.' . $primaryDomain);
     }
 
     /**
-     * Validate tenant domain access
-     */
-    protected function validateTenantDomainAccess(string $email, Request $request): void
-    {
-        $host = request()->getHost();
-        $subdomain = $this->extractSubdomain($host);
-
-        if (!$subdomain) {
-            throw ValidationException::withMessages([
-                'email' => 'Invalid tenant domain.',
-            ]);
-        }
-
-        $validationService = new TenantUserValidationService();
-
-        // Check if user has access to this tenant domain
-        if (!$validationService->validateDomainAccess($email, $subdomain)) {
-            $allowedDomains = $validationService->getAllowedDomainsForUser($email);
-
-            $message = 'You do not have access to this tenant domain.';
-            if (!empty($allowedDomains)) {
-                $message .= ' You can access: ' . implode(', ', $allowedDomains);
-            }
-
-            throw ValidationException::withMessages([
-                'email' => $message,
-            ]);
-        }
-    }
-
-    /**
-     * Authenticate against tenant database for separate database tenants
-     */
-    protected function authenticateAgainstTenantDatabase(array $credentials, $tenant): bool
-    {
-        try {
-            $databaseService = new \App\Services\TenantDatabaseService();
-            $connection = $databaseService->getTenantConnection($tenant);
-
-            $userData = $connection->table('admin_users')
-                ->where('email', $credentials['email'])
-                ->first();
-
-            if (!$userData) {
-                return false;
-            }
-
-            // Verify password
-            if (!\Illuminate\Support\Facades\Hash::check($credentials['password'], $userData->password)) {
-                return false;
-            }
-
-            // Check if user is active
-            $isActive = $userData->is_active ?? $userData->active ?? false;
-            if (!$isActive) {
-                return false;
-            }
-
-            // Create a proper user object that implements Authenticatable
-            $user = new class($userData, $tenant->id) implements \Illuminate\Contracts\Auth\Authenticatable {
-                private $userData;
-                private $tenantId;
-
-                public function __construct($userData, $tenantId) {
-                    $this->userData = $userData;
-                    $this->tenantId = $tenantId;
-                }
-
-                public function getAuthIdentifierName() {
-                    return 'id';
-                }
-
-                public function getAuthIdentifier() {
-                    return $this->userData->id;
-                }
-
-                public function getAuthPassword() {
-                    return $this->userData->password;
-                }
-
-                public function getAuthPasswordName() {
-                    return 'password';
-                }
-
-                public function getRememberToken() {
-                    return null;
-                }
-
-                public function setRememberToken($value) {
-                    // Not implemented for this use case
-                }
-
-                public function getRememberTokenName() {
-                    return 'remember_token';
-                }
-
-                // Additional methods for accessing user data
-                public function __get($key) {
-                    if ($key === 'tenant_id') {
-                        return $this->tenantId;
-                    }
-                    return $this->userData->$key ?? null;
-                }
-
-                public function __isset($key) {
-                    if ($key === 'tenant_id') {
-                        return true;
-                    }
-                    return isset($this->userData->$key);
-                }
-            };
-
-            // Manually log in the user using the admin guard
-            // Note: We need to ensure the session is established properly
-            // even though we're in a switched database context
-            \Illuminate\Support\Facades\Auth::guard('admin')->login($user, false);
-
-            return true;
-
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error authenticating against tenant database', [
-                'error' => $e->getMessage(),
-                'tenant_id' => $tenant->id,
-                'email' => $credentials['email']
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Resolve tenant from subdomain manually
+     * Resolve tenant from subdomain
      */
     protected function resolveTenantFromSubdomain()
     {
         $host = request()->getHost();
-        $subdomain = $this->extractSubdomain($host);
+        $primaryDomain = config('all.domains.primary');
 
-        if (!$subdomain) {
+        if (!str_ends_with($host, '.' . $primaryDomain)) {
             return null;
         }
 
-        // Find tenant by subdomain
+        $subdomain = str_replace('.' . $primaryDomain, '', $host);
+
         return \App\Models\Tenant::where('data->subdomain', $subdomain)->first();
     }
 
     /**
-     * Extract subdomain from host
+     * Get the appropriate guard for current domain
      */
-    protected function extractSubdomain(string $host): ?string
+    protected function getGuardForCurrentDomain(): string
     {
-        $primaryDomain = config('all.domains.primary');
-
-        if (str_ends_with($host, '.' . $primaryDomain)) {
-            return str_replace('.' . $primaryDomain, '', $host);
-        }
-
-        return null;
+        return $this->isTenantDomain() ? 'web' : 'web';
     }
 
     /**
-     * Get the appropriate redirect route based on the current domain and user type
+     * Get redirect route after login
      */
     protected function getRedirectRoute(): string
     {
-        $user = auth()->user();
-        $host = request()->getHost();
-        $adminDomain = config('all.domains.admin');
-
-        // If we're on a tenant domain, always redirect to tenant admin dashboard
-        if ($host !== $adminDomain) {
-            $tenant = $this->resolveTenantFromSubdomain();
-            if ($tenant && isset($tenant->data['subdomain'])) {
-                return route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']], absolute: false);
-            }
+        if ($this->isTenantDomain()) {
+            return route('tenant.admin.dashboard');
         }
 
-        // For admin domain, use policy-based redirects
-        $policy = new AdminAccessPolicy();
-        $redirectUrl = $policy->getRedirectUrl($user);
-
-        if ($redirectUrl) {
-            return $redirectUrl;
-        }
-
-        // Default to admin dashboard for admin domain
-        if ($host === $adminDomain) {
-            return route('admin.dashboard', absolute: false);
-        }
-
-        // Fallback to admin dashboard
-        return route('admin.dashboard', absolute: false);
+        return route('admin.dashboard');
     }
 
     /**
-     * Ensure the authentication request is not rate limited.
+     * Ensure the login request is not rate limited
      */
     protected function ensureIsNotRateLimited(Request $request): void
     {
@@ -349,18 +179,15 @@ class LoginController extends Controller
         $seconds = RateLimiter::availableIn($this->throttleKey($request));
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
         ]);
     }
 
     /**
-     * Get the authentication rate limiting throttle key.
+     * Get the rate limiting throttle key for the request
      */
     protected function throttleKey(Request $request): string
     {
-        return Str::transliterate(Str::lower($request->email) . '|' . $request->ip());
+        return Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
     }
 }

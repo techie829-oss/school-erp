@@ -153,7 +153,7 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-secondary-900 mb-3">Multi-Tenancy</h3>
-                <p class="text-secondary-600">Support for multiple schools with separate databases and custom domain mapping.</p>
+                <p class="text-secondary-600">Support for multiple institutions with custom domain mapping and complete data isolation.</p>
             </div>
         </div>
     </div>

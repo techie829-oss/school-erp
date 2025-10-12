@@ -26,12 +26,11 @@ Route::middleware([
 ])->group(function () {
     // Public routes
     Route::get('/', function () {
-        $tenant = tenant();
-        if ($tenant && isset($tenant->data['subdomain'])) {
-            return redirect()->route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']]);
+        if (auth()->check()) {
+            return redirect()->route('tenant.admin.dashboard');
         }
-        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
-    });
+        return redirect()->route('tenant.login');
+    })->name('tenant.home');
 
     // Authentication routes
     Route::middleware(['guest'])->group(function () {
@@ -44,15 +43,11 @@ Route::middleware([
     Route::middleware(['tenant.auth'])->prefix('admin')->name('tenant.admin.')->group(function () {
         // Redirect /admin to /admin/dashboard
         Route::get('/', function () {
-            $tenant = tenant();
-            if ($tenant && isset($tenant->data['subdomain'])) {
-                return redirect()->route('tenant.admin.dashboard', ['tenant' => $tenant->data['subdomain']]);
-            }
-            return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
+            return redirect()->route('tenant.admin.dashboard');
         });
 
         // Dashboard
-        Route::get('/dashboard', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
 
         // Student Management
         Route::resource('students', \App\Http\Controllers\Tenant\Admin\StudentController::class);

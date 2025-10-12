@@ -88,7 +88,7 @@
                         <svg class="w-5 h-5 text-success mr-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        Choice of database strategy
+                        Secure data isolation
                     </li>
                     <li class="flex items-center text-primary-700">
                         <svg class="w-5 h-5 text-success mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -135,7 +135,7 @@
                         <svg class="w-5 h-5 text-success mr-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        Separate database
+                        Dedicated support
                     </li>
                     <li class="flex items-center text-secondary-700">
                         <svg class="w-5 h-5 text-success mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -197,9 +197,9 @@
                             <td class="py-4 px-4 text-center">✅</td>
                         </tr>
                         <tr>
-                            <td class="py-4 px-4 text-secondary-700">Database Strategy</td>
-                            <td class="py-4 px-4 text-center">Shared Only</td>
-                            <td class="py-4 px-4 text-center">Choice</td>
+                            <td class="py-4 px-4 text-secondary-700">Data Isolation</td>
+                            <td class="py-4 px-4 text-center">Standard</td>
+                            <td class="py-4 px-4 text-center">Enhanced</td>
                             <td class="py-4 px-4 text-center">Separate</td>
                         </tr>
                         <tr>

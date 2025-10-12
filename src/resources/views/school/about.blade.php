@@ -52,8 +52,8 @@
                         <span class="text-gray-600 ml-2">{{ $tenant['location'] ?? 'Location' }}</span>
                     </div>
                     <div>
-                        <strong class="text-gray-900">Database Strategy:</strong>
-                        <span class="text-gray-600 ml-2">{{ ucfirst($tenant['database_strategy'] ?? 'shared') }}</span>
+                        <strong class="text-gray-900">Tenant Type:</strong>
+                        <span class="text-gray-600 ml-2">{{ ucfirst($tenant['type'] ?? 'School') }}</span>
                     </div>
                     <div>
                         <strong class="text-gray-900">Status:</strong>

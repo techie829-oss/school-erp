@@ -282,6 +282,38 @@ class TenantService
     }
 
     /**
+     * Get all tenants with their information.
+     */
+    public function getAllTenants(): array
+    {
+        $tenants = Tenant::all();
+        $result = [];
+
+        foreach ($tenants as $tenant) {
+            $data = $tenant->data;
+            $result[] = [
+                'id' => $tenant->id,
+                'name' => $data['name'] ?? 'Unnamed Tenant',
+                'short_name' => $data['short_name'] ?? $this->generateShortName($data['name'] ?? 'Unnamed Tenant'),
+                'email' => $data['email'] ?? null,
+                'type' => $data['type'] ?? 'school',
+                'active' => $data['active'] ?? false,
+                'domain_type' => $data['domain_type'] ?? 'subdomain',
+                'domain' => $data['full_domain'] ?? $tenant->id . '.' . config('all.domains.primary'),
+                'subdomain' => $data['subdomain'] ?? null,
+                'custom_domain' => $data['custom_domain'] ?? null,
+                'location' => $data['location'] ?? null,
+                'description' => $data['description'] ?? 'Excellence in Education',
+                'student_count' => $data['student_count'] ?? null,
+                'database_strategy' => 'shared', // All tenants now use shared database
+                'status' => $data['active'] ? 'active' : 'inactive',
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Get all tenant domains for vhost configuration.
      */
     public function getAllTenantDomains(): array
