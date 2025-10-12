@@ -44,7 +44,7 @@ return [
             'driver' => 'session',
             'provider' => 'admin_users',
         ],
-        'tenant' => [
+        'tadmin' => [
             'driver' => 'session',
             'provider' => 'admin_users',
         ],

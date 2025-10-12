@@ -85,7 +85,7 @@ class LoginController extends Controller
                 ]);
             }
         } else {
-            // For admin domain, use admin guard
+            // For admin domain, use admin guard (super admin with admin_users table)
             if (Auth::guard('admin')->attempt($credentials, $remember)) {
                 $request->session()->regenerate();
                 RateLimiter::clear($this->throttleKey($request));
@@ -105,7 +105,12 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Logout from appropriate guard based on domain
+        if ($this->isTenantDomain()) {
+            Auth::guard('tadmin')->logout();
+        } else {
+            Auth::guard('admin')->logout();
+        }
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -161,7 +166,8 @@ class LoginController extends Controller
     protected function getRedirectRoute(): string
     {
         if ($this->isTenantDomain()) {
-            return route('tenant.admin.dashboard');
+            // For tenant domains, redirect to tenant admin dashboard (not app domain)
+            return '/admin/dashboard';  // Relative path to stay on current domain
         }
 
         return route('admin.dashboard');

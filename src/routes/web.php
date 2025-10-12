@@ -138,6 +138,11 @@ Route::domain(config('all.domains.admin'))->group(function () {
         // System Management
         Route::get('/system/overview', [\App\Http\Controllers\Admin\SystemController::class, 'overview'])->name('system.overview');
         Route::get('/system/logs', [\App\Http\Controllers\Admin\SystemController::class, 'logs'])->name('system.logs');
+
+        // Temporary fix for tenant admin dashboard route
+        Route::get('/tenant-admin-dashboard', function () {
+            return redirect()->route('admin.dashboard');
+        })->name('tenant.admin.dashboard');
         Route::post('/system/cache-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearCache'])->name('system.cache.clear');
         Route::post('/system/route-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearRoutes'])->name('system.route.clear');
         Route::post('/system/view-clear', [\App\Http\Controllers\Admin\SystemController::class, 'clearViews'])->name('system.view.clear');

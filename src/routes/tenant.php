@@ -26,8 +26,8 @@ Route::middleware([
 ])->group(function () {
     // Public routes
     Route::get('/', function () {
-        if (auth()->check()) {
-            return redirect()->route('tenant.admin.dashboard');
+        if (auth('tadmin')->check()) {
+            return redirect('/admin/dashboard');  // Use relative path
         }
         return redirect()->route('tenant.login');
     })->name('tenant.home');
@@ -39,15 +39,20 @@ Route::middleware([
         Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('tenant.logout');
     });
 
+    // Test route without middleware
+    Route::get('/test-admin', function () {
+        return 'Tenant admin route is working!';
+    });
+
     // Protected admin routes
     Route::middleware(['tenant.auth'])->prefix('admin')->name('tenant.admin.')->group(function () {
-        // Redirect /admin to /admin/dashboard
-        Route::get('/', function () {
-            return redirect()->route('tenant.admin.dashboard');
-        });
-
         // Dashboard
         Route::get('dashboard', [\App\Http\Controllers\Tenant\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        // Redirect /admin to dashboard
+        Route::get('/', function () {
+            return redirect('/admin/dashboard');  // Use relative path to stay on current domain
+        });
 
         // Student Management
         Route::resource('students', \App\Http\Controllers\Tenant\Admin\StudentController::class);

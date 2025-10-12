@@ -35,8 +35,8 @@ class TenantAuthenticationService
             $user = $this->authenticateUser($credentials, $tenant);
 
             if ($user) {
-                // Log in the user
-                Auth::guard('admin')->login($user, $remember);
+                // Log in the user using tadmin guard (tenant admin)
+                Auth::guard('tadmin')->login($user, $remember);
 
                 Log::info('User authenticated successfully', [
                     'email' => $credentials['email'],

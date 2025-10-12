@@ -15,17 +15,17 @@ class TenantAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated via admin guard (for AdminUser model)
-        if (auth('admin')->check()) {
+        // Check if tenant admin is authenticated (using tadmin guard with admin_users table)
+        if (auth('tadmin')->check()) {
             return $next($request);
         }
 
-        // Fallback: Check if tenant user is authenticated via session (legacy)
-        if (session('tenant_user')) {
+        // Fallback: Check regular users (staff, teachers, students) via web guard
+        if (auth('web')->check()) {
             return $next($request);
         }
 
         // No authentication found, redirect to login
-        return redirect()->route('tenant.login', ['tenant' => request()->route('tenant')]);
+        return redirect()->route('tenant.login');
     }
 }

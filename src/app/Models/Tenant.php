@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stancl\Tenancy\Database\Models\Tenant as TenantModel;
 
-class Tenant extends Model
+class Tenant extends TenantModel
 {
     use HasFactory;
 
@@ -34,6 +34,33 @@ class Tenant extends Model
         'id' => 'string',
         'data' => 'array',
     ];
+
+    /**
+     * Override getCustomColumns to include data columns
+     */
+    public static function getCustomColumns(): array
+    {
+        return [
+            'id',
+            'data',
+        ];
+    }
+
+    /**
+     * Get the domains for the tenant (required by Stancl Tenancy)
+     */
+    public function domains()
+    {
+        return $this->hasMany(\Stancl\Tenancy\Database\Models\Domain::class);
+    }
+
+    /**
+     * Get the database config for the tenant (required by Stancl Tenancy)
+     */
+    public function database()
+    {
+        return $this->hasOne(\Stancl\Tenancy\Database\Models\TenantDatabase::class);
+    }
 
     /**
      * Get the color palettes for this tenant.

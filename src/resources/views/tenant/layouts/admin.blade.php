@@ -150,8 +150,8 @@
             <nav class="mt-6 px-3">
                 <div class="space-y-1">
                     <!-- Dashboard -->
-                    <a href="{{ route('tenant.admin.dashboard', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.dashboard') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.dashboard') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('admin.tenant.admin.dashboard') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('admin.tenant.admin.dashboard') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('admin.tenant.admin.dashboard') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
                         </svg>
                         Dashboard
