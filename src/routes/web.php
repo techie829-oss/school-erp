@@ -320,8 +320,10 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::post('/school', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateSchool'])->name('school');
             Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('academic');
         });
-
-        // Color Palettes (TODO: Create ColorPaletteController if needed)
-        // Route::resource('color-palettes', \App\Http\Controllers\Tenant\Admin\ColorPaletteController::class);
+        
+        // Color Palettes
+        Route::get('/color-palettes', function() {
+            return view('tenant.admin.color-palettes.index');
+        })->name('color-palettes.index');
     });
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern

@@ -1,0 +1,8 @@
+name: school-erp
+domain: myschool.test
+subdomains:
+  - abc
+  - app
+  - lps
+  - svps
+  - svps
