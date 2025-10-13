@@ -282,6 +282,15 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             return redirect('/admin/dashboard');
         });
 
+        // Settings Management
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
+            Route::post('/general', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateGeneral'])->name('update.general');
+            Route::post('/features', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateFeatures'])->name('update.features');
+            Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('update.academic');
+            Route::delete('/logo', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'deleteLogo'])->name('delete.logo');
+        });
+
         // Future modules will be added here as they are developed
         // - Student Management
         // - Teacher Management
@@ -289,6 +298,5 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         // - Attendance System
         // - Grades/Marks
         // - Reports
-        // - Settings
     });
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern
