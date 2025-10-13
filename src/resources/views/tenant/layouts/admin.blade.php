@@ -150,83 +150,31 @@
             <nav class="mt-6 px-3">
                 <div class="space-y-1">
                     <!-- Dashboard -->
-                    <a href="{{ route('admin.tenant.admin.dashboard') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('admin.tenant.admin.dashboard') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('admin.tenant.admin.dashboard') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                    <a href="{{ url('/admin/dashboard') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/dashboard') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="mr-3 h-5 w-5 {{ request()->is('*/admin/dashboard') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
                         Dashboard
                     </a>
 
-                    <!-- Students -->
-                    <a href="{{ route('tenant.admin.students.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.students.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.students.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                        </svg>
-                        Students
-                    </a>
-
-                    <!-- Teachers -->
-                    <a href="{{ route('tenant.admin.teachers.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.teachers.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.teachers.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                        </svg>
-                        Teachers
-                    </a>
-
-                    <!-- Classes -->
-                    <a href="{{ route('tenant.admin.classes.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.classes.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.classes.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Classes
-                    </a>
-
-                    <!-- Attendance -->
-                    <a href="{{ route('tenant.admin.attendance.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.attendance.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.attendance.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Attendance
-                    </a>
-
-                    <!-- Grades -->
-                    <a href="{{ route('tenant.admin.grades.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.grades.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.grades.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Grades
-                    </a>
-
-                    <!-- Reports -->
-                    <div class="pt-4">
-                        <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reports</h3>
-                        <div class="mt-2 space-y-1">
-                            <a href="{{ route('tenant.admin.reports.attendance', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.reports.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                                <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.reports.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                                </svg>
-                                Reports
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Settings -->
-                    <div class="pt-4">
-                        <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</h3>
-                        <div class="mt-2 space-y-1">
-                            <a href="{{ route('tenant.admin.settings.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.settings.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                                <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.settings.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                                Settings
-                            </a>
-                            <a href="{{ route('tenant.admin.color-palettes.index', ['tenant' => request()->route('tenant')]) }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('tenant.admin.color-palettes.*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                                <svg class="mr-3 h-5 w-5 {{ request()->routeIs('tenant.admin.color-palettes.*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"/>
-                                </svg>
-                                Color Themes
-                            </a>
+                    <!-- Coming Soon Notice -->
+                    <div class="mt-8 px-3 py-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">More Features Coming Soon</h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>Student Management</li>
+                                        <li>Teacher Management</li>
+                                        <li>Attendance System</li>
+                                        <li>Grades & Reports</li>
+                                        <li>And more...</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\SchoolController;
-use App\Http\Controllers\ColorPaletteController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Livewire\Volt\Volt;
 
@@ -283,47 +282,13 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             return redirect('/admin/dashboard');
         });
 
-        // Student Management
-        Route::resource('students', \App\Http\Controllers\Tenant\Admin\StudentController::class);
-        Route::get('/students/{student}/profile', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'profile'])->name('students.profile');
-
-        // Teacher Management
-        Route::resource('teachers', \App\Http\Controllers\Tenant\Admin\TeacherController::class);
-        Route::get('/teachers/{teacher}/profile', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'profile'])->name('teachers.profile');
-
-        // Class Management
-        Route::resource('classes', \App\Http\Controllers\Tenant\Admin\ClassController::class);
-        Route::get('/classes/{class}/students', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'students'])->name('classes.students');
-        Route::post('/classes/{class}/students', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'addStudent'])->name('classes.add-student');
-        Route::delete('/classes/{class}/students/{student}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'removeStudent'])->name('classes.remove-student');
-
-        // Attendance Management
-        Route::resource('attendance', \App\Http\Controllers\Tenant\Admin\AttendanceController::class);
-        Route::get('/attendance/class/{class}/date/{date}', [\App\Http\Controllers\Tenant\Admin\AttendanceController::class, 'classAttendance'])->name('attendance.class');
-        Route::post('/attendance/mark', [\App\Http\Controllers\Tenant\Admin\AttendanceController::class, 'markAttendance'])->name('attendance.mark');
-
-        // Grades Management
-        Route::resource('grades', \App\Http\Controllers\Tenant\Admin\GradeController::class);
-        Route::get('/grades/student/{student}', [\App\Http\Controllers\Tenant\Admin\GradeController::class, 'studentGrades'])->name('grades.student');
-        Route::get('/grades/class/{class}', [\App\Http\Controllers\Tenant\Admin\GradeController::class, 'classGrades'])->name('grades.class');
-
-        // Reports
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/attendance', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'attendance'])->name('attendance');
-            Route::get('/grades', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'grades'])->name('grades');
-            Route::get('/students', [\App\Http\Controllers\Tenant\Admin\ReportController::class, 'students'])->name('students');
-        });
-
-        // Settings
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
-            Route::post('/school', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateSchool'])->name('school');
-            Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('academic');
-        });
-
-        // Color Palettes
-        Route::get('/color-palettes', function() {
-            return view('tenant.admin.color-palettes.index');
-        })->name('color-palettes.index');
+        // Future modules will be added here as they are developed
+        // - Student Management
+        // - Teacher Management
+        // - Class Management
+        // - Attendance System
+        // - Grades/Marks
+        // - Reports
+        // - Settings
     });
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern
