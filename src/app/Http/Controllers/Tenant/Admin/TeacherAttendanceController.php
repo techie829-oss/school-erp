@@ -73,6 +73,9 @@ class TeacherAttendanceController extends Controller
         $date = $request->get('date', now()->format('Y-m-d'));
         $departmentId = $request->get('department_id');
 
+        // Get attendance settings for default timings
+        $settings = AttendanceSettings::getForTenant($tenant->id);
+
         $departments = Department::forTenant($tenant->id)->active()->get();
 
         // Get all active teachers or filtered by department
@@ -96,7 +99,8 @@ class TeacherAttendanceController extends Controller
             'teachers',
             'existingAttendance',
             'departmentId',
-            'date'
+            'date',
+            'settings'
         ));
     }
 

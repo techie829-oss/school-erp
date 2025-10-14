@@ -129,7 +129,9 @@
 
                         <!-- Status Select -->
                         <div class="w-32">
-                            <select name="attendance[{{ $index }}][status]" class="teacher-status block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            <select name="attendance[{{ $index }}][status]"
+                                class="teacher-status block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                                onchange="toggleTimeInputs(this, {{ $index }})">
                                 <option value="present" {{ $defaultStatus == 'present' ? 'selected' : '' }}>Present</option>
                                 <option value="absent" {{ $defaultStatus == 'absent' ? 'selected' : '' }}>Absent</option>
                                 <option value="late" {{ $defaultStatus == 'late' ? 'selected' : '' }}>Late</option>
@@ -139,17 +141,17 @@
                         </div>
 
                         <!-- Check-in -->
-                        <div class="w-28">
+                        <div class="w-28 time-input-{{ $index }}" id="time-container-{{ $index }}">
                             <input type="time" name="attendance[{{ $index }}][check_in_time]"
-                                value="{{ $attendance?->check_in_time ?? '09:00' }}"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs">
+                                value="{{ $attendance?->check_in_time ?? substr($settings->school_start_time, 0, 5) }}"
+                                class="time-input block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs">
                         </div>
 
                         <!-- Check-out -->
-                        <div class="w-28">
+                        <div class="w-28 time-input-{{ $index }}">
                             <input type="time" name="attendance[{{ $index }}][check_out_time]"
-                                value="{{ $attendance?->check_out_time ?? '17:00' }}"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs">
+                                value="{{ $attendance?->check_out_time ?? substr($settings->school_end_time, 0, 5) }}"
+                                class="time-input block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs">
                         </div>
 
                         <!-- Remarks -->
@@ -191,9 +193,84 @@
 
 <script>
 function markAllPresent() {
-    document.querySelectorAll('.teacher-status').forEach(select => {
+    document.querySelectorAll('.teacher-status').forEach((select, index) => {
         select.value = 'present';
+        toggleTimeInputs(select, index);
     });
+}
+
+function toggleTimeInputs(selectElement, index) {
+    const status = selectElement.value;
+    const timeInputs = document.querySelectorAll('.time-input-' + index);
+
+    // Hide time inputs for absent, on_leave, and holiday
+    if (['absent', 'on_leave', 'holiday'].includes(status)) {
+        timeInputs.forEach(container => {
+            container.style.display = 'none';
+            // Clear the time input values
+            const input = container.querySelector('.time-input');
+            if (input) input.value = '';
+        });
+    } else {
+        timeInputs.forEach(container => {
+            container.style.display = 'block';
+            // Set default times if empty
+            const input = container.querySelector('.time-input');
+            if (input && !input.value) {
+                if (input.name.includes('check_in')) {
+                    input.value = '09:00';
+                } else {
+                    input.value = '17:00';
+                }
+            }
+        });
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Get school timings from settings
+    const schoolStartTime = '{{ substr($settings->school_start_time ?? "09:00:00", 0, 5) }}';
+    const schoolEndTime = '{{ substr($settings->school_end_time ?? "17:00:00", 0, 5) }}';
+
+    document.querySelectorAll('.teacher-status').forEach((select, index) => {
+        toggleTimeInputs(select, index);
+    });
+
+    // Update default times in toggleTimeInputs function
+    window.schoolStartTime = schoolStartTime;
+    window.schoolEndTime = schoolEndTime;
+});
+
+// Update the toggleTimeInputs to use dynamic times
+function toggleTimeInputs(selectElement, index) {
+    const status = selectElement.value;
+    const timeInputs = document.querySelectorAll('.time-input-' + index);
+    const schoolStart = window.schoolStartTime || '09:00';
+    const schoolEnd = window.schoolEndTime || '17:00';
+
+    // Hide time inputs for absent, on_leave, and holiday
+    if (['absent', 'on_leave', 'holiday'].includes(status)) {
+        timeInputs.forEach(container => {
+            container.style.display = 'none';
+            // Clear the time input values
+            const input = container.querySelector('.time-input');
+            if (input) input.value = '';
+        });
+    } else {
+        timeInputs.forEach(container => {
+            container.style.display = 'block';
+            // Set default times if empty
+            const input = container.querySelector('.time-input');
+            if (input && !input.value) {
+                if (input.name.includes('check_in')) {
+                    input.value = schoolStart;
+                } else {
+                    input.value = schoolEnd;
+                }
+            }
+        });
+    }
 }
 </script>
 @endsection

@@ -29,6 +29,12 @@ return new class extends Migration
             $table->json('working_days')->nullable(); // ['monday', 'tuesday', ...]
             $table->json('holidays')->nullable(); // ['2025-10-02', '2025-12-25', ...]
 
+            // School Timing
+            $table->time('school_start_time')->default('09:00:00');
+            $table->time('school_end_time')->default('17:00:00');
+            $table->time('late_arrival_after')->default('09:15:00');
+            $table->integer('grace_period_minutes')->default(15);
+
             // Notifications
             $table->boolean('notify_parent_on_absent')->default(true);
             $table->boolean('notify_admin_on_teacher_absent')->default(true);
