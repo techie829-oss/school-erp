@@ -385,9 +385,45 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('/export', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'export'])->name('export');
         });
 
+        // Fee Management
+        Route::prefix('fees')->name('fees.')->group(function () {
+            // Fee Components
+            Route::prefix('components')->name('components.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\FeeComponentController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Tenant\Admin\FeeComponentController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\Tenant\Admin\FeeComponentController::class, 'store'])->name('store');
+                Route::get('/{id}/edit', [\App\Http\Controllers\Tenant\Admin\FeeComponentController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [\App\Http\Controllers\Tenant\Admin\FeeComponentController::class, 'update'])->name('update');
+                Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\FeeComponentController::class, 'destroy'])->name('destroy');
+            });
+
+            // Fee Plans
+            Route::prefix('plans')->name('plans.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'store'])->name('store');
+                Route::get('/{id}', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'show'])->name('show');
+                Route::get('/{id}/edit', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'update'])->name('update');
+                Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'destroy'])->name('destroy');
+                Route::get('/{id}/assign', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'assign'])->name('assign');
+            });
+
+            // Fee Collection
+            Route::prefix('collection')->name('collection.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'index'])->name('index');
+                Route::get('/{studentId}', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'show'])->name('show');
+                Route::get('/{studentId}/collect', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'collect'])->name('collect');
+                Route::post('/{studentId}/payment', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'processPayment'])->name('payment');
+                Route::get('/receipt/{paymentId}', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'receipt'])->name('receipt');
+            });
+
+            // Fee Reports
+            Route::get('/reports', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'reports'])->name('reports');
+        });
+
         // Future modules will be added here as they are developed
         // - Grades/Marks
-        // - Reports
-        // - Fee Management
+        // - Academic Reports
     });
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern

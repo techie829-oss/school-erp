@@ -82,13 +82,13 @@ class StudentFeeCard extends Model
     {
         $this->paid_amount = $this->feeItems()->sum('paid_amount');
         $this->balance_amount = $this->total_amount - $this->discount_amount - $this->paid_amount;
-        
+
         if ($this->balance_amount <= 0) {
             $this->status = 'paid';
         } elseif ($this->paid_amount > 0) {
             $this->status = 'partial';
         }
-        
+
         $this->save();
     }
 }

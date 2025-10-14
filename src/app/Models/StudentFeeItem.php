@@ -52,7 +52,7 @@ class StudentFeeItem extends Model
         } elseif ($this->paid_amount > 0) {
             $this->status = 'partial';
         }
-        
+
         $this->save();
         $this->studentFeeCard->updateBalance();
     }
