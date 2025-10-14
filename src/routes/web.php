@@ -371,6 +371,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'index'])->name('index');
             Route::get('/mark', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'mark'])->name('mark');
             Route::post('/save', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'save'])->name('save');
+            Route::get('/report', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'report'])->name('report');
+            Route::get('/export', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'export'])->name('export');
         });
 
         // Attendance Management - Teachers
