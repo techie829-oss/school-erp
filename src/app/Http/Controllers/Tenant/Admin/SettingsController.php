@@ -36,6 +36,7 @@ class SettingsController extends Controller
         $featureSettings = TenantSetting::getAllForTenant($tenant->id, 'features');
         $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
         $attendanceSettings = AttendanceSettings::getForTenant($tenant->id);
+        $paymentSettings = TenantSetting::getAllForTenant($tenant->id, 'payment');
 
         // Get tenant data
         $tenantData = $tenant->data ?? [];
@@ -46,7 +47,8 @@ class SettingsController extends Controller
             'generalSettings',
             'featureSettings',
             'academicSettings',
-            'attendanceSettings'
+            'attendanceSettings',
+            'paymentSettings'
         ));
     }
 
@@ -291,6 +293,102 @@ class SettingsController extends Controller
         $settings->save();
 
         return back()->with('success', 'Attendance settings updated successfully!');
+    }
+
+    /**
+     * Update payment settings
+     */
+    public function updatePayment(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'enable_online_payments' => 'nullable|boolean',
+            'payment_gateway' => 'nullable|in:razorpay,stripe,payu,phonepe',
+            'razorpay_key_id' => 'nullable|string|max:255',
+            'razorpay_key_secret' => 'nullable|string|max:255',
+            'razorpay_webhook_secret' => 'nullable|string|max:255',
+            'razorpay_test_mode' => 'nullable|boolean',
+            'payment_methods' => 'nullable|array',
+            'payment_methods.*' => 'in:cash,cheque,card,upi,net_banking,demand_draft',
+            'auto_generate_receipt' => 'nullable|boolean',
+            'payment_reminder_days' => 'nullable|integer|min:0|max:30',
+            'late_fee_percentage' => 'nullable|numeric|min:0|max:100',
+            'receipt_prefix' => 'nullable|string|max:10',
+            'invoice_prefix' => 'nullable|string|max:10',
+            'currency_code' => 'nullable|in:INR,USD,EUR,GBP',
+            'tax_percentage' => 'nullable|numeric|min:0|max:100',
+            'email_receipts' => 'nullable|boolean',
+            'sms_payment_confirmation' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Please fix the validation errors.');
+        }
+
+        // Save payment settings
+        TenantSetting::setSetting($tenant->id, 'enable_online_payments', $request->boolean('enable_online_payments'), 'boolean', 'payment');
+
+        if ($request->payment_gateway) {
+            TenantSetting::setSetting($tenant->id, 'payment_gateway', $request->payment_gateway, 'string', 'payment');
+        }
+
+        if ($request->razorpay_key_id) {
+            TenantSetting::setSetting($tenant->id, 'razorpay_key_id', $request->razorpay_key_id, 'string', 'payment');
+        }
+
+        if ($request->razorpay_key_secret) {
+            // In production, encrypt this
+            TenantSetting::setSetting($tenant->id, 'razorpay_key_secret', encrypt($request->razorpay_key_secret), 'string', 'payment');
+        }
+
+        if ($request->razorpay_webhook_secret) {
+            TenantSetting::setSetting($tenant->id, 'razorpay_webhook_secret', encrypt($request->razorpay_webhook_secret), 'string', 'payment');
+        }
+
+        TenantSetting::setSetting($tenant->id, 'razorpay_test_mode', $request->boolean('razorpay_test_mode'), 'boolean', 'payment');
+
+        if ($request->has('payment_methods')) {
+            TenantSetting::setSetting($tenant->id, 'payment_methods', json_encode($request->payment_methods), 'json', 'payment');
+        }
+
+        TenantSetting::setSetting($tenant->id, 'auto_generate_receipt', $request->boolean('auto_generate_receipt'), 'boolean', 'payment');
+
+        if ($request->has('payment_reminder_days')) {
+            TenantSetting::setSetting($tenant->id, 'payment_reminder_days', $request->payment_reminder_days, 'integer', 'payment');
+        }
+
+        if ($request->has('late_fee_percentage')) {
+            TenantSetting::setSetting($tenant->id, 'late_fee_percentage', $request->late_fee_percentage, 'string', 'payment');
+        }
+
+        if ($request->receipt_prefix) {
+            TenantSetting::setSetting($tenant->id, 'receipt_prefix', $request->receipt_prefix, 'string', 'payment');
+        }
+
+        if ($request->invoice_prefix) {
+            TenantSetting::setSetting($tenant->id, 'invoice_prefix', $request->invoice_prefix, 'string', 'payment');
+        }
+
+        if ($request->currency_code) {
+            TenantSetting::setSetting($tenant->id, 'currency_code', $request->currency_code, 'string', 'payment');
+        }
+
+        if ($request->has('tax_percentage')) {
+            TenantSetting::setSetting($tenant->id, 'tax_percentage', $request->tax_percentage, 'string', 'payment');
+        }
+
+        TenantSetting::setSetting($tenant->id, 'email_receipts', $request->boolean('email_receipts'), 'boolean', 'payment');
+        TenantSetting::setSetting($tenant->id, 'sms_payment_confirmation', $request->boolean('sms_payment_confirmation'), 'boolean', 'payment');
+
+        return back()->with('success', 'Payment settings updated successfully!');
     }
 
     /**

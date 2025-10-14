@@ -308,6 +308,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::post('/features', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateFeatures'])->name('update.features');
             Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('update.academic');
             Route::post('/attendance', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAttendance'])->name('update.attendance');
+            Route::post('/payment', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updatePayment'])->name('update.payment');
             Route::delete('/logo', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'deleteLogo'])->name('delete.logo');
         });
 

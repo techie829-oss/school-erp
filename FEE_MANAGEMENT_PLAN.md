@@ -24,6 +24,7 @@
 ## 📊 Database Schema (From Requirements)
 
 ### 1. **fee_components** Table
+
 ```sql
 - id
 - tenant_id
@@ -36,6 +37,7 @@
 ```
 
 ### 2. **fee_plans** Table
+
 ```sql
 - id
 - tenant_id
@@ -50,6 +52,7 @@
 ```
 
 ### 3. **fee_plan_items** Table
+
 ```sql
 - id
 - fee_plan_id
@@ -61,6 +64,7 @@
 ```
 
 ### 4. **student_fee_cards** Table
+
 ```sql
 - id
 - tenant_id
@@ -73,6 +77,7 @@
 ```
 
 ### 5. **student_fee_items** Table
+
 ```sql
 - id
 - student_fee_card_id
@@ -88,6 +93,7 @@
 ```
 
 ### 6. **invoices** Table
+
 ```sql
 - id
 - tenant_id
@@ -106,6 +112,7 @@
 ```
 
 ### 7. **invoice_items** Table
+
 ```sql
 - id
 - invoice_id
@@ -119,6 +126,7 @@
 ```
 
 ### 8. **payments** Table
+
 ```sql
 - id
 - tenant_id
@@ -138,6 +146,7 @@
 ```
 
 ### 9. **refunds** Table
+
 ```sql
 - id
 - payment_id
@@ -154,15 +163,18 @@
 ## 🏗️ Implementation Phases
 
 ### Phase 1: Fee Structure (Week 1)
+
 **3-4 days**
 
 ✅ **Fee Components Management**
+
 - CRUD for fee components
 - List all components (grid/table)
 - Active/inactive status
 - Component types (recurring/one-time)
 
 ✅ **Fee Plans Management**
+
 - CRUD for fee plans
 - Assign to class & academic year
 - Add fee components to plan
@@ -170,6 +182,7 @@
 - Term selection (Annual, Semester, etc.)
 
 **Files to Create:**
+
 - Migrations: `fee_components`, `fee_plans`, `fee_plan_items`
 - Models: `FeeComponent`, `FeePlan`, `FeePlanItem`
 - Controllers: `FeeComponentController`, `FeePlanController`
@@ -179,9 +192,11 @@
 ---
 
 ### Phase 2: Student Fee Cards (Week 2)
+
 **4-5 days**
 
 ✅ **Fee Card Generation**
+
 - Auto-generate fee cards when student enrolls
 - Assign fee plan based on class
 - Calculate total fees
@@ -189,6 +204,7 @@
 - Track ledger balance
 
 ✅ **Fee Card Management**
+
 - View student fee card
 - Edit fee amounts (with authorization)
 - Apply additional discounts
@@ -196,6 +212,7 @@
 - Update due dates
 
 **Files to Create:**
+
 - Migrations: `student_fee_cards`, `student_fee_items`
 - Models: `StudentFeeCard`, `StudentFeeItem`
 - Controller: `StudentFeeCardController`
@@ -205,9 +222,11 @@
 ---
 
 ### Phase 3: Invoices & Payments (Week 2-3)
+
 **5-6 days**
 
 ✅ **Invoice Management**
+
 - Auto-generate invoices from fee cards
 - Manual invoice creation
 - Invoice numbering (INV-YYYY-XXXX)
@@ -215,6 +234,7 @@
 - Invoice status tracking
 
 ✅ **Payment Collection**
+
 - Record offline payments (cash, cheque, card)
 - Payment receipt generation
 - Partial payment support
@@ -222,12 +242,14 @@
 - Payment history
 
 ✅ **Online Payments** (Optional - can add later)
+
 - Razorpay/Stripe integration
 - Payment gateway callbacks
 - Auto-update on payment success
 - Failed payment handling
 
 **Files to Create:**
+
 - Migrations: `invoices`, `invoice_items`, `payments`, `refunds`
 - Models: `Invoice`, `InvoiceItem`, `Payment`, `Refund`
 - Controllers: `InvoiceController`, `PaymentController`
@@ -237,9 +259,11 @@
 ---
 
 ### Phase 4: Reports & Analytics (Week 3)
+
 **2-3 days**
 
 ✅ **Fee Reports**
+
 - Collection report (daily/monthly)
 - Outstanding report (pending fees)
 - Class-wise collection
@@ -247,11 +271,13 @@
 - Defaulter list
 
 ✅ **Export Functionality**
+
 - Excel export (fee cards, invoices, payments)
 - PDF receipts
 - Monthly collection summary
 
 **Files to Create:**
+
 - Report views: 5-6 pages
 - Export methods in controllers
 - PDF templates for receipts
@@ -260,27 +286,31 @@
 
 ## 🎨 Key Features
 
-### Fee Structure Management:
+### Fee Structure Management
+
 1. Create fee components (Tuition, Transport, Library, etc.)
 2. Create fee plans for each class
 3. Set amounts and due dates
 4. Term-based fees (Annual, Semester, Quarterly, Monthly)
 
-### Student Fee Management:
+### Student Fee Management
+
 1. Auto-generate fee cards on enrollment
 2. View student's complete fee obligation
 3. Apply discounts/scholarships
 4. Track payment status
 5. Installment support
 
-### Payment Processing:
+### Payment Processing
+
 1. Collect payments (cash, online, cheque, card)
 2. Generate receipts
 3. Update fee card balance
 4. Handle partial payments
 5. Refund processing
 
-### Reports & Insights:
+### Reports & Insights
+
 1. Daily/monthly collection
 2. Outstanding fees
 3. Defaulter lists
@@ -340,6 +370,7 @@ GET    /admin/fees/reports/export
 ## 📋 Implementation Checklist
 
 ### Database & Models
+
 - [ ] Create fee_components migration
 - [ ] Create fee_plans migration
 - [ ] Create fee_plan_items migration
@@ -353,6 +384,7 @@ GET    /admin/fees/reports/export
 - [ ] Test relationships
 
 ### Fee Structure
+
 - [ ] FeeComponentController (CRUD)
 - [ ] Fee components views (index, create, edit)
 - [ ] FeePlanController (CRUD)
@@ -361,6 +393,7 @@ GET    /admin/fees/reports/export
 - [ ] Routes for fee structure
 
 ### Student Fees
+
 - [ ] StudentFeeCardController
 - [ ] Auto-generate cards on enrollment
 - [ ] View student fee card
@@ -369,6 +402,7 @@ GET    /admin/fees/reports/export
 - [ ] Views for fee cards
 
 ### Invoices
+
 - [ ] InvoiceController
 - [ ] Auto-generate invoices
 - [ ] Invoice views (list, create, view)
@@ -376,6 +410,7 @@ GET    /admin/fees/reports/export
 - [ ] Send invoice functionality
 
 ### Payments
+
 - [ ] PaymentController
 - [ ] Payment collection page
 - [ ] Payment receipt generation
@@ -383,6 +418,7 @@ GET    /admin/fees/reports/export
 - [ ] Refund processing
 
 ### Reports
+
 - [ ] Collection report
 - [ ] Outstanding report
 - [ ] Defaulter list
@@ -390,6 +426,7 @@ GET    /admin/fees/reports/export
 - [ ] PDF receipts
 
 ### Navigation & UI
+
 - [ ] Add fees menu to sidebar
 - [ ] Fee dashboard
 - [ ] Statistics cards
@@ -400,6 +437,7 @@ GET    /admin/fees/reports/export
 ## 🚀 Quick Start Plan
 
 ### Day 1-2: Fee Components & Plans
+
 - Create migrations
 - Create models
 - Build CRUD for components
@@ -407,18 +445,21 @@ GET    /admin/fees/reports/export
 - Basic UI
 
 ### Day 3-4: Student Fee Cards
+
 - Create fee card system
 - Auto-generation logic
 - Discount application
 - Fee card views
 
 ### Day 5-7: Invoices & Payments
+
 - Invoice generation
 - Payment collection
 - Receipt generation
 - Payment allocation
 
 ### Day 8-10: Reports & Polish
+
 - Collection reports
 - Outstanding reports
 - Excel export
@@ -428,20 +469,26 @@ GET    /admin/fees/reports/export
 
 ## 💡 Key Decisions
 
-### Approach:
+### Approach
+
 **Offline-first, Online later**
+
 - Start with offline payments
 - Add online gateway later
 - Simpler, faster to build
 
-### Fee Card Model:
+### Fee Card Model
+
 **Product-Order Pattern** (like enrollment)
+
 - Fee Plan = Product (template)
 - Student Fee Card = Order (instance)
 - Easy to customize per student
 
-### Payment Allocation:
+### Payment Allocation
+
 **FIFO (First In, First Out)**
+
 - Pay oldest dues first
 - Clear logic
 - Easy to understand
@@ -455,4 +502,3 @@ GET    /admin/fees/reports/export
 ---
 
 *Created: October 14, 2025*
-
