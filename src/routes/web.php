@@ -365,9 +365,23 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
         Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
 
+        // Attendance Management - Students
+        Route::prefix('attendance/students')->name('attendance.students.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'index'])->name('index');
+            Route::get('/mark', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'mark'])->name('mark');
+            Route::post('/save', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'save'])->name('save');
+        });
+
+        // Attendance Management - Teachers
+        Route::prefix('attendance/teachers')->name('attendance.teachers.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'index'])->name('index');
+            Route::get('/mark', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'mark'])->name('mark');
+            Route::post('/save', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'save'])->name('save');
+        });
+
         // Future modules will be added here as they are developed
-        // - Attendance System
         // - Grades/Marks
         // - Reports
+        // - Fee Management
     });
 })->where('tenant', '^(?!app$)[a-zA-Z0-9-]+$'); // Exclude 'app' from tenant pattern
