@@ -297,6 +297,10 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::post('students/{studentId}/update-status', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'updateAcademicStatus'])->name('students.update-status')->where('studentId', '[0-9]+');
         Route::post('students/{studentId}/complete-enrollment', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'completeEnrollment'])->name('students.complete-enrollment')->where('studentId', '[0-9]+');
 
+        // Student Documents
+        Route::post('students/{studentId}/documents', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'uploadDocument'])->name('students.upload-document')->where('studentId', '[0-9]+');
+        Route::delete('student-documents/{documentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'deleteDocument'])->name('students.delete-document')->where('documentId', '[0-9]+');
+
         // Settings Management
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
@@ -326,8 +330,42 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::patch('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'update'])->name('sections.update.patch')->where('sectionId', '[0-9]+');
         Route::delete('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'destroy'])->name('sections.destroy')->where('sectionId', '[0-9]+');
 
+        // Teacher Management
+        Route::get('teachers', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'index'])->name('teachers.index');
+        Route::get('teachers/create', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'create'])->name('teachers.create');
+        Route::post('teachers', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'store'])->name('teachers.store');
+        Route::get('teachers/{teacherId}', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'show'])->name('teachers.show')->where('teacherId', '[0-9]+');
+        Route::get('teachers/{teacherId}/edit', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'edit'])->name('teachers.edit')->where('teacherId', '[0-9]+');
+        Route::put('teachers/{teacherId}', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'update'])->name('teachers.update')->where('teacherId', '[0-9]+');
+        Route::patch('teachers/{teacherId}', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'update'])->name('teachers.update.patch')->where('teacherId', '[0-9]+');
+        Route::delete('teachers/{teacherId}', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'destroy'])->name('teachers.destroy')->where('teacherId', '[0-9]+');
+
+        // Teacher Qualifications & Documents
+        Route::post('teachers/{teacherId}/qualifications', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'addQualification'])->name('teachers.add-qualification')->where('teacherId', '[0-9]+');
+        Route::post('teachers/{teacherId}/documents', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'uploadDocument'])->name('teachers.upload-document')->where('teacherId', '[0-9]+');
+        Route::delete('documents/{documentId}', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'deleteDocument'])->name('teachers.delete-document')->where('documentId', '[0-9]+');
+
+        // Department Management
+        Route::get('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'index'])->name('departments.index');
+        Route::get('departments/create', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'create'])->name('departments.create');
+        Route::post('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'store'])->name('departments.store');
+        Route::get('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'show'])->name('departments.show')->where('departmentId', '[0-9]+');
+        Route::get('departments/{departmentId}/edit', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'edit'])->name('departments.edit')->where('departmentId', '[0-9]+');
+        Route::put('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update')->where('departmentId', '[0-9]+');
+        Route::patch('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update.patch')->where('departmentId', '[0-9]+');
+        Route::delete('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'destroy'])->name('departments.destroy')->where('departmentId', '[0-9]+');
+
+        // Subject Management
+        Route::get('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'index'])->name('subjects.index');
+        Route::get('subjects/create', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'create'])->name('subjects.create');
+        Route::post('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'store'])->name('subjects.store');
+        Route::get('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'show'])->name('subjects.show')->where('subjectId', '[0-9]+');
+        Route::get('subjects/{subjectId}/edit', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'edit'])->name('subjects.edit')->where('subjectId', '[0-9]+');
+        Route::put('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update')->where('subjectId', '[0-9]+');
+        Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
+        Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
+
         // Future modules will be added here as they are developed
-        // - Teacher Management
         // - Attendance System
         // - Grades/Marks
         // - Reports

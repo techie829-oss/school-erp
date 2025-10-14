@@ -12,6 +12,7 @@ A comprehensive, multi-tenant School Management System built with Laravel 11, Li
 ## 🚀 Features
 
 ### ✅ Implemented
+
 - **Multi-Tenancy** - Subdomain-based school isolation
 - **Authentication** - Two-guard system (Super Admin + School Users)
 - **Student Management** - Complete CRUD, promotions, academic history
@@ -20,9 +21,11 @@ A comprehensive, multi-tenant School Management System built with Laravel 11, Li
 - **Super Admin Panel** - Tenant management, users, system tools
 
 ### 🔄 In Progress
+
 - **Teacher Management** - Profiles, qualifications, attendance (Planned)
 
 ### 📝 Planned
+
 - Attendance System
 - Fee Management
 - Exams & Grades
@@ -74,6 +77,7 @@ school-erp/
 ## 🚦 Getting Started
 
 ### Prerequisites
+
 - PHP 8.2+
 - MySQL 8.0+
 - Composer
@@ -83,12 +87,14 @@ school-erp/
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/techie829-oss/school-erp.git
 cd school-erp
 ```
 
 2. **Install dependencies**
+
 ```bash
 cd src
 composer install
@@ -96,6 +102,7 @@ npm install
 ```
 
 3. **Environment setup**
+
 ```bash
 cp .env.example .env
 php artisan key:generate
@@ -103,6 +110,7 @@ php artisan key:generate
 
 4. **Configure database**
 Update `.env` with your database credentials:
+
 ```
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -113,21 +121,25 @@ DB_PASSWORD=
 ```
 
 5. **Run migrations**
+
 ```bash
 php artisan migrate
 ```
 
 6. **Seed database**
+
 ```bash
 php artisan db:seed
 ```
 
 7. **Build assets**
+
 ```bash
 npm run build
 ```
 
 8. **Start development server**
+
 ```bash
 php artisan serve
 # or if using Herd, access via:
@@ -138,10 +150,12 @@ php artisan serve
 ### Default Login Credentials
 
 **Super Admin:**
+
 - URL: `http://app.myschool.test/admin/login`
 - Email: Check seeder for credentials
 
 **School Admin:**
+
 - URL: `http://[tenant].myschool.test/login`
 - Email: Check tenant users seeder
 
@@ -163,12 +177,14 @@ Follow the complete feature implementation approach:
 **See:** `TEACHER_MANAGEMENT_PLAN.md` for detailed example
 
 ### Code Style
+
 - Follow PSR-12 coding standards
 - Use Laravel best practices
 - Add PHPDoc type hints in Blade views
 - Use Tailwind CSS utility classes
 
 ### Testing
+
 ```bash
 php artisan test
 ```
@@ -202,6 +218,7 @@ This project is private and proprietary.
 ## 📞 Support
 
 For support and queries:
+
 - Create an issue in the repository
 - Contact the development team
 
@@ -210,4 +227,3 @@ For support and queries:
 **Version:** 1.0.0  
 **Last Updated:** October 14, 2025  
 **Status:** Active Development
-

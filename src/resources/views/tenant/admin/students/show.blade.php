@@ -297,51 +297,81 @@
 
         <!-- Tab Content: Documents -->
         <div id="student-content-documents" class="student-tab-content hidden p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h4 class="text-sm font-medium text-gray-900">Documents</h4>
-                <button class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                    + Upload Document
-                </button>
-            </div>
-
-            @if($student->documents->count() > 0)
-                <div class="space-y-3">
-                    @foreach($student->documents as $document)
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-900">{{ $document->document_name }}</p>
-                                    <p class="text-xs text-gray-500">
-                                        {{ $document->document_type_label }} • {{ $document->formatted_file_size }} • Uploaded {{ $document->uploaded_at->format('M d, Y') }}
-                                    </p>
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">Uploaded Documents</h4>
+                @if($student->documents->count() > 0)
+                    <div class="space-y-3">
+                        @foreach($student->documents as $document)
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                <div>
+                                    <h5 class="text-sm font-medium text-gray-900">{{ $document->document_name }}</h5>
+                                    <p class="text-xs text-gray-500">{{ $document->document_type_label }}</p>
+                                    <p class="text-xs text-gray-400">{{ $document->formatted_file_size }} • Uploaded {{ $document->uploaded_at->format('d M, Y') }}</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <a href="{{ $document->file_url }}" target="_blank" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
                                     View
                                 </a>
+                                <form action="{{ url('/admin/student-documents/' . $document->id) }}" method="POST" onsubmit="return confirm('Delete this document?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium">
+                                        Delete
+                                    </button>
+                                </form>
                             </div>
                         </div>
+                        @endforeach
                     </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="mt-2 text-sm text-gray-500">No documents uploaded yet</p>
-                    <button class="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium">
-                        Upload First Document
-                    </button>
-                </div>
-            @endif
+                @else
+                    <p class="text-sm text-gray-500 text-center py-8">No documents uploaded yet</p>
+                @endif
+            </div>
+
+            <!-- Upload Document Form -->
+            <div class="border-t pt-6">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">Upload New Document</h4>
+                <form action="{{ url('/admin/students/' . $student->id . '/documents') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Document Name *</label>
+                            <input type="text" name="document_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Document Type *</label>
+                            <select name="document_type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                <option value="birth_certificate">Birth Certificate</option>
+                                <option value="id_proof">ID Proof</option>
+                                <option value="address_proof">Address Proof</option>
+                                <option value="previous_marksheet">Previous Marksheet</option>
+                                <option value="transfer_certificate">Transfer Certificate</option>
+                                <option value="medical_certificate">Medical Certificate</option>
+                                <option value="photo">Photo</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">File *</label>
+                            <input type="file" name="document_file" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                            <p class="mt-1 text-xs text-gray-500">Max: 10MB</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload Document
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Tab Content: Actions -->

@@ -510,4 +510,80 @@ class StudentController extends Controller
 
         return back()->with('success', 'Enrollment completed successfully!');
     }
+
+    /**
+     * Upload document for student
+     */
+    public function uploadDocument(Request $request, $studentId)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        $student = Student::findOrFail($studentId);
+
+        if ($student->tenant_id !== $tenant->id) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'document_name' => 'required|string|max:255',
+            'document_type' => 'required|in:birth_certificate,id_proof,address_proof,previous_marksheet,transfer_certificate,medical_certificate,photo,other',
+            'document_file' => 'required|file|max:10240', // 10MB
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $file = $request->file('document_file');
+            $filePath = $file->store('students/documents', 'public');
+
+            \App\Models\StudentDocument::create([
+                'tenant_id' => $tenant->id,
+                'student_id' => $student->id,
+                'document_name' => $request->document_name,
+                'document_type' => $request->document_type,
+                'file_path' => $filePath,
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'uploaded_by' => auth()->id(),
+                'uploaded_at' => now(),
+            ]);
+
+            return back()->with('success', 'Document uploaded successfully!');
+
+        } catch (\Exception $e) {
+            if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+
+            return back()->with('error', 'Failed to upload document: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a student document
+     */
+    public function deleteDocument(Request $request, $documentId)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        $document = \App\Models\StudentDocument::findOrFail($documentId);
+
+        if ($document->tenant_id !== $tenant->id) {
+            abort(403, 'Unauthorized access');
+        }
+
+        try {
+            // Delete file from storage
+            if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+                Storage::disk('public')->delete($document->file_path);
+            }
+
+            $document->delete();
+
+            return back()->with('success', 'Document deleted successfully!');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to delete document: ' . $e->getMessage());
+        }
+    }
 }
