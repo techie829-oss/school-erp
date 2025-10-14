@@ -99,7 +99,18 @@ function showTab(tabName) {
     const activeButton = document.getElementById('tab-' + tabName);
     activeButton.classList.add('border-primary-500', 'text-primary-600');
     activeButton.classList.remove('border-transparent', 'text-gray-500');
+
+    // Save active tab to localStorage
+    localStorage.setItem('settings_active_tab', tabName);
 }
+
+// On page load, restore last active tab
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTab = localStorage.getItem('settings_active_tab');
+    if (savedTab && document.getElementById('content-' + savedTab)) {
+        showTab(savedTab);
+    }
+});
 </script>
 @endsection
 

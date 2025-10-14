@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\ForTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TenantSetting extends Model
 {
-    use HasFactory;
+    use HasFactory, ForTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -56,7 +57,7 @@ class TenantSetting extends Model
             'json' => json_encode($value),
             default => (string) $value,
         };
-        
+
         return $this;
     }
 

@@ -282,6 +282,16 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             return redirect('/admin/dashboard');
         });
 
+        // Student Management (Manual routes - using studentId to avoid conflict with tenant parameter)
+        Route::get('students', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'index'])->name('students.index');
+        Route::get('students/create', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'create'])->name('students.create');
+        Route::post('students', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'store'])->name('students.store');
+        Route::get('students/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'show'])->name('students.show')->where('studentId', '[0-9]+');
+        Route::get('students/{studentId}/edit', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'edit'])->name('students.edit')->where('studentId', '[0-9]+');
+        Route::put('students/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'update'])->name('students.update')->where('studentId', '[0-9]+');
+        Route::patch('students/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'update'])->name('students.update.patch')->where('studentId', '[0-9]+');
+        Route::delete('students/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'destroy'])->name('students.destroy')->where('studentId', '[0-9]+');
+
         // Settings Management
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
@@ -291,10 +301,28 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::delete('/logo', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'deleteLogo'])->name('delete.logo');
         });
 
+        // Class Management
+        Route::get('classes', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'index'])->name('classes.index');
+        Route::get('classes/create', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'create'])->name('classes.create');
+        Route::post('classes', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'store'])->name('classes.store');
+        Route::get('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'show'])->name('classes.show')->where('classId', '[0-9]+');
+        Route::get('classes/{classId}/edit', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'edit'])->name('classes.edit')->where('classId', '[0-9]+');
+        Route::put('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update')->where('classId', '[0-9]+');
+        Route::patch('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update.patch')->where('classId', '[0-9]+');
+        Route::delete('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'destroy'])->name('classes.destroy')->where('classId', '[0-9]+');
+
+        // Section Management
+        Route::get('sections', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'index'])->name('sections.index');
+        Route::get('sections/create', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'create'])->name('sections.create');
+        Route::post('sections', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'store'])->name('sections.store');
+        Route::get('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'show'])->name('sections.show')->where('sectionId', '[0-9]+');
+        Route::get('sections/{sectionId}/edit', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'edit'])->name('sections.edit')->where('sectionId', '[0-9]+');
+        Route::put('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'update'])->name('sections.update')->where('sectionId', '[0-9]+');
+        Route::patch('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'update'])->name('sections.update.patch')->where('sectionId', '[0-9]+');
+        Route::delete('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'destroy'])->name('sections.destroy')->where('sectionId', '[0-9]+');
+
         // Future modules will be added here as they are developed
-        // - Student Management
         // - Teacher Management
-        // - Class Management
         // - Attendance System
         // - Grades/Marks
         // - Reports

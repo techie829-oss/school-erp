@@ -31,6 +31,7 @@ A comprehensive student management system with class progression tracking, acade
 ### 3. **Academic Status Types**
 
 Students can have following statuses:
+
 - 🆕 **New Admission** - Just joined the institution
 - ✅ **Promoted** - Successfully promoted to next class
 - ✅ **Pass** - Passed current academic year
@@ -52,6 +53,7 @@ Students can have following statuses:
 ### 5. **Document Management**
 
 Students can upload multiple documents:
+
 - Birth Certificate
 - Previous School Transfer Certificate (TC)
 - ID Proof (Aadhar, Passport, etc.)
@@ -142,6 +144,7 @@ Students can upload multiple documents:
 ### **`student_academic_history` Table**
 
 Tracks student's progression through classes:
+
 ```sql
 - id (primary key)
 - student_id (foreign key)
@@ -164,6 +167,7 @@ Tracks student's progression through classes:
 ### **`student_documents` Table**
 
 Store all student documents:
+
 ```sql
 - id (primary key)
 - student_id (foreign key)
@@ -482,9 +486,8 @@ Based on user roles:
 
 ---
 
-## 🚀 Ready to Build!
+## 🚀 Ready to Build
 
 This plan covers everything needed for a complete Student Management System. The system will handle the entire student lifecycle from admission to graduation, with complete academic history tracking and progression management.
 
 **Next Step:** Start implementation with database migrations and models!
-

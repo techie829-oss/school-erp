@@ -102,7 +102,7 @@
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="#" class="relative group bg-white p-4 rounded-lg border border-gray-300 hover:border-gray-400 opacity-60 cursor-not-allowed">
+                    <a href="{{ url('/admin/students/create') }}" class="relative group bg-white p-4 focus-within:ring-2 focus-within:ring-inset focus-within:ring-primary-500 rounded-lg border border-gray-300 hover:border-gray-400 hover:shadow-md transition-all">
                         <div>
                             <span class="rounded-lg inline-flex p-2 bg-primary-50 text-primary-700 ring-4 ring-white">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,8 +111,8 @@
                             </span>
                         </div>
                         <div class="mt-3">
-                            <h3 class="text-sm font-medium">Add Student</h3>
-                            <p class="text-xs text-gray-500">Coming Soon</p>
+                            <h3 class="text-sm font-medium text-gray-900 group-hover:text-primary-600">Add Student</h3>
+                            <p class="text-xs text-gray-500">Enroll new student</p>
                         </div>
                     </a>
 
