@@ -3,17 +3,22 @@
 @section('title', 'Fee Collection')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">Fee Collection</h1>
-            <p class="text-gray-600 mt-1">Collect fees from students</p>
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Fee Collection
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Collect and manage student fee payments
+            </p>
         </div>
+    </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-xl shadow-lg p-6">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center">
                     <div class="p-4 bg-green-100 rounded-lg">
                         <i class="fas fa-rupee-sign text-3xl text-green-600"></i>
@@ -25,7 +30,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center">
                     <div class="p-4 bg-red-100 rounded-lg">
                         <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
@@ -37,7 +42,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center">
                     <div class="p-4 bg-orange-100 rounded-lg">
                         <i class="fas fa-users text-3xl text-orange-600"></i>
@@ -50,8 +55,8 @@
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg p-6">
             <form method="GET" action="{{ url('/admin/fees/collection') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search Student</label>
@@ -86,33 +91,51 @@
             </form>
         </div>
 
-        <!-- Success/Error Messages -->
-        @if(session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded">
-                <p>{{ session('success') }}</p>
+    <!-- Success/Error Messages -->
+    @if(session('success'))
+    <div class="rounded-md bg-green-50 p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
             </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
-                <p>{{ session('error') }}</p>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
             </div>
-        @endif
+        </div>
+    </div>
+    @endif
 
-        <!-- Students Table -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    @if(session('error'))
+    <div class="rounded-md bg-red-50 p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Students Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
             @if($students->count() > 0)
                 <table class="w-full">
-                    <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-4 text-left">Admission No</th>
-                            <th class="px-6 py-4 text-left">Student Name</th>
-                            <th class="px-6 py-4 text-left">Class</th>
-                            <th class="px-6 py-4 text-right">Total Fee</th>
-                            <th class="px-6 py-4 text-right">Paid</th>
-                            <th class="px-6 py-4 text-right">Balance</th>
-                            <th class="px-6 py-4 text-left">Status</th>
-                            <th class="px-6 py-4 text-center">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission No</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Fee</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -168,16 +191,17 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-6 py-4 text-center whitespace-nowrap text-sm font-medium">
                                     <div class="flex justify-center gap-2">
-                                        <a href="{{ url('/admin/fees/collection/' . $student->id) }}"
-                                           class="px-4 py-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition text-sm">
-                                            <i class="fas fa-eye mr-1"></i>View
+                                        <a href="{{ url('/admin/fees/collection/' . $student->id) }}" 
+                                           class="text-primary-600 hover:text-primary-900">
+                                            View
                                         </a>
                                         @if($balance > 0)
-                                            <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}"
-                                               class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">
-                                                <i class="fas fa-rupee-sign mr-1"></i>Collect
+                                            <span class="text-gray-300">|</span>
+                                            <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}" 
+                                               class="text-green-600 hover:text-green-900">
+                                                Collect
                                             </a>
                                         @endif
                                     </div>
@@ -192,12 +216,12 @@
                     {{ $students->links() }}
                 </div>
             @else
-                <div class="text-center py-16">
-                    <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
-                        <i class="fas fa-search text-5xl text-gray-400"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Students Found</h3>
-                    <p class="text-gray-500">Try adjusting your filters</p>
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No students found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
                 </div>
             @endif
         </div>
