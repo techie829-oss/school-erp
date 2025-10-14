@@ -12,33 +12,21 @@ return new class extends Migration
             $table->id();
             $table->string('tenant_id')->unique();
 
-            // Student Attendance Settings
-            $table->boolean('student_enable_period_wise')->default(false);
-            $table->integer('student_periods_per_day')->default(1);
-            $table->decimal('student_half_day_threshold', 3, 1)->default(4.0);
-            $table->integer('student_late_threshold_minutes')->default(15);
-
-            // Teacher Attendance Settings
-            $table->decimal('teacher_working_hours_per_day', 3, 1)->default(8.0);
-            $table->decimal('teacher_half_day_threshold', 3, 1)->default(4.0);
-            $table->integer('teacher_late_threshold_minutes')->default(15);
-            $table->boolean('teacher_enable_biometric')->default(false);
-
-            // General Settings
-            $table->enum('week_start_day', ['sunday', 'monday'])->default('monday');
-            $table->json('working_days')->nullable(); // ['monday', 'tuesday', ...]
-            $table->json('holidays')->nullable(); // ['2025-10-02', '2025-12-25', ...]
-
             // School Timing
             $table->time('school_start_time')->default('09:00:00');
             $table->time('school_end_time')->default('17:00:00');
             $table->time('late_arrival_after')->default('09:15:00');
             $table->integer('grace_period_minutes')->default(15);
 
-            // Notifications
-            $table->boolean('notify_parent_on_absent')->default(true);
-            $table->boolean('notify_admin_on_teacher_absent')->default(true);
-            $table->decimal('low_attendance_threshold', 3, 1)->default(75.0);
+            // Attendance Policies
+            $table->decimal('minimum_working_hours', 3, 1)->default(8.0);
+            $table->decimal('half_day_threshold_hours', 3, 1)->default(4.0);
+            $table->json('weekend_days')->nullable(); // ['sunday', 'saturday', ...]
+
+            // Notification Settings
+            $table->boolean('auto_mark_absent')->default(false);
+            $table->boolean('require_remarks_for_absent')->default(false);
+            $table->integer('allow_edit_after_days')->default(7);
 
             $table->timestamps();
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceSettings;
 use App\Models\TeacherAttendance;
 use App\Models\Teacher;
 use App\Models\Department;
