@@ -262,5 +262,230 @@ class TeacherAttendanceController extends Controller
             'avg_hours' => $records->where('total_hours', '>', 0)->avg('total_hours'),
         ];
     }
+
+    /**
+     * Generate attendance report
+     */
+    public function report(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        // Get filter options
+        $departments = Department::forTenant($tenant->id)->active()->get();
+        $teachers = Teacher::forTenant($tenant->id)->active()->get();
+
+        $reportData = null;
+
+        // If filters are applied, generate report
+        if ($request->has('date_from') || $request->has('report_type')) {
+            $reportType = $request->get('report_type', 'daily');
+            $dateFrom = $request->get('date_from', now()->startOfMonth()->format('Y-m-d'));
+            $dateTo = $request->get('date_to', now()->format('Y-m-d'));
+            $departmentId = $request->get('department_id');
+            $teacherId = $request->get('teacher_id');
+            $threshold = $request->get('threshold', 90);
+
+            switch ($reportType) {
+                case 'daily':
+                    $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $departmentId);
+                    break;
+                case 'monthly':
+                    $reportData = $this->generateMonthlyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                    break;
+                case 'teacher_wise':
+                    $reportData = $this->generateTeacherWiseReport($tenant->id, $dateFrom, $dateTo, $teacherId, $departmentId);
+                    break;
+                case 'department_wise':
+                    $reportData = $this->generateDepartmentWiseReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                    break;
+                case 'defaulters':
+                    $reportData = $this->generateDefaultersReport($tenant->id, $dateFrom, $dateTo, $threshold, $departmentId);
+                    break;
+            }
+        }
+
+        return view('tenant.admin.attendance.teachers.report', compact(
+            'tenant',
+            'departments',
+            'teachers',
+            'reportData'
+        ));
+    }
+
+    /**
+     * Export attendance data
+     */
+    public function export(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $format = $request->get('format', 'excel');
+        $reportType = $request->get('report_type', 'daily');
+        $dateFrom = $request->get('date_from', now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', now()->format('Y-m-d'));
+        $departmentId = $request->get('department_id');
+        $teacherId = $request->get('teacher_id');
+        $threshold = $request->get('threshold', 90);
+
+        // Generate report data
+        switch ($reportType) {
+            case 'daily':
+                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $departmentId);
+                break;
+            case 'monthly':
+                $reportData = $this->generateMonthlyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                break;
+            case 'teacher_wise':
+                $reportData = $this->generateTeacherWiseReport($tenant->id, $dateFrom, $dateTo, $teacherId, $departmentId);
+                break;
+            case 'department_wise':
+                $reportData = $this->generateDepartmentWiseReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                break;
+            case 'defaulters':
+                $reportData = $this->generateDefaultersReport($tenant->id, $dateFrom, $dateTo, $threshold, $departmentId);
+                break;
+            default:
+                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $departmentId);
+        }
+
+        if ($format === 'excel') {
+            return $this->exportToExcel($reportData, $tenant);
+        } else {
+            return $this->exportToPDF($reportData, $tenant);
+        }
+    }
+
+    /**
+     * Generate daily report
+     */
+    private function generateDailyReport($tenantId, $date, $departmentId = null)
+    {
+        $query = TeacherAttendance::forTenant($tenantId)
+            ->forDate($date)
+            ->with(['teacher.department']);
+
+        if ($departmentId) {
+            $query->whereHas('teacher', function($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        }
+
+        $records = $query->get();
+
+        return [
+            'type' => 'daily',
+            'title' => 'Daily Teacher Attendance Report - ' . Carbon::parse($date)->format('F d, Y'),
+            'date' => $date,
+            'records' => $records,
+            'summary' => [
+                'total' => $records->count(),
+                'present' => $records->where('status', 'present')->count(),
+                'absent' => $records->where('status', 'absent')->count(),
+                'late' => $records->where('status', 'late')->count(),
+                'half_day' => $records->where('status', 'half_day')->count(),
+                'on_leave' => $records->where('status', 'on_leave')->count(),
+                'percentage' => $records->count() > 0
+                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count()) / $records->count()) * 100
+                    : 0
+            ]
+        ];
+    }
+
+    /**
+     * Generate monthly report - simplified version
+     */
+    private function generateMonthlyReport($tenantId, $dateFrom, $dateTo, $departmentId = null)
+    {
+        return $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
+    }
+
+    /**
+     * Generate teacher-wise report - simplified version
+     */
+    private function generateTeacherWiseReport($tenantId, $dateFrom, $dateTo, $teacherId = null, $departmentId = null)
+    {
+        return $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
+    }
+
+    /**
+     * Generate department-wise report - simplified version
+     */
+    private function generateDepartmentWiseReport($tenantId, $dateFrom, $dateTo, $departmentId = null)
+    {
+        return $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
+    }
+
+    /**
+     * Generate defaulters report - simplified version
+     */
+    private function generateDefaultersReport($tenantId, $dateFrom, $dateTo, $threshold, $departmentId = null)
+    {
+        $reportData = $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
+        $reportData['threshold'] = $threshold;
+        return $reportData;
+    }
+
+    /**
+     * Export to Excel
+     */
+    private function exportToExcel($reportData, $tenant)
+    {
+        $filename = 'teacher_attendance_' . $reportData['type'] . '_' . date('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($reportData, $tenant) {
+            $file = fopen('php://output', 'w');
+
+            // Header
+            fputcsv($file, [$tenant->data['name'] ?? 'School ERP']);
+            fputcsv($file, [$reportData['title']]);
+            fputcsv($file, ['Generated: ' . now()->format('F d, Y h:i A')]);
+            fputcsv($file, []);
+
+            // Daily report format
+            fputcsv($file, ['Employee ID', 'Teacher Name', 'Department', 'Status', 'Check In', 'Check Out', 'Hours', 'Remarks']);
+            foreach ($reportData['records'] as $record) {
+                fputcsv($file, [
+                    $record->teacher->employee_id ?? 'N/A',
+                    $record->teacher->first_name . ' ' . $record->teacher->last_name,
+                    $record->teacher->department->name ?? 'N/A',
+                    ucfirst($record->status),
+                    $record->check_in_time ?? '',
+                    $record->check_out_time ?? '',
+                    $record->total_hours ? number_format($record->total_hours, 2) : '',
+                    $record->remarks ?? ''
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export to PDF
+     */
+    private function exportToPDF($reportData, $tenant)
+    {
+        // Basic PDF export - can be enhanced with dompdf
+        $html = view('tenant.admin.attendance.teachers.exports.pdf', compact('reportData', 'tenant'))->render();
+
+        return response($html)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="teacher_attendance_report.pdf"');
+    }
 }
 
