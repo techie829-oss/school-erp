@@ -255,7 +255,11 @@ class StudentController extends Controller
             ->with(['currentEnrollment.schoolClass', 'currentEnrollment.section', 'enrollments.schoolClass', 'enrollments.section', 'documents'])
             ->firstOrFail();
 
-        return view('tenant.admin.students.show', compact('student', 'tenant'));
+        // Get classes and sections for promotion form
+        $classes = SchoolClass::forTenant($tenant->id)->orderBy('class_name')->get();
+        $sections = Section::forTenant($tenant->id)->with('schoolClass')->orderBy('section_name')->get();
+
+        return view('tenant.admin.students.show', compact('student', 'tenant', 'classes', 'sections'));
     }
 
     /**
@@ -378,5 +382,132 @@ class StudentController extends Controller
 
         return redirect('/admin/students')
             ->with('success', 'Student deleted successfully!');
+    }
+
+    /**
+     * Promote student to next class
+     */
+    public function promote(Request $request, $studentId)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $student = Student::where('tenant_id', $tenant->id)->where('id', $studentId)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'to_class_id' => 'required|exists:classes,id',
+            'to_section_id' => 'nullable|exists:sections,id',
+            'academic_year' => 'required|string|max:20',
+            'roll_number' => 'nullable|string|max:50',
+            'percentage' => 'nullable|numeric|min:0|max:100',
+            'grade' => 'nullable|string|max:10',
+            'remarks' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $student->promoteToClass(
+                $request->to_class_id,
+                $request->to_section_id,
+                $request->academic_year,
+                $request->percentage,
+                $request->grade,
+                $request->remarks,
+                $request->roll_number
+            );
+
+            return back()->with('success', 'Student promoted successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to promote student: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update academic status
+     */
+    public function updateAcademicStatus(Request $request, $studentId)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $student = Student::where('tenant_id', $tenant->id)->where('id', $studentId)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'overall_status' => 'required|in:active,alumni,transferred,dropped_out',
+            'status_remarks' => 'nullable|string|max:500',
+            'is_active' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $student->update([
+            'overall_status' => $request->overall_status,
+            'status_remarks' => $request->status_remarks,
+            'is_active' => $request->is_active,
+        ]);
+
+        // If student is marked as inactive or not active status, deactivate current enrollment
+        if (!$request->is_active || $request->overall_status !== 'active') {
+            $currentEnrollment = $student->currentEnrollment;
+            if ($currentEnrollment) {
+                $currentEnrollment->update([
+                    'is_current' => false,
+                    'end_date' => now(),
+                    'enrollment_status' => $request->overall_status,
+                ]);
+            }
+        }
+
+        return back()->with('success', 'Academic status updated successfully!');
+    }
+
+    /**
+     * Complete current enrollment (pass/fail/transfer)
+     */
+    public function completeEnrollment(Request $request, $studentId)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $student = Student::where('tenant_id', $tenant->id)->where('id', $studentId)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'result' => 'required|in:passed,failed,transferred,dropped',
+            'percentage' => 'nullable|numeric|min:0|max:100',
+            'grade' => 'nullable|string|max:10',
+            'remarks' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $currentEnrollment = $student->currentEnrollment;
+        if (!$currentEnrollment) {
+            return back()->with('error', 'No active enrollment found for this student');
+        }
+
+        $currentEnrollment->markAsCompleted(
+            $request->result,
+            $request->percentage,
+            $request->grade,
+            $request->remarks
+        );
+
+        return back()->with('success', 'Enrollment completed successfully!');
     }
 }

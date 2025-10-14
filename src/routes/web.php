@@ -292,6 +292,11 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::patch('students/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'update'])->name('students.update.patch')->where('studentId', '[0-9]+');
         Route::delete('students/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'destroy'])->name('students.destroy')->where('studentId', '[0-9]+');
 
+        // Student Academic Actions
+        Route::post('students/{studentId}/promote', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'promote'])->name('students.promote')->where('studentId', '[0-9]+');
+        Route::post('students/{studentId}/update-status', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'updateAcademicStatus'])->name('students.update-status')->where('studentId', '[0-9]+');
+        Route::post('students/{studentId}/complete-enrollment', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'completeEnrollment'])->name('students.complete-enrollment')->where('studentId', '[0-9]+');
+
         // Settings Management
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');

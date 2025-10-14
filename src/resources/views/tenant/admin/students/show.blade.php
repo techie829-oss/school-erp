@@ -1,3 +1,8 @@
+{{-- @var $student \App\Models\Student --}}
+{{-- @var $tenant \App\Models\Tenant --}}
+{{-- @var $classes \Illuminate\Support\Collection<\App\Models\SchoolClass> --}}
+{{-- @var $sections \Illuminate\Support\Collection<\App\Models\Section> --}}
+
 @extends('tenant.layouts.admin')
 
 @section('title', 'Student Profile')
@@ -105,6 +110,9 @@
                 <button onclick="showStudentTab('documents')" id="student-tab-documents" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Documents ({{ $student->documents->count() }})
                 </button>
+                <button onclick="showStudentTab('actions')" id="student-tab-actions" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Actions
+                </button>
             </nav>
         </div>
 
@@ -198,31 +206,62 @@
 
         <!-- Tab Content: Academic History (Enrollments) -->
         <div id="student-content-academic" class="student-tab-content hidden p-6">
-            <h4 class="text-sm font-medium text-gray-900 mb-4">Academic Progression (Class Enrollments)</h4>
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-sm font-medium text-gray-900">Academic Progression (Class Enrollments)</h4>
+                <span class="text-xs text-gray-500">{{ $student->enrollments->count() }} enrollment(s) total</span>
+            </div>
             @if($student->enrollments->count() > 0)
                 <div class="space-y-4">
                     @foreach($student->enrollments as $enrollment)
                     <div class="border border-gray-200 rounded-lg p-4 {{ $enrollment->is_current ? 'border-primary-300 bg-primary-50' : '' }}">
                         <div class="flex items-start justify-between">
-                            <div>
-                                <h5 class="text-sm font-medium text-gray-900">
-                                    {{ $enrollment->schoolClass->class_name }}
-                                    @if($enrollment->section)
-                                        - Section {{ $enrollment->section->section_name }}
-                                    @endif
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <h5 class="text-sm font-medium text-gray-900">
+                                        {{ $enrollment->schoolClass->class_name }}
+                                        @if($enrollment->section)
+                                            - Section {{ $enrollment->section->section_name }}
+                                        @endif
+                                    </h5>
                                     @if($enrollment->roll_number)
-                                        (Roll: {{ $enrollment->roll_number }})
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            Roll: {{ $enrollment->roll_number }}
+                                        </span>
                                     @endif
-                                </h5>
-                                <p class="text-sm text-gray-500">{{ $enrollment->academic_year }}</p>
-                                <p class="text-xs text-gray-400 mt-1">
-                                    {{ $enrollment->start_date->format('M d, Y') }}
-                                    @if($enrollment->end_date)
-                                        - {{ $enrollment->end_date->format('M d, Y') }}
-                                    @else
-                                        - Present
-                                    @endif
-                                </p>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <span class="text-gray-500">Academic Year:</span>
+                                        <span class="text-gray-900 font-medium">{{ $enrollment->academic_year }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Enrollment Date:</span>
+                                        <span class="text-gray-900 font-medium">{{ $enrollment->enrollment_date?->format('M d, Y') ?? 'Not specified' }}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 p-2 bg-gray-50 rounded border">
+                                    <p class="text-xs text-gray-600">
+                                        <span class="font-medium">Duration:</span>
+                                        @if($enrollment->start_date)
+                                            {{ $enrollment->start_date->format('M d, Y') }}
+                                            @if($enrollment->end_date)
+                                                <span class="text-gray-500">to</span> {{ $enrollment->end_date->format('M d, Y') }}
+                                                @php
+                                                    $duration = $enrollment->start_date->diffInDays($enrollment->end_date);
+                                                @endphp
+                                                <span class="text-gray-500">({{ $duration }} days)</span>
+                                            @else
+                                                <span class="text-gray-500">to</span> <span class="text-green-600 font-medium">Present</span>
+                                                @php
+                                                    $duration = $enrollment->start_date->diffInDays(now());
+                                                @endphp
+                                                <span class="text-gray-500">({{ $duration }} days so far)</span>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-500">Duration not specified</span>
+                                        @endif
+                                    </p>
+                                </div>
                             </div>
                             <div class="text-right">
                                 @if($enrollment->is_current)
@@ -303,6 +342,214 @@
                     </button>
                 </div>
             @endif
+        </div>
+
+        <!-- Tab Content: Actions -->
+        <div id="student-content-actions" class="student-tab-content hidden p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Promote Student -->
+                <div class="border border-gray-200 rounded-lg">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                        <h4 class="text-lg font-medium text-gray-900 flex items-center">
+                            <svg class="h-5 w-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            Promote Student
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">Promote student to next class for new academic year</p>
+                    </div>
+                    <form action="{{ url('/admin/students/' . $student->id . '/promote') }}" method="POST" class="p-6">
+                        @csrf
+                        <div class="space-y-4">
+                            @if($student->currentEnrollment)
+                                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>Currently enrolled in:</strong> {{ $student->currentEnrollment->schoolClass->class_name }}
+                                        {{ $student->currentEnrollment->section ? '- Section ' . $student->currentEnrollment->section->section_name : '' }}
+                                    </p>
+                                </div>
+                            @else
+                                <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p class="text-sm text-yellow-800">Student is not currently enrolled in any class</p>
+                                </div>
+                            @endif
+
+                            <div>
+                                <label for="promote_to_class_id" class="block text-sm font-medium text-gray-700">Promote To Class *</label>
+                                <select name="to_class_id" id="promote_to_class_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="">Select Class</option>
+                                    @foreach($classes as $class)
+                                        {{-- @var $class \App\Models\SchoolClass --}}
+                                        <option value="{{ $class->id }}">{{ $class->class_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="promote_to_section_id" class="block text-sm font-medium text-gray-700">Section</label>
+                                <select name="to_section_id" id="promote_to_section_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="">Select Section</option>
+                                    @foreach($sections as $section)
+                                        {{-- @var $section \App\Models\Section --}}
+                                        <option value="{{ $section->id }}">{{ $section->schoolClass->class_name }} - {{ $section->section_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="promote_academic_year" class="block text-sm font-medium text-gray-700">Academic Year *</label>
+                                    <input type="text" name="academic_year" id="promote_academic_year" required placeholder="2025-2026" value="{{ date('Y') }}-{{ date('Y') + 1 }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                </div>
+
+                                <div>
+                                    <label for="promote_roll_number" class="block text-sm font-medium text-gray-700">New Roll Number</label>
+                                    <input type="text" name="roll_number" id="promote_roll_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="promote_percentage" class="block text-sm font-medium text-gray-700">Percentage</label>
+                                    <input type="number" name="percentage" id="promote_percentage" step="0.01" min="0" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                </div>
+
+                                <div>
+                                    <label for="promote_grade" class="block text-sm font-medium text-gray-700">Grade</label>
+                                    <input type="text" name="grade" id="promote_grade" maxlength="10" placeholder="A+" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="promote_remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                                <textarea name="remarks" id="promote_remarks" rows="2" maxlength="500" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                                Promote Student
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Update Academic Status -->
+                <div class="border border-gray-200 rounded-lg">
+                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-200">
+                        <h4 class="text-lg font-medium text-gray-900 flex items-center">
+                            <svg class="h-5 w-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Update Academic Status
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">Change overall student status (Active, Alumni, Transferred, etc.)</p>
+                    </div>
+                    <form action="{{ url('/admin/students/' . $student->id . '/update-status') }}" method="POST" class="p-6">
+                        @csrf
+                        <div class="space-y-4">
+                            <div class="p-3 bg-{{ $student->is_active ? 'green' : 'red' }}-50 border border-{{ $student->is_active ? 'green' : 'red' }}-200 rounded-lg">
+                                <p class="text-sm text-{{ $student->is_active ? 'green' : 'red' }}-800">
+                                    <strong>Current Status:</strong> {{ ucfirst(str_replace('_', ' ', $student->overall_status)) }}
+                                    ({{ $student->is_active ? 'Active' : 'Inactive' }})
+                                </p>
+                            </div>
+
+                            <div>
+                                <label for="overall_status" class="block text-sm font-medium text-gray-700">Overall Status *</label>
+                                <select name="overall_status" id="overall_status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="active" {{ $student->overall_status == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="alumni" {{ $student->overall_status == 'alumni' ? 'selected' : '' }}>Alumni (Graduated)</option>
+                                    <option value="transferred" {{ $student->overall_status == 'transferred' ? 'selected' : '' }}>Transferred</option>
+                                    <option value="dropped_out" {{ $student->overall_status == 'dropped_out' ? 'selected' : '' }}>Dropped Out</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="is_active" class="block text-sm font-medium text-gray-700">Active Status *</label>
+                                <select name="is_active" id="is_active" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="1" {{ $student->is_active ? 'selected' : '' }}>Active</option>
+                                    <option value="0" {{ !$student->is_active ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="status_remarks" class="block text-sm font-medium text-gray-700">Status Remarks</label>
+                                <textarea name="status_remarks" id="status_remarks" rows="3" maxlength="500" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">{{ $student->status_remarks }}</textarea>
+                                <p class="mt-1 text-xs text-gray-500">Explain the reason for this status change</p>
+                            </div>
+
+                            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-xs text-yellow-800">
+                                    <strong>Note:</strong> Marking student as Inactive or changing status to Alumni/Transferred/Dropped Out will automatically end their current enrollment.
+                                </p>
+                            </div>
+
+                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Update Status
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Complete Current Enrollment -->
+                @if($student->currentEnrollment)
+                <div class="border border-gray-200 rounded-lg lg:col-span-2">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
+                        <h4 class="text-lg font-medium text-gray-900 flex items-center">
+                            <svg class="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            Complete Current Enrollment
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">Mark the current enrollment as completed with result (Passed, Failed, etc.) without promoting</p>
+                    </div>
+                    <form action="{{ url('/admin/students/' . $student->id . '/complete-enrollment') }}" method="POST" class="p-6">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label for="result" class="block text-sm font-medium text-gray-700">Result *</label>
+                                <select name="result" id="result" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="">Select Result</option>
+                                    <option value="passed">Passed</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="transferred">Transferred</option>
+                                    <option value="dropped">Dropped Out</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="complete_percentage" class="block text-sm font-medium text-gray-700">Percentage</label>
+                                <input type="number" name="percentage" id="complete_percentage" step="0.01" min="0" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+
+                            <div>
+                                <label for="complete_grade" class="block text-sm font-medium text-gray-700">Grade</label>
+                                <input type="text" name="grade" id="complete_grade" maxlength="10" placeholder="A+" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+
+                            <div>
+                                <label for="complete_remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                                <input type="text" name="remarks" id="complete_remarks" maxlength="500" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Complete Enrollment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
