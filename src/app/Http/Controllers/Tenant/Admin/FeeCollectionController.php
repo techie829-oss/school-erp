@@ -29,7 +29,7 @@ class FeeCollectionController extends Controller
     public function index(Request $request)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -81,7 +81,7 @@ class FeeCollectionController extends Controller
     public function show(Request $request, $studentId)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -111,7 +111,7 @@ class FeeCollectionController extends Controller
     public function collect(Request $request, $studentId)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -135,7 +135,7 @@ class FeeCollectionController extends Controller
     public function processPayment(Request $request, $studentId)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -282,7 +282,7 @@ class FeeCollectionController extends Controller
     public function receipt(Request $request, $paymentId)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -299,7 +299,7 @@ class FeeCollectionController extends Controller
     public function reports(Request $request)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }

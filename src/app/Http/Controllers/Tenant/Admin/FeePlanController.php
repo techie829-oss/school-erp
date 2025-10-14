@@ -26,7 +26,7 @@ class FeePlanController extends Controller
     public function index(Request $request)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -64,7 +64,7 @@ class FeePlanController extends Controller
     public function create(Request $request)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -80,7 +80,7 @@ class FeePlanController extends Controller
     public function store(Request $request)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -150,7 +150,7 @@ class FeePlanController extends Controller
     public function show(Request $request, $id)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -167,7 +167,7 @@ class FeePlanController extends Controller
     public function edit(Request $request, $id)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -187,7 +187,7 @@ class FeePlanController extends Controller
     public function update(Request $request, $id)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -259,7 +259,7 @@ class FeePlanController extends Controller
     public function destroy(Request $request, $id)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
@@ -292,7 +292,7 @@ class FeePlanController extends Controller
     public function assign(Request $request, $id)
     {
         $tenant = $this->tenantService->getCurrentTenant($request);
-        
+
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
