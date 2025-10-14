@@ -3,36 +3,85 @@
 @section('title', 'Collect Fee')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <div class="mb-6">
-            <div class="flex items-center gap-4 mb-2">
-                <a href="{{ url('/admin/fees/collection') }}" 
-                   class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left"></i>
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="flex" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{{ url('/admin/dashboard') }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    Dashboard
                 </a>
-                <h1 class="text-3xl font-bold text-gray-800">Collect Fee Payment</h1>
-            </div>
-            <p class="text-gray-600">Process fee payment for student</p>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <a href="{{ url('/admin/fees/collection') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Fee Collection</a>
+                </div>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <a href="{{ url('/admin/fees/collection/' . $student->id) }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Student Details</a>
+                </div>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Collect Payment</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Collect Fee Payment
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                {{ $student->first_name }} {{ $student->last_name }} • {{ $student->admission_number }}
+            </p>
         </div>
+    </div>
 
-        <!-- Error Messages -->
-        @if($errors->any())
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
-                <ul class="list-disc list-inside">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+    <!-- Error Messages -->
+    @if($errors->any())
+    <div class="rounded-md bg-red-50 p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
             </div>
-        @endif
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Student Info & Fee Breakdown -->
             <div class="lg:col-span-1 space-y-6">
                 <!-- Student Card -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-bold text-gray-800 mb-4">Student Information</h2>
                     <div class="space-y-3">
                         <div>
@@ -51,7 +100,7 @@
                 </div>
 
                 <!-- Fee Summary -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-bold text-gray-800 mb-4">Fee Summary</h2>
                     <div class="space-y-3">
                         <div class="flex justify-between">
@@ -74,7 +123,7 @@
                 </div>
 
                 <!-- Fee Items -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-bold text-gray-800 mb-4">Fee Breakdown</h2>
                     <div class="space-y-2">
                         @foreach($student->studentFeeCard->feeItems as $item)
@@ -198,14 +247,17 @@
 
                         <!-- Submit Buttons -->
                         <div class="flex gap-4">
-                            <button type="submit" 
-                                    class="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white text-lg font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 transition">
-                                <i class="fas fa-check mr-2"></i>Collect Payment
-                            </button>
-                            <a href="{{ url('/admin/fees/collection') }}" 
-                               class="px-6 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-                                Cancel
-                            </a>
+                        <button type="submit" 
+                                class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Collect Payment
+                        </button>
+                        <a href="{{ url('/admin/fees/collection/' . $student->id) }}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Cancel
+                        </a>
                         </div>
                     </form>
                 </div>
