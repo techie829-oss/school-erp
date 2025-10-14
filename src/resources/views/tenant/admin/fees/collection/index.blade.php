@@ -193,13 +193,13 @@
                                 </td>
                                 <td class="px-6 py-4 text-center whitespace-nowrap text-sm font-medium">
                                     <div class="flex justify-center gap-2">
-                                        <a href="{{ url('/admin/fees/collection/' . $student->id) }}" 
+                                        <a href="{{ url('/admin/fees/collection/' . $student->id) }}"
                                            class="text-primary-600 hover:text-primary-900">
                                             View
                                         </a>
                                         @if($balance > 0)
                                             <span class="text-gray-300">|</span>
-                                            <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}" 
+                                            <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}"
                                                class="text-green-600 hover:text-green-900">
                                                 Collect
                                             </a>

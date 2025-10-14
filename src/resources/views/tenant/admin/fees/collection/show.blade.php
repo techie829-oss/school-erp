@@ -3,29 +3,62 @@
 @section('title', 'Student Fee Details')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <a href="{{ url('/admin/fees/collection') }}" 
-                       class="text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-800">Fee Details</h1>
-                        <p class="text-gray-600">{{ $student->first_name }} {{ $student->last_name }}</p>
-                    </div>
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="flex" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{{ url('/admin/dashboard') }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <a href="{{ url('/admin/fees/collection') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Fee Collection</a>
                 </div>
-                @if($student->studentFeeCard && $student->studentFeeCard->balance_amount > 0)
-                    <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}" 
-                       class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition">
-                        <i class="fas fa-rupee-sign mr-2"></i>Collect Payment
-                    </a>
-                @endif
-            </div>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Student Details</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Fee Details - {{ $student->first_name }} {{ $student->last_name }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                {{ $student->admission_number }} • {{ $student->schoolClass->name ?? 'N/A' }} - {{ $student->section->name ?? 'N/A' }}
+            </p>
         </div>
+        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+            @if($student->studentFeeCard && $student->studentFeeCard->balance_amount > 0)
+                <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Collect Payment
+                </a>
+            @endif
+            <a href="{{ url('/admin/fees/collection') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Back to List
+            </a>
+        </div>
+    </div>
 
         <!-- Success/Error Messages -->
         @if(session('success'))
@@ -34,11 +67,11 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left Column: Student Info & Fee Summary -->
             <div class="space-y-6">
                 <!-- Student Card -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-user-graduate text-blue-600 mr-2"></i>
                         Student Information
@@ -84,7 +117,7 @@
 
                 <!-- Fee Summary -->
                 @if($student->studentFeeCard)
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-white shadow rounded-lg p-6">
                         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                             <i class="fas fa-chart-pie text-green-600 mr-2"></i>
                             Fee Summary
@@ -151,7 +184,7 @@
             <div class="lg:col-span-2 space-y-6">
                 <!-- Fee Items Breakdown -->
                 @if($student->studentFeeCard && $student->studentFeeCard->feeItems->count() > 0)
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-white shadow rounded-lg p-6">
                         <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                             <i class="fas fa-list text-purple-600 mr-2"></i>
                             Fee Breakdown
@@ -211,7 +244,7 @@
                 @endif
 
                 <!-- Payment History -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-history text-blue-600 mr-2"></i>
                         Payment History
@@ -280,7 +313,7 @@
 
                 <!-- Invoices -->
                 @if($invoices->count() > 0)
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-white shadow rounded-lg p-6">
                         <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                             <i class="fas fa-file-invoice text-orange-600 mr-2"></i>
                             Invoices
