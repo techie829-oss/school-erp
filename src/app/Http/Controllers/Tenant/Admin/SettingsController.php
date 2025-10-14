@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceSettings;
 use App\Models\Tenant;
 use App\Models\TenantSetting;
 use App\Services\TenantService;
@@ -34,6 +35,7 @@ class SettingsController extends Controller
         $generalSettings = TenantSetting::getAllForTenant($tenant->id, 'general');
         $featureSettings = TenantSetting::getAllForTenant($tenant->id, 'features');
         $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $attendanceSettings = AttendanceSettings::getForTenant($tenant->id);
 
         // Get tenant data
         $tenantData = $tenant->data ?? [];
@@ -43,7 +45,8 @@ class SettingsController extends Controller
             'tenantData',
             'generalSettings',
             'featureSettings',
-            'academicSettings'
+            'academicSettings',
+            'attendanceSettings'
         ));
     }
 
@@ -216,6 +219,78 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Academic settings updated successfully!');
+    }
+
+    /**
+     * Update attendance settings
+     */
+    public function updateAttendance(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'school_start_time' => 'nullable|date_format:H:i',
+            'school_end_time' => 'nullable|date_format:H:i|after:school_start_time',
+            'late_arrival_after' => 'nullable|date_format:H:i|after:school_start_time',
+            'grace_period_minutes' => 'nullable|integer|min:0|max:60',
+            'minimum_working_hours' => 'nullable|numeric|min:0|max:24',
+            'half_day_threshold_hours' => 'nullable|numeric|min:0|max:12',
+            'weekend_days' => 'nullable|array',
+            'weekend_days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+            'auto_mark_absent' => 'nullable|boolean',
+            'require_remarks_for_absent' => 'nullable|boolean',
+            'allow_edit_after_days' => 'nullable|integer|min:0|max:30',
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Please fix the validation errors.');
+        }
+
+        // Get or create attendance settings
+        $settings = AttendanceSettings::firstOrNew([
+            'tenant_id' => $tenant->id,
+        ]);
+
+        // Update settings
+        if ($request->school_start_time) {
+            $settings->school_start_time = $request->school_start_time . ':00';
+        }
+        if ($request->school_end_time) {
+            $settings->school_end_time = $request->school_end_time . ':00';
+        }
+        if ($request->late_arrival_after) {
+            $settings->late_arrival_after = $request->late_arrival_after . ':00';
+        }
+        if ($request->has('grace_period_minutes')) {
+            $settings->grace_period_minutes = $request->grace_period_minutes;
+        }
+        if ($request->has('minimum_working_hours')) {
+            $settings->minimum_working_hours = $request->minimum_working_hours;
+        }
+        if ($request->has('half_day_threshold_hours')) {
+            $settings->half_day_threshold_hours = $request->half_day_threshold_hours;
+        }
+        if ($request->has('weekend_days')) {
+            $settings->weekend_days = json_encode($request->weekend_days);
+        }
+
+        $settings->auto_mark_absent = $request->boolean('auto_mark_absent');
+        $settings->require_remarks_for_absent = $request->boolean('require_remarks_for_absent');
+
+        if ($request->has('allow_edit_after_days')) {
+            $settings->allow_edit_after_days = $request->allow_edit_after_days;
+        }
+
+        $settings->save();
+
+        return back()->with('success', 'Attendance settings updated successfully!');
     }
 
     /**
