@@ -4,17 +4,29 @@ namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\FeeComponent;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class FeeComponentController extends Controller
 {
+    protected $tenantService;
+
+    public function __construct(TenantService $tenantService)
+    {
+        $this->tenantService = $tenantService;
+    }
+
     /**
      * Display a listing of fee components
      */
-    public function index()
+    public function index(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $components = FeeComponent::forTenant($tenant->id)
             ->orderBy('type', 'asc')
             ->orderBy('name', 'asc')
@@ -36,7 +48,11 @@ class FeeComponentController extends Controller
      */
     public function store(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
 
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|max:50|unique:fee_components,code,NULL,id,tenant_id,' . $tenant->id,
@@ -74,9 +90,13 @@ class FeeComponentController extends Controller
     /**
      * Show the form for editing the component
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $component = FeeComponent::forTenant($tenant->id)->findOrFail($id);
 
         return view('tenant.admin.fees.components.edit', compact('component'));
@@ -87,7 +107,11 @@ class FeeComponentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $component = FeeComponent::forTenant($tenant->id)->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
@@ -125,9 +149,13 @@ class FeeComponentController extends Controller
     /**
      * Remove the specified component
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $component = FeeComponent::forTenant($tenant->id)->findOrFail($id);
 
         // Check if component is used in any plans

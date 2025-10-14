@@ -10,18 +10,29 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\TenantSetting;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class FeeCollectionController extends Controller
 {
+    protected $tenantService;
+
+    public function __construct(TenantService $tenantService)
+    {
+        $this->tenantService = $tenantService;
+    }
     /**
      * Display fee collection dashboard
      */
     public function index(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
 
         $query = Student::forTenant($tenant->id)
             ->with(['schoolClass', 'section', 'studentFeeCard']);
@@ -67,9 +78,13 @@ class FeeCollectionController extends Controller
     /**
      * Show fee details for a student
      */
-    public function show($studentId)
+    public function show(Request $request, $studentId)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $student = Student::forTenant($tenant->id)
             ->with(['schoolClass', 'section', 'studentFeeCard.feeItems.feeComponent',
                     'studentFeeCard.feePlan'])
@@ -93,9 +108,13 @@ class FeeCollectionController extends Controller
     /**
      * Show payment collection form
      */
-    public function collect($studentId)
+    public function collect(Request $request, $studentId)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $student = Student::forTenant($tenant->id)
             ->with(['schoolClass', 'section', 'studentFeeCard.feeItems.feeComponent'])
             ->findOrFail($studentId);
@@ -115,7 +134,11 @@ class FeeCollectionController extends Controller
      */
     public function processPayment(Request $request, $studentId)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $student = Student::forTenant($tenant->id)->findOrFail($studentId);
 
         $validator = Validator::make($request->all(), [
@@ -256,9 +279,13 @@ class FeeCollectionController extends Controller
     /**
      * Generate receipt
      */
-    public function receipt($paymentId)
+    public function receipt(Request $request, $paymentId)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $payment = Payment::forTenant($tenant->id)
             ->with(['student.schoolClass', 'student.section', 'invoice.items.feeComponent', 'collectedBy'])
             ->findOrFail($paymentId);
@@ -271,7 +298,11 @@ class FeeCollectionController extends Controller
      */
     public function reports(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
 
         $reportType = $request->get('type', 'daily');
         $data = [];

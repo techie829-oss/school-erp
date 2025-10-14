@@ -7,18 +7,29 @@ use App\Models\FeePlan;
 use App\Models\FeePlanItem;
 use App\Models\FeeComponent;
 use App\Models\SchoolClass;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class FeePlanController extends Controller
 {
+    protected $tenantService;
+
+    public function __construct(TenantService $tenantService)
+    {
+        $this->tenantService = $tenantService;
+    }
     /**
      * Display a listing of fee plans
      */
     public function index(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
 
         $query = FeePlan::forTenant($tenant->id)
             ->with(['schoolClass', 'feePlanItems.feeComponent']);
@@ -50,9 +61,13 @@ class FeePlanController extends Controller
     /**
      * Show the form for creating a new fee plan
      */
-    public function create()
+    public function create(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $classes = SchoolClass::forTenant($tenant->id)->orderBy('name')->get();
         $components = FeeComponent::forTenant($tenant->id)->active()->get();
 
@@ -64,7 +79,11 @@ class FeePlanController extends Controller
      */
     public function store(Request $request)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
 
         $validator = Validator::make($request->all(), [
             'academic_year' => 'required|string|max:20',
@@ -128,9 +147,13 @@ class FeePlanController extends Controller
     /**
      * Display the specified fee plan
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $plan = FeePlan::forTenant($tenant->id)
             ->with(['schoolClass', 'feePlanItems.feeComponent', 'studentFeeCards.student'])
             ->findOrFail($id);
@@ -141,9 +164,13 @@ class FeePlanController extends Controller
     /**
      * Show the form for editing the fee plan
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $plan = FeePlan::forTenant($tenant->id)
             ->with('feePlanItems.feeComponent')
             ->findOrFail($id);
@@ -159,7 +186,11 @@ class FeePlanController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $plan = FeePlan::forTenant($tenant->id)->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
@@ -225,9 +256,13 @@ class FeePlanController extends Controller
     /**
      * Remove the specified fee plan
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $plan = FeePlan::forTenant($tenant->id)->findOrFail($id);
 
         // Check if plan is assigned to students
@@ -254,9 +289,13 @@ class FeePlanController extends Controller
     /**
      * Assign plan to students
      */
-    public function assign($id)
+    public function assign(Request $request, $id)
     {
-        $tenant = session('tenant');
+        $tenant = $this->tenantService->getCurrentTenant($request);
+        
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
         $plan = FeePlan::forTenant($tenant->id)
             ->with(['schoolClass', 'feePlanItems.feeComponent'])
             ->findOrFail($id);
