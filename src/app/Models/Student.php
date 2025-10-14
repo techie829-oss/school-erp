@@ -128,6 +128,31 @@ class Student extends Model
         )->where('class_enrollments.is_current', true);
     }
 
+    // Aliases for convenience (used by fee management and other modules)
+    public function schoolClass()
+    {
+        return $this->hasOneThrough(
+            SchoolClass::class,
+            ClassEnrollment::class,
+            'student_id',
+            'id',
+            'id',
+            'class_id'
+        )->where('class_enrollments.is_current', true);
+    }
+
+    public function section()
+    {
+        return $this->hasOneThrough(
+            Section::class,
+            ClassEnrollment::class,
+            'student_id',
+            'id',
+            'id',
+            'section_id'
+        )->where('class_enrollments.is_current', true);
+    }
+
     // Academic history (completed enrollments)
     public function academicHistory()
     {
@@ -138,6 +163,22 @@ class Student extends Model
     public function documents()
     {
         return $this->hasMany(StudentDocument::class);
+    }
+
+    // Fee Management
+    public function studentFeeCard()
+    {
+        return $this->hasOne(StudentFeeCard::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 
     /**
