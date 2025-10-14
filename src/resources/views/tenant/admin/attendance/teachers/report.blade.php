@@ -28,7 +28,7 @@
     <div class="bg-white shadow sm:rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Report Filters</h3>
-            
+
             <form method="GET" action="{{ url('/admin/attendance/teachers/report') }}" class="space-y-6">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <!-- Report Type -->
@@ -46,7 +46,7 @@
                     <!-- Date From -->
                     <div>
                         <label for="date_from" class="block text-sm font-medium text-gray-700">From Date</label>
-                        <input type="date" name="date_from" id="date_from" 
+                        <input type="date" name="date_from" id="date_from"
                             value="{{ request('date_from', now()->startOfMonth()->format('Y-m-d')) }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                     </div>
@@ -54,7 +54,7 @@
                     <!-- Date To -->
                     <div>
                         <label for="date_to" class="block text-sm font-medium text-gray-700">To Date</label>
-                        <input type="date" name="date_to" id="date_to" 
+                        <input type="date" name="date_to" id="date_to"
                             value="{{ request('date_to', now()->format('Y-m-d')) }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                     </div>
@@ -90,7 +90,7 @@
                     <!-- Threshold (for defaulters) -->
                     <div>
                         <label for="threshold" class="block text-sm font-medium text-gray-700">Attendance Threshold (%)</label>
-                        <input type="number" name="threshold" id="threshold" 
+                        <input type="number" name="threshold" id="threshold"
                             value="{{ request('threshold', 90) }}" min="0" max="100" step="1"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                         <p class="mt-1 text-xs text-gray-500">For defaulter list</p>
@@ -98,7 +98,7 @@
                 </div>
 
                 <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <button type="button" onclick="window.location.href='{{ url('/admin/attendance/teachers/report') }}'" 
+                    <button type="button" onclick="window.location.href='{{ url('/admin/attendance/teachers/report') }}'"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -125,14 +125,14 @@
         <div class="px-4 py-4 sm:px-6 flex justify-between items-center">
             <h3 class="text-lg font-medium text-gray-900">Export Report</h3>
             <div class="flex space-x-3">
-                <a href="{{ url('/admin/attendance/teachers/export') }}?{{ http_build_query(request()->all()) }}&format=excel" 
+                <a href="{{ url('/admin/attendance/teachers/export') }}?{{ http_build_query(request()->all()) }}&format=excel"
                     class="inline-flex items-center px-4 py-2 border border-green-600 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50">
                     <svg class="-ml-1 mr-2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     Export to Excel
                 </a>
-                <a href="{{ url('/admin/attendance/teachers/export') }}?{{ http_build_query(request()->all()) }}&format=pdf" 
+                <a href="{{ url('/admin/attendance/teachers/export') }}?{{ http_build_query(request()->all()) }}&format=pdf"
                     class="inline-flex items-center px-4 py-2 border border-red-600 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                     <svg class="-ml-1 mr-2 h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
@@ -149,7 +149,7 @@
             <h3 class="text-lg font-medium text-gray-900 mb-4">
                 {{ $reportData['title'] }}
             </h3>
-            
+
             @if($reportData['type'] == 'daily')
                 @include('tenant.admin.attendance.teachers.reports.daily', ['data' => $reportData])
             @elseif($reportData['type'] == 'monthly')
