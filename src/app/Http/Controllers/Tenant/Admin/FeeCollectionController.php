@@ -72,7 +72,11 @@ class FeeCollectionController extends Controller
                 ->count(),
         ];
 
-        return view('tenant.admin.fees.collection.index', compact('students', 'stats'));
+        // Get classes and sections for filters
+        $classes = \App\Models\SchoolClass::forTenant($tenant->id)->ordered()->get();
+        $sections = \App\Models\Section::forTenant($tenant->id)->with('schoolClass')->get();
+
+        return view('tenant.admin.fees.collection.index', compact('students', 'stats', 'classes', 'sections'));
     }
 
     /**

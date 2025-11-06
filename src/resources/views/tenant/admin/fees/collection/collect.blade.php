@@ -151,113 +151,101 @@
 
             <!-- Payment Form -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl shadow-lg p-8">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Payment Details</h2>
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
 
                     <form action="{{ url('/admin/fees/collection/' . $student->id . '/payment') }}" method="POST">
                         @csrf
 
-                        <!-- Payment Amount -->
-                        <div class="mb-6">
-                            <label class="block text-gray-700 font-semibold mb-2">
-                                Payment Amount <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-3 text-gray-500 font-semibold">₹</span>
-                                <input type="number" 
-                                       name="amount" 
-                                       value="{{ old('amount', $student->studentFeeCard->balance_amount) }}"
-                                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
-                                       placeholder="0.00"
-                                       step="0.01"
-                                       min="1"
-                                       max="{{ $student->studentFeeCard->balance_amount }}"
-                                       required>
+                        <div class="space-y-4">
+                            <!-- Payment Amount -->
+                            <div>
+                                <label for="amount" class="block text-sm font-medium text-gray-700">
+                                    Payment Amount <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative mt-1">
+                                    <span class="absolute left-3 top-2 text-gray-500">₹</span>
+                                    <input type="number" name="amount" id="amount"
+                                           value="{{ old('amount', $student->studentFeeCard->balance_amount) }}"
+                                           class="pl-8 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('amount') border-red-300 @enderror"
+                                           placeholder="0.00" step="0.01" min="1"
+                                           max="{{ $student->studentFeeCard->balance_amount }}" required>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Maximum: ₹{{ number_format($student->studentFeeCard->balance_amount, 2) }}</p>
                             </div>
-                            <p class="text-sm text-gray-500 mt-1">Maximum: ₹{{ number_format($student->studentFeeCard->balance_amount, 2) }}</p>
-                        </div>
 
-                        <!-- Payment Date -->
-                        <div class="mb-6">
-                            <label class="block text-gray-700 font-semibold mb-2">
-                                Payment Date <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date" 
-                                   name="payment_date" 
-                                   value="{{ old('payment_date', date('Y-m-d')) }}"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                   required>
-                        </div>
+                            <!-- Payment Date -->
+                            <div>
+                                <label for="payment_date" class="block text-sm font-medium text-gray-700">
+                                    Payment Date <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" name="payment_date" id="payment_date"
+                                       value="{{ old('payment_date', date('Y-m-d')) }}" required
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('payment_date') border-red-300 @enderror">
+                            </div>
 
-                        <!-- Payment Method -->
-                        <div class="mb-6">
-                            <label class="block text-gray-700 font-semibold mb-2">
-                                Payment Method <span class="text-red-500">*</span>
-                            </label>
-                            <select name="payment_method" 
-                                    id="paymentMethod"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    onchange="togglePaymentFields()"
-                                    required>
-                                <option value="">-- Select Method --</option>
-                                <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
-                                <option value="cheque" {{ old('payment_method') == 'cheque' ? 'selected' : '' }}>Cheque</option>
-                                <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                                <option value="online" {{ old('payment_method') == 'online' ? 'selected' : '' }}>Online Payment</option>
-                                @if($paymentSettings['enable_razorpay'] ?? false)
-                                    <option value="razorpay" {{ old('payment_method') == 'razorpay' ? 'selected' : '' }}>Razorpay</option>
-                                @endif
-                            </select>
-                        </div>
+                            <!-- Payment Method -->
+                            <div>
+                                <label for="payment_method" class="block text-sm font-medium text-gray-700">
+                                    Payment Method <span class="text-red-500">*</span>
+                                </label>
+                                <select name="payment_method" id="paymentMethod" onchange="togglePaymentFields()" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('payment_method') border-red-300 @enderror">
+                                    <option value="">Select Method</option>
+                                    <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
+                                    <option value="cheque" {{ old('payment_method') == 'cheque' ? 'selected' : '' }}>Cheque</option>
+                                    <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                    <option value="online" {{ old('payment_method') == 'online' ? 'selected' : '' }}>Online Payment</option>
+                                    @if($paymentSettings['enable_razorpay'] ?? false)
+                                        <option value="razorpay" {{ old('payment_method') == 'razorpay' ? 'selected' : '' }}>Razorpay</option>
+                                    @endif
+                                </select>
+                            </div>
 
-                        <!-- Reference Number (for cheque/bank transfer) -->
-                        <div class="mb-6" id="referenceField" style="display: none;">
-                            <label class="block text-gray-700 font-semibold mb-2">
-                                Reference Number / Cheque Number
-                            </label>
-                            <input type="text" 
-                                   name="reference_number" 
-                                   value="{{ old('reference_number') }}"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Enter reference/cheque number">
-                        </div>
+                            <!-- Reference Number (for cheque/bank transfer) -->
+                            <div id="referenceField" style="display: none;">
+                                <label for="reference_number" class="block text-sm font-medium text-gray-700">
+                                    Reference Number / Cheque Number
+                                </label>
+                                <input type="text" name="reference_number" id="reference_number"
+                                       value="{{ old('reference_number') }}"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                                       placeholder="Enter reference/cheque number">
+                            </div>
 
-                        <!-- Transaction ID (for online/razorpay) -->
-                        <div class="mb-6" id="transactionField" style="display: none;">
-                            <label class="block text-gray-700 font-semibold mb-2">
-                                Transaction ID
-                            </label>
-                            <input type="text" 
-                                   name="transaction_id" 
-                                   value="{{ old('transaction_id') }}"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Enter transaction ID">
-                        </div>
+                            <!-- Transaction ID (for online/razorpay) -->
+                            <div id="transactionField" style="display: none;">
+                                <label for="transaction_id" class="block text-sm font-medium text-gray-700">
+                                    Transaction ID
+                                </label>
+                                <input type="text" name="transaction_id" id="transaction_id"
+                                       value="{{ old('transaction_id') }}"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                                       placeholder="Enter transaction ID">
+                            </div>
 
-                        <!-- Notes -->
-                        <div class="mb-6">
-                            <label class="block text-gray-700 font-semibold mb-2">
-                                Notes / Remarks
-                            </label>
-                            <textarea name="notes" 
-                                      rows="3"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                      placeholder="Optional payment notes">{{ old('notes') }}</textarea>
+                            <!-- Notes -->
+                            <div>
+                                <label for="notes" class="block text-sm font-medium text-gray-700">Notes / Remarks</label>
+                                <textarea name="notes" id="notes" rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                                    placeholder="Optional payment notes">{{ old('notes') }}</textarea>
+                            </div>
                         </div>
 
                         <!-- Submit Buttons -->
-                        <div class="flex gap-4">
-                        <button type="submit" 
-                                class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Collect Payment
-                        </button>
-                        <a href="{{ url('/admin/fees/collection/' . $student->id) }}" 
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                            Cancel
-                        </a>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <a href="{{ url('/admin/fees/collection/' . $student->id) }}"
+                               class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Cancel
+                            </a>
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Collect Payment
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -271,11 +259,11 @@ function togglePaymentFields() {
     const method = document.getElementById('paymentMethod').value;
     const referenceField = document.getElementById('referenceField');
     const transactionField = document.getElementById('transactionField');
-    
+
     // Hide all optional fields first
     referenceField.style.display = 'none';
     transactionField.style.display = 'none';
-    
+
     // Show relevant fields based on method
     if (method === 'cheque' || method === 'bank_transfer') {
         referenceField.style.display = 'block';

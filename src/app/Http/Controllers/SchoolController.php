@@ -17,8 +17,11 @@ class SchoolController extends Controller
     /**
      * Show the school's main landing page.
      */
-    public function home(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
+    public function home(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        // Get tenant from route parameter
+        $tenant = $request->route('tenant');
+
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
@@ -39,8 +42,11 @@ class SchoolController extends Controller
     /**
      * Show the school's about page.
      */
-    public function about(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
+    public function about(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        // Get tenant from route parameter
+        $tenant = $request->route('tenant');
+
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
@@ -61,8 +67,11 @@ class SchoolController extends Controller
     /**
      * Show the school's programs/curriculum page.
      */
-    public function programs(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
+    public function programs(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        // Get tenant from route parameter
+        $tenant = $request->route('tenant');
+
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
@@ -83,8 +92,11 @@ class SchoolController extends Controller
     /**
      * Show the school's admission page.
      */
-    public function admission(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
+    public function admission(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        // Get tenant from route parameter
+        $tenant = $request->route('tenant');
+
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
@@ -105,8 +117,11 @@ class SchoolController extends Controller
     /**
      * Show the school's contact page.
      */
-    public function contact(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
+    public function contact(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        // Get tenant from route parameter
+        $tenant = $request->route('tenant');
+
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 
@@ -127,8 +142,11 @@ class SchoolController extends Controller
     /**
      * Show the school's facilities page.
      */
-    public function facilities(Request $request, string $tenant): View|\Illuminate\Http\RedirectResponse
+    public function facilities(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        // Get tenant from route parameter
+        $tenant = $request->route('tenant');
+
         // Set the tenant context for this request
         $request->merge(['tenant_subdomain' => $tenant]);
 

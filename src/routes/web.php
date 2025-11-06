@@ -70,33 +70,42 @@ Route::domain(config('all.domains.admin'))->group(function () {
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // Tenant Users Management (MUST come before resource routes to avoid conflicts)
-        Route::get('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersIndex'])->name('tenants.users.index');
-        Route::get('/tenants/{tenant}/users/count', [\App\Http\Controllers\Admin\TenantController::class, 'usersCount'])->name('tenants.users.count');
-        Route::get('/tenants/{tenant}/users/create', [\App\Http\Controllers\Admin\TenantController::class, 'usersCreate'])->name('tenants.users.create');
-        Route::post('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersStore'])->name('tenants.users.store');
-        Route::get('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersShow'])->name('tenants.users.show');
-        Route::get('/tenants/{tenant}/users/{userId}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'usersEdit'])->name('tenants.users.edit');
-        Route::put('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdate'])->name('tenants.users.update');
-        Route::get('/tenants/{tenant}/users/{userId}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersChangePassword'])->name('tenants.users.change-password');
-        Route::post('/tenants/{tenant}/users/{userId}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdatePassword'])->name('tenants.users.update-password');
-        Route::get('/tenants/{tenant}/users/{userId}/delete', [\App\Http\Controllers\Admin\TenantController::class, 'usersDelete'])->name('tenants.users.delete');
-        Route::delete('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersDestroy'])->name('tenants.users.destroy');
+        // Tenant Users Management (MUST come before tenant routes to avoid conflicts)
+        Route::get('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersIndex'])->name('tenants.users.index')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/users/count', [\App\Http\Controllers\Admin\TenantController::class, 'usersCount'])->name('tenants.users.count')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/users/create', [\App\Http\Controllers\Admin\TenantController::class, 'usersCreate'])->name('tenants.users.create')->where('tenant', '[a-z0-9-]+');
+        Route::post('/tenants/{tenant}/users', [\App\Http\Controllers\Admin\TenantController::class, 'usersStore'])->name('tenants.users.store')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersShow'])->name('tenants.users.show')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/users/{userId}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'usersEdit'])->name('tenants.users.edit')->where('tenant', '[a-z0-9-]+');
+        Route::put('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdate'])->name('tenants.users.update')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/users/{userId}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersChangePassword'])->name('tenants.users.change-password')->where('tenant', '[a-z0-9-]+');
+        Route::post('/tenants/{tenant}/users/{userId}/change-password', [\App\Http\Controllers\Admin\TenantController::class, 'usersUpdatePassword'])->name('tenants.users.update-password')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/users/{userId}/delete', [\App\Http\Controllers\Admin\TenantController::class, 'usersDelete'])->name('tenants.users.delete')->where('tenant', '[a-z0-9-]+');
+        Route::delete('/tenants/{tenant}/users/{userId}', [\App\Http\Controllers\Admin\TenantController::class, 'usersDestroy'])->name('tenants.users.destroy')->where('tenant', '[a-z0-9-]+');
 
 
 
         // Tenant Management (Resource routes - MUST come after specific routes)
-        Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
+        // Custom tenant routes (using {tenant} parameter for slug-based ID, not resource routes)
+        Route::get('/tenants', [\App\Http\Controllers\Admin\TenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/create', [\App\Http\Controllers\Admin\TenantController::class, 'create'])->name('tenants.create');
+        Route::post('/tenants', [\App\Http\Controllers\Admin\TenantController::class, 'store'])->name('tenants.store');
+        Route::get('/tenants/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'show'])->name('tenants.show');
+        Route::get('/tenants/{tenant}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'edit'])->name('tenants.edit');
+        Route::put('/tenants/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'update'])->name('tenants.update');
+        Route::patch('/tenants/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'update'])->name('tenants.patch');
+        Route::delete('/tenants/{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'destroy'])->name('tenants.destroy');
+
+        // Tenant utility routes
         Route::post('/tenants/check-subdomain', [\App\Http\Controllers\Admin\TenantController::class, 'checkSubdomain'])->name('tenants.check-subdomain');
         Route::post('/tenants/cleanup-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'cleanupHerdYml'])->name('tenants.cleanup-herd-yml');
         Route::post('/tenants/sync-herd-yml', [\App\Http\Controllers\Admin\TenantController::class, 'syncHerdYmlWithDatabase'])->name('tenants.sync-herd-yml');
 
         // Debug route for tenant database configuration
-        Route::get('/tenants/{tenant}/debug-database', [\App\Http\Controllers\Admin\TenantController::class, 'debugDatabase'])->name('tenants.debug-database');
-
+        Route::get('/tenants/{tenant}/debug-database', [\App\Http\Controllers\Admin\TenantController::class, 'debugDatabase'])->name('tenants.debug-database')->where('tenant', '[a-z0-9-]+');
 
         // Tenant Status Management
-        Route::post('/tenants/{tenant}/toggle-status', [\App\Http\Controllers\Admin\TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+        Route::post('/tenants/{tenant}/toggle-status', [\App\Http\Controllers\Admin\TenantController::class, 'toggleStatus'])->name('tenants.toggle-status')->where('tenant', '[a-z0-9-]+');
 
         // Vhost Management
         Route::prefix('vhost')->name('vhost.')->group(function () {
@@ -213,14 +222,6 @@ Route::domain(config('all.domains.admin'))->group(function () {
         }
         return redirect()->route('admin.login');
     });
-
-    // Generic catch-all for any other undefined routes
-    Route::get('/{any}', function ($any) {
-        if (auth()->check()) {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('admin.login');
-    })->where('any', '.*');
 });
 
 // Dynamic Tenant Routes (for any tenant domain matching the pattern)
@@ -316,11 +317,11 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::get('classes', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'index'])->name('classes.index');
         Route::get('classes/create', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'create'])->name('classes.create');
         Route::post('classes', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'store'])->name('classes.store');
-        Route::get('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'show'])->name('classes.show')->where('classId', '[0-9]+');
-        Route::get('classes/{classId}/edit', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'edit'])->name('classes.edit')->where('classId', '[0-9]+');
-        Route::put('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update')->where('classId', '[0-9]+');
-        Route::patch('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update.patch')->where('classId', '[0-9]+');
-        Route::delete('classes/{classId}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'destroy'])->name('classes.destroy')->where('classId', '[0-9]+');
+        Route::get('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'show'])->name('classes.show')->where('id', '[0-9]+');
+        Route::get('classes/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'edit'])->name('classes.edit')->where('id', '[0-9]+');
+        Route::put('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update')->where('id', '[0-9]+');
+        Route::patch('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update.patch')->where('id', '[0-9]+');
+        Route::delete('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'destroy'])->name('classes.destroy')->where('id', '[0-9]+');
 
         // Section Management
         Route::get('sections', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'index'])->name('sections.index');

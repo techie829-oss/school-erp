@@ -113,10 +113,10 @@
         <h2 class="text-3xl font-bold text-white mb-4">Join Our School Community</h2>
         <p class="text-xl text-primary-100 mb-8">Be part of an institution that values excellence and innovation</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('tenant.admission', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+            <a href="{{ url('/admission') }}" class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
                 Apply Now
             </a>
-            <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-8 py-4 bg-transparent text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors border-2 border-white">
+            <a href="{{ url('/contact') }}" class="inline-flex items-center px-8 py-4 bg-transparent text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors border-2 border-white">
                 Contact Us
             </a>
         </div>

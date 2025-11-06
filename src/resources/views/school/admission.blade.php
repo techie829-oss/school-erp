@@ -8,7 +8,7 @@
         <div class="text-center">
             <h1 class="text-4xl font-bold text-gray-900 mb-4">Admission Information</h1>
             <p class="text-xl text-gray-600 mb-8">Learn about our admission process and requirements for joining our school community.</p>
-            <a href="{{ route('tenant.home', ['tenant' => $tenantSubdomain]) }}" class="mt-6 inline-flex items-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
+            <a href="{{ url('/') }}" class="mt-6 inline-flex items-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
                 Back to Home
             </a>
         </div>

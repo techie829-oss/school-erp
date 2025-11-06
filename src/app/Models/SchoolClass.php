@@ -96,4 +96,13 @@ class SchoolClass extends Model
     {
         return $query->orderBy('class_numeric')->orderBy('class_name');
     }
+
+    /**
+     * Accessor for 'name' (alias for class_name)
+     * Makes it easier to use in relationships: $class->name
+     */
+    public function getNameAttribute()
+    {
+        return $this->class_name;
+    }
 }

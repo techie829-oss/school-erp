@@ -71,7 +71,11 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Class</label>
                     <select name="class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                         <option value="">All Classes</option>
-                        <!-- Will be populated from controller -->
+                        @foreach($classes as $class)
+                            <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
+                                {{ $class->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -79,7 +83,11 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Section</label>
                     <select name="section_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                         <option value="">All Sections</option>
-                        <!-- Will be populated from controller -->
+                        @foreach($sections as $section)
+                            <option value="{{ $section->id }}" {{ request('section_id') == $section->id ? 'selected' : '' }}>
+                                {{ $section->schoolClass->name }} - {{ $section->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 

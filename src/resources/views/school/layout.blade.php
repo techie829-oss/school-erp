@@ -124,11 +124,11 @@
                                 Dashboard
                             </a>
                         @else
-                            <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
+                            <a href="{{ url('/login') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
                                 Parent Login
                             </a>
                         @endauth
-                        <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
+                        <a href="{{ url('/contact') }}" class="px-6 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors">
                             Contact Us
                         </a>
                     </div>
@@ -147,22 +147,22 @@
                 <!-- Navigation row -->
                 <div class="hidden md:flex justify-center border-t border-gray-100 py-3">
                     <div class="flex items-center space-x-8">
-                        <a href="{{ route('tenant.home', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.home') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
+                        <a href="{{ url('/') }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->is('/') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Home
                         </a>
-                        <a href="{{ route('tenant.about', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.about') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
+                        <a href="{{ url('/about') }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->is('about') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             About
                         </a>
-                        <a href="{{ route('tenant.programs', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.programs') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
+                        <a href="{{ url('/programs') }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->is('programs') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Programs
                         </a>
-                        <a href="{{ route('tenant.facilities', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.facilities') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
+                        <a href="{{ url('/facilities') }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->is('facilities') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Facilities
                         </a>
-                        <a href="{{ route('tenant.admission', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.admission') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
+                        <a href="{{ url('/admission') }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->is('admission') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Admission
                         </a>
-                        <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('tenant.contact') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
+                        <a href="{{ url('/contact') }}" class="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->is('contact') ? 'text-primary-600 border-b-2 border-primary-600 pb-1' : '' }}">
                             Contact
                         </a>
                     </div>
@@ -172,22 +172,22 @@
             <!-- Mobile Navigation -->
             <div class="md:hidden hidden" id="mobile-menu">
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    <a href="{{ route('tenant.home', ['tenant' => $tenantSubdomain]) }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->routeIs('tenant.home') ? 'text-primary-600 bg-primary-50' : '' }}">
+                    <a href="{{ url('/') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->is('/') ? 'text-primary-600 bg-primary-50' : '' }}">
                         Home
                     </a>
-                    <a href="{{ route('tenant.about', ['tenant' => $tenantSubdomain]) }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->routeIs('tenant.about') ? 'text-primary-600 bg-primary-50' : '' }}">
+                    <a href="{{ url('/about') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->is('about') ? 'text-primary-600 bg-primary-50' : '' }}">
                         About
                     </a>
-                    <a href="{{ route('tenant.programs', ['tenant' => $tenantSubdomain]) }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->routeIs('tenant.programs') ? 'text-primary-600 bg-primary-50' : '' }}">
+                    <a href="{{ url('/programs') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->is('programs') ? 'text-primary-600 bg-primary-50' : '' }}">
                         Programs
                     </a>
-                    <a href="{{ route('tenant.facilities', ['tenant' => $tenantSubdomain]) }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->routeIs('tenant.facilities') ? 'text-primary-600 bg-primary-50' : '' }}">
+                    <a href="{{ url('/facilities') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->is('facilities') ? 'text-primary-600 bg-primary-50' : '' }}">
                         Facilities
                     </a>
-                    <a href="{{ route('tenant.admission', ['tenant' => $tenantSubdomain]) }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->routeIs('tenant.admission') ? 'text-primary-600 bg-primary-50' : '' }}">
+                    <a href="{{ url('/admission') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->is('admission') ? 'text-primary-600 bg-primary-50' : '' }}">
                         Admission
                     </a>
-                    <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->routeIs('tenant.contact') ? 'text-primary-600 bg-primary-50' : '' }}">
+                    <a href="{{ url('/contact') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors {{ request()->is('contact') ? 'text-primary-600 bg-primary-50' : '' }}">
                         Contact
                     </a>
                 </div>
@@ -197,11 +197,11 @@
                             Dashboard
                         </a>
                     @else
-                        <a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
+                        <a href="{{ url('/login') }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
                             Parent Login
                         </a>
                     @endauth
-                    <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="block w-full text-center px-6 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors rounded-lg">
+                    <a href="{{ url('/contact') }}" class="block w-full text-center px-6 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors rounded-lg">
                         Contact Us
                     </a>
                 </div>
@@ -238,10 +238,10 @@
                     <div>
                         <h4 class="text-md font-semibold mb-4 text-white">Quick Links</h4>
                         <ul class="space-y-2">
-                            <li><a href="{{ route('tenant.about', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">About Us</a></li>
-                            <li><a href="{{ route('tenant.programs', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Programs</a></li>
-                            <li><a href="{{ route('tenant.admission', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Admission</a></li>
-                            <li><a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Contact</a></li>
+                            <li><a href="{{ url('/about') }}" class="text-gray-300 hover:text-white transition-colors">About Us</a></li>
+                            <li><a href="{{ url('/programs') }}" class="text-gray-300 hover:text-white transition-colors">Programs</a></li>
+                            <li><a href="{{ url('/admission') }}" class="text-gray-300 hover:text-white transition-colors">Admission</a></li>
+                            <li><a href="{{ url('/contact') }}" class="text-gray-300 hover:text-white transition-colors">Contact</a></li>
                         </ul>
                     </div>
 
@@ -251,9 +251,9 @@
                             @auth
                                 <li><a href="{{ url('/admin/dashboard') }}" class="text-gray-300 hover:text-white transition-colors">Dashboard</a></li>
                             @else
-                                <li><a href="{{ route('tenant.login', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Parent Portal</a></li>
+                                <li><a href="{{ url('/login') }}" class="text-gray-300 hover:text-white transition-colors">Parent Portal</a></li>
                             @endauth
-                            <li><a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
+                            <li><a href="{{ url('/contact') }}" class="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
                             <li><a href="#" class="text-gray-300 hover:text-white transition-colors">Newsletter</a></li>
                         </ul>
                     </div>

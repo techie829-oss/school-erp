@@ -122,4 +122,13 @@ class Section extends Model
     {
         return $query->where('class_id', $classId);
     }
+
+    /**
+     * Accessor for 'name' (alias for section_name)
+     * Makes it easier to use in relationships: $section->name
+     */
+    public function getNameAttribute()
+    {
+        return $this->section_name;
+    }
 }

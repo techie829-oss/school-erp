@@ -14,13 +14,13 @@
                 {{ $tenant['description'] ?? 'Excellence in Education' }} - Empowering students to achieve their full potential through innovative learning and character development.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('tenant.admission', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-8 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl">
+                <a href="{{ url('/admission') }}" class="inline-flex items-center px-8 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl">
                     Apply for Admission
                     <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                     </svg>
                 </a>
-                <a href="{{ route('tenant.about', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors border-2 border-primary-600">
+                <a href="{{ url('/about') }}" class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors border-2 border-primary-600">
                     Learn More
                 </a>
             </div>
@@ -125,7 +125,7 @@
         </div>
 
         <div class="text-center mt-8">
-            <a href="{{ route('tenant.programs', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
+            <a href="{{ url('/programs') }}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
                 View All Programs
                 <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -141,10 +141,10 @@
         <h2 class="text-3xl font-bold text-white mb-4">Ready to Join {{ $tenant['name'] ?? 'Our School' }}?</h2>
         <p class="text-xl text-primary-100 mb-8">Take the first step towards your child's bright future</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('tenant.admission', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+            <a href="{{ url('/admission') }}" class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
                 Start Application
             </a>
-            <a href="{{ route('tenant.contact', ['tenant' => $tenantSubdomain]) }}" class="inline-flex items-center px-8 py-4 bg-transparent text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors border-2 border-white">
+            <a href="{{ url('/contact') }}" class="inline-flex items-center px-8 py-4 bg-transparent text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors border-2 border-white">
                 Contact Us
             </a>
         </div>

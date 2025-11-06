@@ -126,8 +126,8 @@
 <body class="font-sans antialiased bg-gray-50">
     <div class="min-h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0">
-            <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+        <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0 overflow-y-auto">
+            <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 sticky top-0 bg-white z-10">
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -147,7 +147,7 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="mt-6 px-3">
+            <nav class="mt-6 px-3 pb-6">
                 <div class="space-y-1">
                     <!-- Dashboard -->
                     <a href="{{ url('/admin/dashboard') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/dashboard') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">

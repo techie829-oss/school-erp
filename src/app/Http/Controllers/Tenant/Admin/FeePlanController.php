@@ -48,7 +48,7 @@ class FeePlanController extends Controller
             ->orderBy('class_id', 'asc')
             ->paginate(20);
 
-        $classes = SchoolClass::forTenant($tenant->id)->orderBy('name')->get();
+        $classes = SchoolClass::forTenant($tenant->id)->orderBy('class_name')->get();
         $years = FeePlan::forTenant($tenant->id)
             ->select('academic_year')
             ->distinct()
@@ -68,7 +68,7 @@ class FeePlanController extends Controller
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
-        $classes = SchoolClass::forTenant($tenant->id)->orderBy('name')->get();
+        $classes = SchoolClass::forTenant($tenant->id)->orderBy('class_name')->get();
         $components = FeeComponent::forTenant($tenant->id)->active()->get();
 
         return view('tenant.admin.fees.plans.create', compact('classes', 'components'));
@@ -175,7 +175,7 @@ class FeePlanController extends Controller
             ->with('feePlanItems.feeComponent')
             ->findOrFail($id);
 
-        $classes = SchoolClass::forTenant($tenant->id)->orderBy('name')->get();
+        $classes = SchoolClass::forTenant($tenant->id)->orderBy('class_name')->get();
         $components = FeeComponent::forTenant($tenant->id)->active()->get();
 
         return view('tenant.admin.fees.plans.edit', compact('plan', 'classes', 'components'));
