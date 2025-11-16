@@ -121,6 +121,13 @@
         .sidebar-transition {
             transition: all 0.3s ease-in-out;
         }
+        /* Allow main content to show overflow on large screens to avoid unnecessary horizontal scrollbar
+           but keep scrolling on small screens via existing overflow wrappers. */
+        @media (min-width: 1024px) {
+            .content-overflow-visible {
+                overflow-x: visible !important;
+            }
+        }
     </style>
 </head>
 <body class="font-sans antialiased bg-gray-50">
@@ -212,11 +219,19 @@
                     <div class="my-4 border-t border-gray-200"></div>
 
                     <!-- Student Attendance -->
-                    <a href="{{ url('/admin/attendance/students') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                    <a href="{{ url('/admin/attendance/students') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') && !request()->is('*/admin/attendance/holidays*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
                         <svg class="mr-3 h-5 w-5 {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
                         Student Attendance
+                    </a>
+
+                    <!-- Holiday Management -->
+                    <a href="{{ url('/admin/attendance/holidays') }}" class="group flex items-center pl-11 pr-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/holidays*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="mr-2 h-4 w-4 {{ request()->is('*/admin/attendance/holidays*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V8a2 2 0 00-2-2H5A2 2 0 003 8v11z"/>
+                        </svg>
+                        Manage Holidays
                     </a>
 
                     <!-- Student Reports -->
@@ -270,6 +285,14 @@
                         Fee Plans
                     </a>
 
+                    <!-- Fee Reports -->
+                    <a href="{{ url('/admin/fees/reports') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Fee Reports
+                    </a>
+
                     <!-- Divider -->
                     <div class="my-4 border-t border-gray-200"></div>
 
@@ -280,6 +303,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                         Settings
+                    </a>
+
+                    <!-- Notification Logs -->
+                    <a href="{{ url('/admin/notifications/logs') }}" class="group flex items-center px-3 py-2 text-xs font-medium rounded-md {{ request()->is('*/admin/notifications/logs*') ? 'bg-primary-100 text-primary-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="mr-3 h-4 w-4 {{ request()->is('*/admin/notifications/logs*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4V7m2 14H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Notification Logs
                     </a>
 
                     <!-- Coming Soon Notice -->
@@ -353,7 +384,8 @@
 
             <!-- Page Content -->
             <main class="py-6">
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <!-- Allow content to use the full available width (previously limited by max-w-7xl) -->
+                <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8 content-overflow-visible">
                     @yield('content')
                 </div>
             </main>

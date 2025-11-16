@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\AttendanceSummary;
 use App\Models\AttendanceSettings;
+use App\Models\Holiday;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -66,6 +67,130 @@ class StudentAttendanceController extends Controller
             'year',
             'todayStats',
             'monthlyData'
+        ));
+    }
+
+    /**
+     * Class / Section monthly calendar view (Option B)
+     */
+    public function calendar(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $month = (int) $request->get('month', now()->month);
+        $year = (int) $request->get('year', now()->year);
+        $classId = $request->get('class_id');
+        $sectionId = $request->get('section_id');
+
+        // Filters
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+        $sections = $classId
+            ? Section::forTenant($tenant->id)->where('class_id', $classId)->active()->get()
+            : Section::forTenant($tenant->id)->active()->get();
+
+        $currentMonth = Carbon::create($year, $month, 1);
+        $startOfMonth = $currentMonth->copy()->startOfMonth();
+        $endOfMonth = $currentMonth->copy()->endOfMonth();
+
+        // Fetch holidays for this month for highlighting
+        $holidayMap = Holiday::forTenant($tenant->id)
+            ->whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->get()
+            ->keyBy(fn ($h) => $h->date->toDateString());
+
+        // Aggregate attendance per day for this class/section
+        $rawDaily = StudentAttendance::forTenant($tenant->id)
+            ->whereBetween('attendance_date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->when($classId, function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            })
+            ->when($sectionId, function ($q) use ($sectionId) {
+                $q->where('section_id', $sectionId);
+            })
+            ->selectRaw('attendance_date,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present,
+                SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent,
+                SUM(CASE WHEN status = "late" THEN 1 ELSE 0 END) as late,
+                SUM(CASE WHEN status = "half_day" THEN 1 ELSE 0 END) as half_day,
+                SUM(CASE WHEN status = "on_leave" THEN 1 ELSE 0 END) as on_leave')
+            ->groupBy('attendance_date')
+            ->orderBy('attendance_date')
+            ->get()
+            ->keyBy('attendance_date');
+
+        // Build calendar matrix: 6 weeks x 7 days (week starts on Sunday)
+        $calendarDays = [];
+        // 0 (Sun) - 6 (Sat)
+        $startWeekDay = $startOfMonth->dayOfWeek;
+        $daysInMonth = $currentMonth->daysInMonth;
+
+        $dayCounter = 1;
+        for ($week = 0; $week < 6; $week++) {
+            for ($dow = 0; $dow < 7; $dow++) {
+                $cell = [
+                    'date' => null,
+                    'day' => null,
+                    'data' => null,
+                ];
+
+                if (($week === 0 && $dow < $startWeekDay) || $dayCounter > $daysInMonth) {
+                    // Empty cell
+                } else {
+                    $dateObj = Carbon::create($year, $month, $dayCounter);
+                    $dateKey = $dateObj->toDateString();
+                    $stats = $rawDaily->get($dateKey);
+
+                    $cell['date'] = $dateKey;
+                    $cell['day'] = $dayCounter;
+
+                    $isHoliday = $holidayMap->has($dateKey);
+
+                    if ($stats || $isHoliday) {
+                        $total = (int) $stats->total;
+                        $presentLike = (int) $stats->present + (int) $stats->late + (int) $stats->half_day;
+                        $percentage = $total > 0 ? round(($presentLike / $total) * 100) : 0;
+
+                        $cell['data'] = [
+                            'total' => $total,
+                            'present' => (int) ($stats->present ?? 0),
+                            'absent' => (int) ($stats->absent ?? 0),
+                            'late' => (int) ($stats->late ?? 0),
+                            'half_day' => (int) ($stats->half_day ?? 0),
+                            'on_leave' => (int) ($stats->on_leave ?? 0),
+                            'percentage' => $percentage,
+                            'is_holiday' => $isHoliday,
+                            'holiday_title' => $isHoliday ? $holidayMap->get($dateKey)->title : null,
+                        ];
+                    }
+
+                    $dayCounter++;
+                }
+
+                $calendarDays[$week][$dow] = $cell;
+            }
+        }
+
+        // Simple month navigation (keeping current filters)
+        $prevMonth = $currentMonth->copy()->subMonth();
+        $nextMonth = $currentMonth->copy()->addMonth();
+
+        return view('tenant.admin.attendance.students.calendar', compact(
+            'tenant',
+            'classes',
+            'sections',
+            'classId',
+            'sectionId',
+            'month',
+            'year',
+            'calendarDays',
+            'currentMonth',
+            'prevMonth',
+            'nextMonth'
         ));
     }
 

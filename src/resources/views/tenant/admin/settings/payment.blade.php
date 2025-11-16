@@ -155,7 +155,11 @@
                     </label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         @php
-                            $paymentMethods = old('payment_methods', json_decode($paymentSettings['payment_methods'] ?? '["cash","cheque","card","upi"]', true));
+                            $paymentMethods = old('payment_methods', $paymentSettings['payment_methods'] ?? ['cash', 'cheque', 'card', 'upi']);
+                            // Handle if payment_methods is stored as JSON string
+                            if (is_string($paymentMethods)) {
+                                $paymentMethods = json_decode($paymentMethods, true) ?? ['cash', 'cheque', 'card', 'upi'];
+                            }
                             $methods = ['cash' => 'Cash', 'cheque' => 'Cheque', 'card' => 'Card/POS', 'upi' => 'UPI', 'net_banking' => 'Net Banking', 'demand_draft' => 'Demand Draft'];
                         @endphp
                         @foreach($methods as $value => $label)

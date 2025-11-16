@@ -259,7 +259,75 @@ class StudentController extends Controller
         $classes = SchoolClass::forTenant($tenant->id)->orderBy('class_name')->get();
         $sections = Section::forTenant($tenant->id)->with('schoolClass')->orderBy('section_name')->get();
 
-        return view('tenant.admin.students.show', compact('student', 'tenant', 'classes', 'sections'));
+        // Attendance calendar data (per-student)
+        $month = (int) $request->get('attendance_month', now()->month);
+        $year = (int) $request->get('attendance_year', now()->year);
+
+        // Clamp month/year to valid values
+        if ($month < 1 || $month > 12) {
+            $month = now()->month;
+        }
+        if ($year < 2000 || $year > 2100) {
+            $year = now()->year;
+        }
+
+        $monthStart = now()->setDate($year, $month, 1)->startOfDay();
+        $daysInMonth = $monthStart->daysInMonth;
+        $monthEnd = $monthStart->copy()->endOfMonth();
+
+        $attendanceRecords = \App\Models\StudentAttendance::forTenant($tenant->id)
+            ->forStudent($student->id)
+            ->whereBetween('attendance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->get()
+            ->keyBy(function ($record) {
+                return $record->attendance_date->day;
+            });
+
+        $attendanceCalendar = [];
+        $summary = [
+            'present' => 0,
+            'absent' => 0,
+            'late' => 0,
+            'half_day' => 0,
+            'on_leave' => 0,
+            'holiday' => 0,
+            'total_marked' => 0,
+        ];
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = $monthStart->copy()->day($day);
+            $record = $attendanceRecords->get($day);
+
+            if ($record) {
+                $status = $record->status;
+                $color = $record->status_color;
+                if (isset($summary[$status])) {
+                    $summary[$status]++;
+                }
+                $summary['total_marked']++;
+            } else {
+                $status = null;
+                $color = 'gray';
+            }
+
+            $attendanceCalendar[] = [
+                'day' => $day,
+                'date' => $date,
+                'status' => $status,
+                'color' => $color,
+            ];
+        }
+
+        return view('tenant.admin.students.show', compact(
+            'student',
+            'tenant',
+            'classes',
+            'sections',
+            'attendanceCalendar',
+            'summary',
+            'month',
+            'year'
+        ));
     }
 
     /**

@@ -89,6 +89,9 @@
                 <button onclick="showTab('payment')" id="tab-payment" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Payment Settings
                 </button>
+                <button onclick="showTab('notifications')" id="tab-notifications" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Notifications (SMS/Email)
+                </button>
             </nav>
         </div>
 
@@ -115,6 +118,11 @@
         <!-- Payment Settings Tab -->
         <div id="content-payment" class="tab-content hidden p-6">
             @include('tenant.admin.settings.payment')
+        </div>
+
+        <!-- Notification Settings Tab -->
+        <div id="content-notifications" class="tab-content hidden p-6">
+            @include('tenant.admin.settings.notifications')
         </div>
     </div>
 </div>

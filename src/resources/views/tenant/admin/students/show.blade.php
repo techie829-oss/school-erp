@@ -140,6 +140,12 @@
                 <button onclick="showStudentTab('documents')" id="student-tab-documents" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Documents ({{ $student->documents->count() }})
                 </button>
+                <button onclick="showStudentTab('attendance')" id="student-tab-attendance" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Attendance
+                </button>
+                <button onclick="showStudentTab('fees')" id="student-tab-fees" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Fee Card
+                </button>
                 <button onclick="showStudentTab('actions')" id="student-tab-actions" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Actions
                 </button>
@@ -404,6 +410,209 @@
             </div>
         </div>
 
+        <!-- Tab Content: Attendance Calendar -->
+        <div id="student-content-attendance" class="student-tab-content hidden p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">Attendance Calendar</h4>
+                    <p class="text-xs text-gray-500">
+                        Month-wise view of this student's attendance. Click arrows to change month.
+                    </p>
+                </div>
+                @php
+                    $currentMonth = $month;
+                    $currentYear = $year;
+                    $prev = \Carbon\Carbon::create($year, $month, 1)->subMonth();
+                    $next = \Carbon\Carbon::create($year, $month, 1)->addMonth();
+                @endphp
+                <div class="inline-flex items-center space-x-2">
+                    <a href="{{ url('/admin/students/' . $student->id . '?attendance_month=' . $prev->month . '&attendance_year=' . $prev->year) }}"
+                       class="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-xs text-gray-700 bg-white hover:bg-gray-50">
+                        ‹ {{ $prev->format('M Y') }}
+                    </a>
+                    <span class="text-sm font-semibold text-gray-900">
+                        {{ \Carbon\Carbon::create($year, $month, 1)->format('F Y') }}
+                    </span>
+                    <a href="{{ url('/admin/students/' . $student->id . '?attendance_month=' . $next->month . '&attendance_year=' . $next->year) }}"
+                       class="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-xs text-gray-700 bg-white hover:bg-gray-50">
+                        {{ $next->format('M Y') }} ›
+                    </a>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4">
+                <div class="bg-green-50 border border-green-200 rounded-md p-2 text-center">
+                    <div class="text-[11px] text-gray-600">Present</div>
+                    <div class="text-sm font-semibold text-green-700">{{ $summary['present'] }}</div>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-md p-2 text-center">
+                    <div class="text-[11px] text-gray-600">Absent</div>
+                    <div class="text-sm font-semibold text-red-700">{{ $summary['absent'] }}</div>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-md p-2 text-center">
+                    <div class="text-[11px] text-gray-600">Late</div>
+                    <div class="text-sm font-semibold text-yellow-700">{{ $summary['late'] }}</div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-2 text-center">
+                    <div class="text-[11px] text-gray-600">Half Day</div>
+                    <div class="text-sm font-semibold text-blue-700">{{ $summary['half_day'] }}</div>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-md p-2 text-center">
+                    <div class="text-[11px] text-gray-600">Leave</div>
+                    <div class="text-sm font-semibold text-purple-700">{{ $summary['on_leave'] }}</div>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-md p-2 text-center">
+                    <div class="text-[11px] text-gray-600">Marked Days</div>
+                    <div class="text-sm font-semibold text-gray-800">{{ $summary['total_marked'] }}</div>
+                </div>
+            </div>
+
+            @php
+                $firstOfMonth = \Carbon\Carbon::create($year, $month, 1);
+                $startWeekDay = (int) $firstOfMonth->dayOfWeek; // 0 (Sun) .. 6 (Sat)
+                $daysInMonth = count($attendanceCalendar);
+                $dayIndex = 0;
+            @endphp
+
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <table class="min-w-full border-collapse text-[11px]">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Sun</th>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Mon</th>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Tue</th>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Wed</th>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Thu</th>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Fri</th>
+                            <th class="px-2 py-1 text-center font-medium text-gray-600">Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $currentDay = 1; @endphp
+                        @while($currentDay <= $daysInMonth)
+                            <tr>
+                                @for($weekDay = 0; $weekDay < 7; $weekDay++)
+                                    @php
+                                        $cellContent = null;
+                                        if ($currentDay === 1 && $weekDay < $startWeekDay) {
+                                            // Empty cell before the first day of month
+                                            $cellContent = null;
+                                        } elseif ($currentDay <= $daysInMonth) {
+                                            $cellContent = $attendanceCalendar[$currentDay - 1];
+                                            $currentDay++;
+                                        }
+                                    @endphp
+                                    <td class="h-16 border border-gray-100 align-top px-1 py-1 text-center">
+                                        @if($cellContent)
+                                            @php
+                                                $status = $cellContent['status'];
+                                                $color = $cellContent['color'];
+                                                $badgeClass = match($color) {
+                                                    'green' => 'bg-green-100 text-green-800',
+                                                    'red' => 'bg-red-100 text-red-800',
+                                                    'yellow' => 'bg-yellow-100 text-yellow-800',
+                                                    'blue' => 'bg-blue-100 text-blue-800',
+                                                    'purple' => 'bg-purple-100 text-purple-800',
+                                                    'gray' => 'bg-gray-100 text-gray-600',
+                                                    default => 'bg-gray-100 text-gray-600',
+                                                };
+                                                $label = $status ? ucfirst(str_replace('_', ' ', $status)) : '—';
+                                            @endphp
+                                            <div class="flex flex-col h-full items-center justify-start">
+                                                <span class="text-[11px] font-semibold text-gray-800">
+                                                    {{ $cellContent['day'] }}
+                                                </span>
+                                                <span class="mt-1 inline-flex px-1.5 py-0.5 rounded-full {{ $badgeClass }}">
+                                                    {{ $label }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                    </td>
+                                @endfor
+                            </tr>
+                        @endwhile
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="mt-2 text-[11px] text-gray-500">
+                Note: Only days with attendance marked are counted. Unmarked days are shown as “—”.
+            </p>
+        </div>
+
+        <!-- Tab Content: Fee Card -->
+        <div id="student-content-fees" class="student-tab-content hidden p-6">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 mb-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">Student Fee Management</h4>
+                <p class="text-sm text-gray-600 mb-4">View detailed fee cards, payment history, and apply discounts</p>
+                <a href="{{ url('/admin/fees/cards/' . $student->id) }}"
+                   class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    View Complete Fee Card
+                </a>
+            </div>
+
+            @php
+                $feeCards = $student->studentFeeCard ? [$student->studentFeeCard] : [];
+            @endphp
+
+            @if(count($feeCards) > 0)
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Total Amount</div>
+                        <div class="text-2xl font-bold text-gray-900">₹{{ number_format($student->studentFeeCard->total_amount ?? 0, 2) }}</div>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Paid Amount</div>
+                        <div class="text-2xl font-bold text-emerald-600">₹{{ number_format($student->studentFeeCard->paid_amount ?? 0, 2) }}</div>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <div class="text-sm text-gray-500">Balance Due</div>
+                        <div class="text-2xl font-bold text-red-600">₹{{ number_format($student->studentFeeCard->balance_amount ?? 0, 2) }}</div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    @if(($student->studentFeeCard->balance_amount ?? 0) > 0)
+                        <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}"
+                           class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            Collect Payment
+                        </a>
+                    @endif
+                    <a href="{{ url('/admin/fees/cards/' . $student->id . '/print') }}" target="_blank"
+                       class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        Print Fee Card
+                    </a>
+                </div>
+            @else
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <h3 class="text-sm font-medium text-yellow-800">No Fee Card Assigned</h3>
+                            <p class="mt-1 text-sm text-yellow-700">This student has not been assigned to any fee plan yet. Please assign a fee plan to generate the fee card.</p>
+                            <div class="mt-3">
+                                <a href="{{ url('/admin/fees/plans') }}" class="text-sm font-medium text-yellow-800 hover:text-yellow-900">
+                                    Go to Fee Plans →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+
         <!-- Tab Content: Actions -->
         <div id="student-content-actions" class="student-tab-content hidden p-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -438,7 +647,7 @@
                                 <label for="promote_to_class_id" class="block text-sm font-medium text-gray-700">Promote To Class *</label>
                                 <select name="to_class_id" id="promote_to_class_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                                     <option value="">Select Class</option>
-                                    @foreach($classes as $class)
+                                    @foreach(is_iterable($classes ?? null) ? $classes : [] as $class)
                                         {{-- @var $class \App\Models\SchoolClass --}}
                                         <option value="{{ $class->id }}">{{ $class->class_name }}</option>
                                     @endforeach
@@ -449,9 +658,11 @@
                                 <label for="promote_to_section_id" class="block text-sm font-medium text-gray-700">Section</label>
                                 <select name="to_section_id" id="promote_to_section_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                                     <option value="">Select Section</option>
-                                    @foreach($sections as $section)
+                                    @foreach(is_iterable($sections ?? null) ? $sections : [] as $section)
                                         {{-- @var $section \App\Models\Section --}}
-                                        <option value="{{ $section->id }}">{{ $section->schoolClass->class_name }} - {{ $section->section_name }}</option>
+                                        <option value="{{ $section->id }}" data-class-id="{{ $section->class_id }}">
+                                            {{ $section->schoolClass->class_name }} - {{ $section->section_name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -642,6 +853,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedTab = localStorage.getItem('student_profile_active_tab');
     if (savedTab && document.getElementById('student-content-' + savedTab)) {
         showStudentTab(savedTab);
+    }
+
+    // Dependent sections dropdown in Promote Student form
+    const classSelect = document.getElementById('promote_to_class_id');
+    const sectionSelect = document.getElementById('promote_to_section_id');
+    if (classSelect && sectionSelect) {
+        const allSectionOptions = Array.from(sectionSelect.options);
+
+        function filterSectionsByClass() {
+            const selectedClassId = classSelect.value;
+            const firstOption = allSectionOptions[0];
+
+            sectionSelect.innerHTML = '';
+            sectionSelect.appendChild(firstOption.cloneNode(true));
+
+            allSectionOptions.slice(1).forEach(function(option) {
+                const optionClassId = option.getAttribute('data-class-id');
+                if (!selectedClassId || optionClassId === selectedClassId) {
+                    sectionSelect.appendChild(option.cloneNode(true));
+                }
+            });
+        }
+
+        classSelect.addEventListener('change', filterSectionsByClass);
+        filterSectionsByClass();
     }
 });
 </script>

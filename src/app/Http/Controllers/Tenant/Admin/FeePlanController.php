@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\FeeComponent;
 use App\Models\FeePlan;
 use App\Models\FeePlanItem;
-use App\Models\FeeComponent;
 use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\StudentFeeCard;
+use App\Models\StudentFeeItem;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class FeePlanController extends Controller
 {
@@ -155,7 +159,11 @@ class FeePlanController extends Controller
             abort(404, 'Tenant not found');
         }
         $plan = FeePlan::forTenant($tenant->id)
-            ->with(['schoolClass', 'feePlanItems.feeComponent', 'studentFeeCards.student'])
+            ->with([
+                'schoolClass',
+                'feePlanItems.feeComponent',
+                'studentFeeCards.student.currentEnrollment.section',
+            ])
             ->findOrFail($id);
 
         return view('tenant.admin.fees.plans.show', compact('plan'));
@@ -297,9 +305,237 @@ class FeePlanController extends Controller
             abort(404, 'Tenant not found');
         }
         $plan = FeePlan::forTenant($tenant->id)
-            ->with(['schoolClass', 'feePlanItems.feeComponent'])
+            ->with(['schoolClass', 'feePlanItems.feeComponent', 'studentFeeCards.student.currentEnrollment'])
             ->findOrFail($id);
 
-        return view('tenant.admin.fees.plans.assign', compact('plan'));
+        // Auto-sync obvious academic year mismatches for already assigned fee cards
+        $syncedCount = 0;
+        foreach ($plan->studentFeeCards as $card) {
+            $student = $card->student;
+            $enrollment = $student?->currentEnrollment;
+
+            if (!$student || !$enrollment) {
+                continue;
+            }
+
+            // Only consider cards where current class matches plan class
+            if ($enrollment->class_id !== $plan->class_id) {
+                continue;
+            }
+
+            // If enrollment year and plan year match, but card year is different, fix the card
+            if (
+                $enrollment->academic_year === $plan->academic_year &&
+                $card->academic_year !== $enrollment->academic_year
+            ) {
+                $card->academic_year = $enrollment->academic_year;
+                $card->save();
+                $syncedCount++;
+            }
+        }
+
+        $students = Student::forTenant($tenant->id)
+            ->with(['currentEnrollment.section'])
+            ->whereHas('currentEnrollment', function ($query) use ($plan) {
+                $query->where('class_id', $plan->class_id)
+                    ->where('is_current', true);
+            })
+            ->orderBy('full_name')
+            ->get();
+
+        $assignedStudentIds = $plan->studentFeeCards->pluck('student_id')->toArray();
+
+        return view('tenant.admin.fees.plans.assign', [
+            'plan' => $plan,
+            'students' => $students,
+            'assignedStudentIds' => $assignedStudentIds,
+            'syncedCount' => $syncedCount,
+        ]);
+    }
+
+    /**
+     * Persist fee plan assignments and generate student fee cards/items
+     */
+    public function assignStore(Request $request, $id)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $plan = FeePlan::forTenant($tenant->id)
+            ->with('feePlanItems')
+            ->findOrFail($id);
+
+        $validated = Validator::make($request->all(), [
+            'student_ids' => 'required|array|min:1',
+            'student_ids.*' => 'required|exists:students,id',
+        ], [
+            'student_ids.required' => 'Select at least one student to assign.',
+        ]);
+
+        if ($validated->fails()) {
+            return redirect()->back()
+                ->withErrors($validated)
+                ->withInput();
+        }
+
+        $studentIds = $request->input('student_ids', []);
+
+        $students = Student::forTenant($tenant->id)
+            ->with('currentEnrollment')
+            ->whereIn('id', $studentIds)
+            ->get();
+
+        $createdCount = 0;
+        $skipped = [];
+
+        DB::beginTransaction();
+        try {
+            $totalAmount = $plan->feePlanItems->sum('amount');
+
+            foreach ($students as $student) {
+                $currentEnrollment = $student->currentEnrollment;
+
+                // Ensure student is currently in the same CLASS as the fee plan.
+                // We no longer block on academic_year here; the fee card always uses the plan's academic_year.
+                if (
+                    !$currentEnrollment ||
+                    $currentEnrollment->class_id !== $plan->class_id
+                ) {
+                    $skipped[] = $student->full_name . ' (class mismatch)';
+                    continue;
+                }
+
+                $alreadyAssigned = StudentFeeCard::forTenant($tenant->id)
+                    ->where('student_id', $student->id)
+                    ->where('fee_plan_id', $plan->id)
+                    ->exists();
+
+                if ($alreadyAssigned) {
+                    $skipped[] = $student->full_name;
+                    continue;
+                }
+
+                $feeCard = StudentFeeCard::create([
+                    'tenant_id' => $tenant->id,
+                    'student_id' => $student->id,
+                    'fee_plan_id' => $plan->id,
+                    'academic_year' => $plan->academic_year,
+                    'total_amount' => $totalAmount,
+                    'discount_amount' => 0,
+                    'paid_amount' => 0,
+                    'balance_amount' => $totalAmount,
+                    'status' => 'active',
+                ]);
+
+                foreach ($plan->feePlanItems as $item) {
+                    StudentFeeItem::create([
+                        'student_fee_card_id' => $feeCard->id,
+                        'fee_component_id' => $item->fee_component_id,
+                        'original_amount' => $item->amount,
+                        'discount_amount' => 0,
+                        'net_amount' => $item->amount,
+                        'due_date' => $item->due_date,
+                        'paid_amount' => 0,
+                        'status' => 'unpaid',
+                    ]);
+                }
+
+                $createdCount++;
+            }
+
+            DB::commit();
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->with('error', 'Failed to assign fee plan: ' . $exception->getMessage());
+        }
+
+        $message = "{$createdCount} student(s) assigned successfully.";
+
+        if (!empty($skipped)) {
+            $message .= ' Skipped: ' . implode(', ', array_slice($skipped, 0, 3));
+            if (count($skipped) > 3) {
+                $message .= ' and others.';
+            }
+        }
+
+        return redirect('/admin/fees/plans/' . $plan->id)
+            ->with('success', $message);
+    }
+
+    /**
+     * Printable summary of the fee plan
+     */
+    public function print(Request $request, $id)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $plan = FeePlan::forTenant($tenant->id)
+            ->with([
+                'schoolClass',
+                'feePlanItems.feeComponent',
+                'studentFeeCards.student.currentEnrollment.section',
+            ])
+            ->findOrFail($id);
+
+        return view('tenant.admin.fees.plans.print', compact('plan', 'tenant'));
+    }
+
+    /**
+     * Export assigned students to CSV
+     */
+    public function export(Request $request, $id)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $plan = FeePlan::forTenant($tenant->id)
+            ->with(['studentFeeCards.student.currentEnrollment.section'])
+            ->findOrFail($id);
+
+        $filename = 'fee-plan-' . Str::slug($plan->name) . '-students.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $columns = ['Student Name', 'Admission No.', 'Roll No.', 'Section', 'Total', 'Paid', 'Balance', 'Status'];
+
+        $callback = function () use ($columns, $plan) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $columns);
+
+            foreach ($plan->studentFeeCards as $card) {
+                $student = $card->student;
+                $enrollment = $student?->currentEnrollment;
+
+                fputcsv($handle, [
+                    $student->full_name ?? 'N/A',
+                    $student->admission_number ?? '',
+                    $enrollment?->roll_number ?? '',
+                    $enrollment?->section?->section_name ?? '',
+                    $card->total_amount,
+                    $card->paid_amount,
+                    $card->balance_amount,
+                    ucfirst($card->status),
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $filename, $headers);
     }
 }

@@ -108,7 +108,11 @@
                     </label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         @php
-                            $weekendDays = old('weekend_days', json_decode($attendanceSettings->weekend_days ?? '["sunday"]', true));
+                            $weekendDays = old('weekend_days', $attendanceSettings->weekend_days ?? ['sunday']);
+                            // Handle if weekend_days is stored as JSON string
+                            if (is_string($weekendDays)) {
+                                $weekendDays = json_decode($weekendDays, true) ?? ['sunday'];
+                            }
                             $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                         @endphp
                         @foreach($days as $day)

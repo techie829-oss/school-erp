@@ -37,7 +37,7 @@
             </p>
         </div>
         <div class="mt-4 flex md:mt-0 md:ml-4">
-            <a href="{{ url('/admin/fees/components/create') }}" 
+            <a href="{{ url('/admin/fees/components/create') }}"
                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -82,7 +82,7 @@
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             @if($components->count() > 0)
                 <table class="w-full">
-                    <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                    <thead class="bg-gradient-to-r from-blue-600 to-indigo-600">
                         <tr>
                             <th class="px-6 py-4 text-left">Code</th>
                             <th class="px-6 py-4 text-left">Name</th>
@@ -101,12 +101,18 @@
                                 <td class="px-6 py-4 font-medium text-gray-800">{{ $component->name }}</td>
                                 <td class="px-6 py-4">
                                     @if($component->type == 'recurring')
-                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                            <i class="fas fa-sync-alt mr-1"></i>Recurring
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582M20 20v-5h-.581M5.418 9A7 7 0 0112 5h1m5.002 10A7 7 0 0112 19h-1"></path>
+                                            </svg>
+                                            Recurring
                                         </span>
                                     @else
-                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                            <i class="fas fa-check-circle mr-1"></i>One Time
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            One Time
                                         </span>
                                     @endif
                                 </td>
@@ -125,8 +131,11 @@
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <a href="{{ url('/admin/fees/components/' . $component->id . '/edit') }}"
-                                           class="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition">
-                                            <i class="fas fa-edit"></i>
+                                           class="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
+                                           title="Edit Component">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 00.707-.293l9.439-9.439a1 1 0 000-1.414l-3.586-3.586a1 1 0 00-1.414 0L4 14.586V20z"></path>
+                                            </svg>
                                         </a>
                                         <form action="{{ url('/admin/fees/components/' . $component->id) }}"
                                               method="POST"
@@ -135,8 +144,11 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition">
-                                                <i class="fas fa-trash"></i>
+                                                    class="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
+                                                    title="Delete Component">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                                </svg>
                                             </button>
                                         </form>
                                     </div>
@@ -154,13 +166,20 @@
                 <!-- Empty State -->
                 <div class="text-center py-16">
                     <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
-                        <i class="fas fa-money-bill-wave text-5xl text-gray-400"></i>
+                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
                     </div>
                     <h3 class="text-xl font-semibold text-gray-700 mb-2">No Fee Components Yet</h3>
                     <p class="text-gray-500 mb-6">Get started by creating your first fee component</p>
                     <a href="{{ url('/admin/fees/components/create') }}"
                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition inline-block">
-                        <i class="fas fa-plus mr-2"></i>Add First Component
+                        <span class="inline-flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add First Component
+                        </span>
                     </a>
                 </div>
             @endif
@@ -172,7 +191,9 @@
                 <div class="bg-white rounded-xl shadow p-6">
                     <div class="flex items-center">
                         <div class="p-3 bg-blue-100 rounded-lg">
-                            <i class="fas fa-list text-2xl text-blue-600"></i>
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+                            </svg>
                         </div>
                         <div class="ml-4">
                             <p class="text-gray-500 text-sm">Total Components</p>
@@ -184,7 +205,9 @@
                 <div class="bg-white rounded-xl shadow p-6">
                     <div class="flex items-center">
                         <div class="p-3 bg-green-100 rounded-lg">
-                            <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
                         </div>
                         <div class="ml-4">
                             <p class="text-gray-500 text-sm">Active Components</p>
@@ -196,7 +219,9 @@
                 <div class="bg-white rounded-xl shadow p-6">
                     <div class="flex items-center">
                         <div class="p-3 bg-purple-100 rounded-lg">
-                            <i class="fas fa-sync-alt text-2xl text-purple-600"></i>
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582M20 20v-5h-.581M5.418 9A7 7 0 0112 5h1m5.002 10A7 7 0 0112 19h-1"></path>
+                            </svg>
                         </div>
                         <div class="ml-4">
                             <p class="text-gray-500 text-sm">Recurring Type</p>

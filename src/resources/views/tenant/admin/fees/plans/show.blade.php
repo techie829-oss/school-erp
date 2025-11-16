@@ -44,7 +44,28 @@
                 {{ $plan->schoolClass->class_name ?? 'N/A' }} • {{ $plan->academic_year }} • {{ ucfirst(str_replace('_', ' ', $plan->term)) }}
             </p>
         </div>
-        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3 flex-wrap">
+            <a href="{{ url('/admin/fees/plans/' . $plan->id . '/assign') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Assign Students
+            </a>
+            <a href="{{ url('/admin/fees/plans/' . $plan->id . '/print') }}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" target="_blank">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Print Plan
+            </a>
+            <a href="{{ url('/admin/fees/plans/' . $plan->id . '/export') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-700 hover:bg-slate-800">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-3-3m3 3l3-3M6 20h12"/>
+                </svg>
+                Export CSV
+            </a>
             <a href="{{ url('/admin/fees/plans/' . $plan->id . '/edit') }}"
                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,9 +79,9 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="flex flex-col lg:flex-row lg:items-start gap-6">
         <!-- Left Column: Plan Details -->
-        <div class="space-y-6">
+        <div class="space-y-6 lg:w-1/3">
             <!-- Plan Information -->
             <div class="bg-white shadow rounded-lg p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Plan Information</h3>
@@ -129,22 +150,23 @@
         </div>
 
         <!-- Right Column: Fee Components -->
-        <div class="lg:col-span-2 space-y-6 w-full">
+        <div class="lg:w-2/3 space-y-6">
             <!-- Fee Components List -->
             <div class="bg-white shadow rounded-lg w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900">Fee Components</h3>
                 </div>
                 @if($plan->feePlanItems->count() > 0)
-                    <div class="overflow-x-auto w-full">
-                        <table class="w-full divide-y divide-gray-200">
+                    <div class="overflow-x-auto lg:overflow-visible w-full">
+                        <!-- Use min-w-full so the table expands to container width and allow automatic layout -->
+                        <table class="min-w-full table-auto divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Amount</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Due Date</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Mandatory</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Mandatory</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -154,7 +176,7 @@
                                             <div class="text-sm font-medium text-gray-900">{{ $item->feeComponent->name }}</div>
                                             <div class="text-sm text-gray-500">{{ $item->feeComponent->code }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <td class="px-6 py-4 text-right">
                                             <div class="text-sm font-semibold text-gray-900">₹{{ number_format($item->amount, 2) }}</div>
                                         </td>
                                         <td class="px-6 py-4">
@@ -162,10 +184,10 @@
                                                 {{ $item->feeComponent->type == 'recurring' ? 'Recurring' : 'One Time' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 text-sm text-gray-500">
                                             {{ $item->due_date ? $item->due_date->format('d M Y') : '-' }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <td class="px-6 py-4 text-center">
                                             @if($item->is_mandatory)
                                                 <span class="text-green-600">✓</span>
                                             @else
@@ -180,6 +202,116 @@
                 @else
                     <div class="text-center py-8 text-gray-500">
                         <p>No components in this plan</p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Assigned Students -->
+            <div class="bg-white shadow rounded-lg w-full">
+                <div class="px-6 py-4 border-b border-gray-200 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Assigned Students</h3>
+                        <p class="text-sm text-gray-500">Students currently linked to this plan with generated fee cards.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700">
+                            {{ $plan->studentFeeCards->count() }} Assigned
+                        </div>
+                        <a href="{{ url('/admin/fees/plans/' . $plan->id . '/assign') }}"
+                           class="inline-flex items-center px-4 py-2 rounded-md text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700">
+                            Manage Assignments
+                        </a>
+                    </div>
+                </div>
+
+                @if($plan->studentFeeCards->count() > 0)
+                    @php
+                        $cards = $plan->studentFeeCards->sortBy(function ($card) {
+                            return $card->student->full_name ?? '';
+                        });
+                        $totalBalance = $plan->studentFeeCards->sum('balance_amount');
+                    @endphp
+                    <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Total Outstanding</p>
+                            <p class="text-xl font-semibold text-gray-900">₹{{ number_format($totalBalance, 2) }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Status Breakdown</p>
+                            <div class="text-sm text-gray-900 flex flex-wrap gap-3 mt-1">
+                                <span>Paid: {{ $plan->studentFeeCards->where('status', 'paid')->count() }}</span>
+                                <span>Partial: {{ $plan->studentFeeCards->where('status', 'partial')->count() }}</span>
+                                <span>Active: {{ $plan->studentFeeCards->where('status', 'active')->count() }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Last Assignment</p>
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ $plan->studentFeeCards->sortByDesc('created_at')->first()?->created_at?->format('d M Y') ?? '—' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach($cards as $card)
+                                    <tr>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ $card->student->full_name ?? 'N/A' }}</div>
+                                            <div class="text-sm text-gray-500">{{ $card->student->admission_number ?? '' }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            {{ $card->student->currentEnrollment->roll_number ?? '—' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            {{ $card->student->currentEnrollment?->section?->section_name ?? '—' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                                            ₹{{ number_format($card->total_amount, 2) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                                            ₹{{ number_format($card->paid_amount, 2) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                                            ₹{{ number_format($card->balance_amount, 2) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            @php
+                                                $statusColors = [
+                                                    'paid' => 'bg-emerald-100 text-emerald-800',
+                                                    'partial' => 'bg-yellow-100 text-yellow-800',
+                                                    'overdue' => 'bg-red-100 text-red-800',
+                                                    'active' => 'bg-sky-100 text-sky-800',
+                                                ];
+                                            @endphp
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$card->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                                {{ ucfirst($card->status) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-12 text-gray-500">
+                        <p>No students assigned to this plan yet.</p>
+                        <p class="mt-2">
+                            <a href="{{ url('/admin/fees/plans/' . $plan->id . '/assign') }}" class="text-primary-600 hover:text-primary-700">
+                                Assign the first student
+                            </a>
+                        </p>
                     </div>
                 @endif
             </div>

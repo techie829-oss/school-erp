@@ -202,6 +202,10 @@ class FeeCollectionController extends Controller
 
             DB::commit();
 
+            // Send payment confirmation notification
+            $notificationService = new \App\Services\NotificationService($tenant->id);
+            $notificationService->sendPaymentConfirmation($payment);
+
             return redirect('/admin/fees/collection/' . $studentId)
                 ->with('success', 'Payment collected successfully! Payment Number: ' . $payment->payment_number);
         } catch (\Exception $e) {
@@ -308,25 +312,229 @@ class FeeCollectionController extends Controller
             abort(404, 'Tenant not found');
         }
 
-        $reportType = $request->get('type', 'daily');
-        $data = [];
+        $classes = \App\Models\SchoolClass::forTenant($tenant->id)->orderBy('class_name')->get();
+
+        // Check if report generation requested
+        if (!$request->has('report_type')) {
+            return view('tenant.admin.fees.reports', compact('classes'));
+        }
+
+        $reportType = $request->get('report_type', 'collection');
+        $fromDate = $request->get('from_date', now()->startOfMonth()->format('Y-m-d'));
+        $toDate = $request->get('to_date', now()->format('Y-m-d'));
+        $classId = $request->get('class_id');
+
+        $reportData = null;
+        $summary = null;
 
         switch ($reportType) {
-            case 'daily':
-                $data = $this->getDailyReport($tenant, $request);
+            case 'collection':
+                list($reportData, $summary) = $this->getCollectionReport($tenant, $fromDate, $toDate, $classId);
                 break;
-            case 'monthly':
-                $data = $this->getMonthlyReport($tenant, $request);
+            case 'outstanding':
+                list($reportData, $summary) = $this->getOutstandingReport($tenant, $classId);
                 break;
             case 'defaulters':
-                $data = $this->getDefaultersReport($tenant, $request);
+                list($reportData, $summary) = $this->getDefaultersReport($tenant, $classId);
                 break;
-            case 'collection_summary':
-                $data = $this->getCollectionSummary($tenant, $request);
+            case 'class_wise':
+                list($reportData, $summary) = $this->getClassWiseReport($tenant, $fromDate, $toDate);
+                break;
+            case 'payment_method':
+                list($reportData, $summary) = $this->getPaymentMethodReport($tenant, $fromDate, $toDate);
                 break;
         }
 
-        return view('tenant.admin.fees.reports.index', compact('data', 'reportType'));
+        // Handle export
+        if ($request->get('export') === 'excel') {
+            return $this->exportToExcel($reportData, $reportType);
+        }
+
+        return view('tenant.admin.fees.reports', compact('classes', 'reportData', 'summary'));
+    }
+
+    private function getCollectionReport($tenant, $fromDate, $toDate, $classId = null)
+    {
+        $query = Payment::forTenant($tenant->id)
+            ->whereBetween('payment_date', [$fromDate, $toDate])
+            ->where('status', 'success')
+            ->with(['student.currentEnrollment.schoolClass']);
+
+        if ($classId) {
+            $query->whereHas('student.currentEnrollment', function($q) use ($classId) {
+                $q->where('class_id', $classId)->where('is_current', true);
+            });
+        }
+
+        $payments = $query->orderBy('payment_date', 'desc')->get();
+
+        $data = [
+            'headers' => ['Date', 'Receipt No', 'Student Name', 'Class', 'Amount', 'Method', 'Reference'],
+            'data' => $payments->map(function($payment) {
+                return [
+                    $payment->payment_date->format('d M Y'),
+                    $payment->payment_number,
+                    $payment->student->full_name,
+                    $payment->student->currentEnrollment?->schoolClass?->class_name ?? '-',
+                    '₹' . number_format($payment->amount, 2),
+                    ucfirst($payment->payment_method),
+                    $payment->reference_number ?? '-',
+                ];
+            })->toArray()
+        ];
+
+        $summary = [
+            'total_payments' => $payments->count(),
+            'total_amount' => $payments->sum('amount'),
+            'average_payment' => $payments->count() > 0 ? $payments->avg('amount') : 0,
+        ];
+
+        return [$data, $summary];
+    }
+
+    private function getOutstandingReport($tenant, $classId = null)
+    {
+        $query = StudentFeeCard::forTenant($tenant->id)
+            ->where('balance_amount', '>', 0)
+            ->with(['student.currentEnrollment.schoolClass', 'student.currentEnrollment.section', 'feePlan']);
+
+        if ($classId) {
+            $query->whereHas('student.currentEnrollment', function($q) use ($classId) {
+                $q->where('class_id', $classId)->where('is_current', true);
+            });
+        }
+
+        $feeCards = $query->orderBy('balance_amount', 'desc')->get();
+
+        $data = [
+            'headers' => ['Student Name', 'Admission No', 'Class', 'Total Amount', 'Paid', 'Balance', 'Status'],
+            'data' => $feeCards->map(function($card) {
+                return [
+                    $card->student->full_name,
+                    $card->student->admission_number,
+                    $card->student->currentEnrollment?->schoolClass?->class_name ?? '-',
+                    '₹' . number_format($card->total_amount, 2),
+                    '₹' . number_format($card->paid_amount, 2),
+                    '₹' . number_format($card->balance_amount, 2),
+                    ucfirst($card->status),
+                ];
+            })->toArray()
+        ];
+
+        $summary = [
+            'total_students' => $feeCards->count(),
+            'total_outstanding' => $feeCards->sum('balance_amount'),
+            'total_amount_due' => $feeCards->sum('total_amount'),
+            'total_collected' => $feeCards->sum('paid_amount'),
+        ];
+
+        return [$data, $summary];
+    }
+
+    private function getClassWiseReport($tenant, $fromDate, $toDate)
+    {
+        $classes = \App\Models\SchoolClass::forTenant($tenant->id)->get();
+
+        $data = [
+            'headers' => ['Class', 'Total Students', 'Total Amount', 'Collected', 'Outstanding', 'Collection %'],
+            'data' => []
+        ];
+
+        $totalAmount = 0;
+        $totalCollected = 0;
+        $totalOutstanding = 0;
+
+        foreach ($classes as $class) {
+            $feeCards = StudentFeeCard::forTenant($tenant->id)
+                ->whereHas('student.currentEnrollment', function($q) use ($class) {
+                    $q->where('class_id', $class->id)->where('is_current', true);
+                })
+                ->get();
+
+            $classTotal = $feeCards->sum('total_amount');
+            $classCollected = $feeCards->sum('paid_amount');
+            $classOutstanding = $feeCards->sum('balance_amount');
+            $collectionPercent = $classTotal > 0 ? ($classCollected / $classTotal) * 100 : 0;
+
+            $data['data'][] = [
+                $class->class_name,
+                $feeCards->count(),
+                '₹' . number_format($classTotal, 2),
+                '₹' . number_format($classCollected, 2),
+                '₹' . number_format($classOutstanding, 2),
+                number_format($collectionPercent, 1) . '%',
+            ];
+
+            $totalAmount += $classTotal;
+            $totalCollected += $classCollected;
+            $totalOutstanding += $classOutstanding;
+        }
+
+        $summary = [
+            'total_amount' => $totalAmount,
+            'total_collected' => $totalCollected,
+            'total_outstanding' => $totalOutstanding,
+            'collection_percentage' => $totalAmount > 0 ? ($totalCollected / $totalAmount) * 100 : 0,
+        ];
+
+        return [$data, $summary];
+    }
+
+    private function getPaymentMethodReport($tenant, $fromDate, $toDate)
+    {
+        $payments = Payment::forTenant($tenant->id)
+            ->whereBetween('payment_date', [$fromDate, $toDate])
+            ->where('status', 'success')
+            ->select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total'))
+            ->groupBy('payment_method')
+            ->get();
+
+        $data = [
+            'headers' => ['Payment Method', 'Number of Payments', 'Total Amount', 'Percentage'],
+            'data' => []
+        ];
+
+        $grandTotal = $payments->sum('total');
+
+        foreach ($payments as $payment) {
+            $percentage = $grandTotal > 0 ? ($payment->total / $grandTotal) * 100 : 0;
+            $data['data'][] = [
+                ucfirst(str_replace('_', ' ', $payment->payment_method)),
+                $payment->count,
+                '₹' . number_format($payment->total, 2),
+                number_format($percentage, 1) . '%',
+            ];
+        }
+
+        $summary = [
+            'total_payments' => $payments->sum('count'),
+            'total_amount' => $grandTotal,
+        ];
+
+        return [$data, $summary];
+    }
+
+    private function exportToExcel($reportData, $reportType)
+    {
+        $filename = 'fee-' . $reportType . '-report-' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($reportData) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $reportData['headers']);
+
+            foreach ($reportData['data'] as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $filename, $headers);
     }
 
     private function getDailyReport($tenant, $request)

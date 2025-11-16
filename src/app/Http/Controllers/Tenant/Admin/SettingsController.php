@@ -37,6 +37,7 @@ class SettingsController extends Controller
         $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
         $attendanceSettings = AttendanceSettings::getForTenant($tenant->id);
         $paymentSettings = TenantSetting::getAllForTenant($tenant->id, 'payment');
+        $notificationSettings = TenantSetting::getAllForTenant($tenant->id, 'notifications');
 
         // Get tenant data
         $tenantData = $tenant->data ?? [];
@@ -48,7 +49,8 @@ class SettingsController extends Controller
             'featureSettings',
             'academicSettings',
             'attendanceSettings',
-            'paymentSettings'
+            'paymentSettings',
+            'notificationSettings'
         ));
     }
 
@@ -389,6 +391,147 @@ class SettingsController extends Controller
         TenantSetting::setSetting($tenant->id, 'sms_payment_confirmation', $request->boolean('sms_payment_confirmation'), 'boolean', 'payment');
 
         return back()->with('success', 'Payment settings updated successfully!');
+    }
+
+    /**
+     * Update notification settings (SMS & Email)
+     */
+    public function updateNotifications(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'email_enabled' => 'nullable|boolean',
+            'mail_mailer' => 'nullable|in:smtp,sendmail,mailgun,ses',
+            'mail_host' => 'nullable|string|max:255',
+            'mail_port' => 'nullable|integer|min:1|max:65535',
+            'mail_encryption' => 'nullable|in:tls,ssl,',
+            'mail_username' => 'nullable|string|max:255',
+            'mail_password' => 'nullable|string|max:255',
+            'mail_from_address' => 'nullable|email|max:255',
+            'mail_from_name' => 'nullable|string|max:255',
+            'sms_enabled' => 'nullable|boolean',
+            'sms_provider' => 'nullable|in:msg91,twilio,textlocal',
+            'msg91_auth_key' => 'nullable|string|max:255',
+            'msg91_sender_id' => 'nullable|string|max:6',
+            'msg91_route' => 'nullable|in:1,4',
+            'msg91_dlt_template_payment_confirmation' => 'nullable|string|max:255',
+            'msg91_dlt_template_payment_reminder' => 'nullable|string|max:255',
+            'msg91_dlt_template_fee_due' => 'nullable|string|max:255',
+            'msg91_dlt_template_attendance' => 'nullable|string|max:255',
+            'notify_payment_confirmation' => 'nullable|boolean',
+            'notify_payment_reminder' => 'nullable|boolean',
+            'notify_fee_due' => 'nullable|boolean',
+            'notify_attendance' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Please fix the validation errors.');
+        }
+
+        // Save Email Settings
+        TenantSetting::setSetting($tenant->id, 'email_enabled', $request->boolean('email_enabled'), 'boolean', 'notifications');
+
+        if ($request->email_enabled) {
+            if ($request->mail_mailer) {
+                TenantSetting::setSetting($tenant->id, 'mail_mailer', $request->mail_mailer, 'string', 'notifications');
+            }
+            if ($request->mail_host) {
+                TenantSetting::setSetting($tenant->id, 'mail_host', $request->mail_host, 'string', 'notifications');
+            }
+            if ($request->mail_port) {
+                TenantSetting::setSetting($tenant->id, 'mail_port', $request->mail_port, 'string', 'notifications');
+            }
+            if ($request->has('mail_encryption')) {
+                TenantSetting::setSetting($tenant->id, 'mail_encryption', $request->mail_encryption, 'string', 'notifications');
+            }
+            if ($request->mail_username) {
+                TenantSetting::setSetting($tenant->id, 'mail_username', $request->mail_username, 'string', 'notifications');
+            }
+            if ($request->mail_password) {
+                // Encrypt password before storing
+                TenantSetting::setSetting($tenant->id, 'mail_password', encrypt($request->mail_password), 'string', 'notifications');
+            }
+            if ($request->mail_from_address) {
+                TenantSetting::setSetting($tenant->id, 'mail_from_address', $request->mail_from_address, 'string', 'notifications');
+            }
+            if ($request->mail_from_name) {
+                TenantSetting::setSetting($tenant->id, 'mail_from_name', $request->mail_from_name, 'string', 'notifications');
+            }
+        }
+
+        // Save SMS Settings
+        TenantSetting::setSetting($tenant->id, 'sms_enabled', $request->boolean('sms_enabled'), 'boolean', 'notifications');
+
+        if ($request->sms_enabled) {
+            if ($request->sms_provider) {
+                TenantSetting::setSetting($tenant->id, 'sms_provider', $request->sms_provider, 'string', 'notifications');
+            }
+
+            // MSG91 Settings
+            if ($request->sms_provider === 'msg91') {
+                if ($request->msg91_auth_key) {
+                    TenantSetting::setSetting($tenant->id, 'msg91_auth_key', encrypt($request->msg91_auth_key), 'string', 'notifications');
+                }
+                if ($request->msg91_sender_id) {
+                    TenantSetting::setSetting($tenant->id, 'msg91_sender_id', strtoupper($request->msg91_sender_id), 'string', 'notifications');
+                }
+                if ($request->msg91_route) {
+                    TenantSetting::setSetting($tenant->id, 'msg91_route', $request->msg91_route, 'string', 'notifications');
+                }
+                if ($request->msg91_dlt_template_payment_confirmation) {
+                    TenantSetting::setSetting(
+                        $tenant->id,
+                        'msg91_dlt_template_payment_confirmation',
+                        $request->msg91_dlt_template_payment_confirmation,
+                        'string',
+                        'notifications'
+                    );
+                }
+                if ($request->msg91_dlt_template_payment_reminder) {
+                    TenantSetting::setSetting(
+                        $tenant->id,
+                        'msg91_dlt_template_payment_reminder',
+                        $request->msg91_dlt_template_payment_reminder,
+                        'string',
+                        'notifications'
+                    );
+                }
+                if ($request->msg91_dlt_template_fee_due) {
+                    TenantSetting::setSetting(
+                        $tenant->id,
+                        'msg91_dlt_template_fee_due',
+                        $request->msg91_dlt_template_fee_due,
+                        'string',
+                        'notifications'
+                    );
+                }
+                if ($request->msg91_dlt_template_attendance) {
+                    TenantSetting::setSetting(
+                        $tenant->id,
+                        'msg91_dlt_template_attendance',
+                        $request->msg91_dlt_template_attendance,
+                        'string',
+                        'notifications'
+                    );
+                }
+            }
+        }
+
+        // Save Notification Preferences
+        TenantSetting::setSetting($tenant->id, 'notify_payment_confirmation', $request->boolean('notify_payment_confirmation'), 'boolean', 'notifications');
+        TenantSetting::setSetting($tenant->id, 'notify_payment_reminder', $request->boolean('notify_payment_reminder'), 'boolean', 'notifications');
+        TenantSetting::setSetting($tenant->id, 'notify_fee_due', $request->boolean('notify_fee_due'), 'boolean', 'notifications');
+        TenantSetting::setSetting($tenant->id, 'notify_attendance', $request->boolean('notify_attendance'), 'boolean', 'notifications');
+
+        return back()->with('success', 'Notification settings updated successfully!');
     }
 
     /**

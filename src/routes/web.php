@@ -310,6 +310,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('update.academic');
             Route::post('/attendance', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAttendance'])->name('update.attendance');
             Route::post('/payment', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updatePayment'])->name('update.payment');
+            Route::post('/notifications', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateNotifications'])->name('update.notifications');
             Route::delete('/logo', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'deleteLogo'])->name('delete.logo');
         });
 
@@ -371,6 +372,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         // Attendance Management - Students
         Route::prefix('attendance/students')->name('attendance.students.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'index'])->name('index');
+            // Class/Section Calendar View (Option B)
+            Route::get('/calendar', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'calendar'])->name('calendar');
             Route::get('/mark', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'mark'])->name('mark');
             Route::post('/save', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'save'])->name('save');
             Route::get('/report', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'report'])->name('report');
@@ -384,6 +387,13 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::post('/save', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'save'])->name('save');
             Route::get('/report', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'report'])->name('report');
             Route::get('/export', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'export'])->name('export');
+        });
+
+        // Holiday Management
+        Route::prefix('attendance/holidays')->name('attendance.holidays.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\HolidayController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Tenant\Admin\HolidayController::class, 'store'])->name('store');
+            Route::delete('{id}', [\App\Http\Controllers\Tenant\Admin\HolidayController::class, 'destroy'])->name('destroy');
         });
 
         // Fee Management
@@ -408,6 +418,9 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
                 Route::put('/{id}', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'update'])->name('update');
                 Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'destroy'])->name('destroy');
                 Route::get('/{id}/assign', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'assign'])->name('assign');
+                Route::post('/{id}/assign', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'assignStore'])->name('assign.store');
+                Route::get('/{id}/print', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'print'])->name('print');
+                Route::get('/{id}/export', [\App\Http\Controllers\Tenant\Admin\FeePlanController::class, 'export'])->name('export');
             });
 
             // Fee Collection
@@ -419,9 +432,29 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
                 Route::get('/receipt/{paymentId}', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'receipt'])->name('receipt');
             });
 
+            // Student Fee Cards
+            Route::prefix('cards')->name('cards.')->group(function () {
+                Route::get('/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'show'])->name('show');
+                Route::get('/{studentId}/print', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'print'])->name('print');
+                Route::post('/{feeCardId}/discount', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'applyDiscount'])->name('discount');
+                Route::post('/{feeItemId}/waive', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'waiveFee'])->name('waive');
+                Route::post('/{feeCardId}/late-fee', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'applyLateFee'])->name('late-fee');
+                Route::post('/{studentId}/reminder', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'sendReminder'])->name('reminder');
+            });
+
+            // Payment Receipts
+            Route::prefix('receipts')->name('receipts.')->group(function () {
+                Route::get('/{paymentId}', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'receipt'])->name('show');
+                Route::get('/{paymentId}/download', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'downloadReceipt'])->name('download');
+            });
+
             // Fee Reports
             Route::get('/reports', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'reports'])->name('reports');
         });
+
+        // Notification Logs (SMS / Email) for this tenant
+        Route::get('notifications/logs', [\App\Http\Controllers\Tenant\Admin\NotificationLogController::class, 'index'])
+            ->name('notifications.logs');
 
         // Future modules will be added here as they are developed
         // - Grades/Marks

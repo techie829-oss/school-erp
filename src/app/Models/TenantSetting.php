@@ -40,7 +40,7 @@ class TenantSetting extends Model
         return match($this->setting_type) {
             'boolean' => filter_var($this->setting_value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $this->setting_value,
-            'json' => json_decode($this->setting_value, true),
+            'json' => is_array($this->setting_value) ? $this->setting_value : json_decode($this->setting_value, true),
             'file' => $this->setting_value,
             default => $this->setting_value,
         };
