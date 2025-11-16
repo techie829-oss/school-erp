@@ -11,6 +11,7 @@ use App\Models\AttendanceSummary;
 use App\Models\AttendanceSettings;
 use App\Models\Holiday;
 use App\Services\TenantService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -98,10 +99,10 @@ class StudentAttendanceController extends Controller
 
         // Fetch holidays for this month for highlighting
         $holidayMap = Holiday::forTenant($tenant->id)
-            ->whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->whereBetween('date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
             ->with('scopes')
             ->get()
-            ->keyBy(fn ($h) => $h->date->toDateString());
+            ->keyBy(fn ($h) => $h->date->format('Y-m-d'));
 
         // Aggregate attendance per day for this class/section
         $rawDaily = StudentAttendance::forTenant($tenant->id)
@@ -341,6 +342,59 @@ class StudentAttendanceController extends Controller
             }
 
             DB::commit();
+
+            // Send notifications for absent/low attendance students (non-blocking)
+            try {
+                $notificationService = new NotificationService($tenant->id);
+                $date = Carbon::parse($request->date);
+                $class = SchoolClass::find($request->class_id);
+                $section = Section::find($request->section_id);
+
+                foreach ($request->attendance as $record) {
+                    $student = Student::find($record['student_id']);
+                    if (!$student) continue;
+
+                    $status = $record['status'];
+
+                    // Send notification for absent students
+                    if ($status === 'absent') {
+                        $mobile = $student->father_phone ?? $student->mother_phone ?? $student->guardian_phone ?? $student->phone;
+                        $email = $student->father_email ?? $student->mother_email ?? $student->guardian_email ?? $student->email;
+
+                        if ($mobile) {
+                            $message = "Dear Parent, {$student->full_name} (Admission: {$student->admission_number}) was absent on {$date->format('d M Y')}. Class: {$class->class_name}" . ($section ? " - {$section->section_name}" : '') . ". Please contact school if needed.";
+                            $notificationService->sendSms($mobile, $message, 'attendance');
+                        }
+
+                        if ($email) {
+                            $subject = "Absence Notice - {$student->full_name}";
+                            $body = "<p>Dear Parent,</p><p>This is to inform you that <strong>{$student->full_name}</strong> (Admission Number: {$student->admission_number}) was <strong>absent</strong> on <strong>{$date->format('d M Y')}</strong>.</p><p><strong>Class:</strong> {$class->class_name}" . ($section ? " - {$section->section_name}" : '') . "</p><p>Please contact the school if you have any concerns.</p>";
+                            $notificationService->sendEmail($email, $subject, $body);
+                        }
+                    }
+
+                    // Check for low attendance percentage and send alert
+                    $summary = AttendanceSummary::forStudent($tenant->id, $student->id, $date->month, $date->year);
+                    if ($summary && $summary->attendance_percentage < 75 && $summary->attendance_percentage > 0) {
+                        $mobile = $student->father_phone ?? $student->mother_phone ?? $student->guardian_phone ?? $student->phone;
+                        $email = $student->father_email ?? $student->mother_email ?? $student->guardian_email ?? $student->email;
+
+                        if ($mobile) {
+                            $message = "Dear Parent, {$student->full_name}'s attendance for {$date->format('F Y')} is {$summary->attendance_percentage}% (below 75%). Please ensure regular attendance.";
+                            $notificationService->sendSms($mobile, $message, 'attendance');
+                        }
+
+                        if ($email) {
+                            $subject = "Low Attendance Alert - {$student->full_name}";
+                            $body = "<p>Dear Parent,</p><p>This is to inform you that <strong>{$student->full_name}</strong>'s attendance for <strong>{$date->format('F Y')}</strong> is <strong>{$summary->attendance_percentage}%</strong>, which is below the required 75%.</p><p>Please ensure regular attendance.</p>";
+                            $notificationService->sendEmail($email, $subject, $body);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Never block attendance save due to notification failures
+                \Log::error('Attendance notification error: ' . $e->getMessage());
+            }
 
             return redirect('/admin/attendance/students')
                 ->with('success', 'Attendance marked successfully for ' . count($request->attendance) . ' students!');
