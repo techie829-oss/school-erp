@@ -24,6 +24,28 @@ class Holiday extends Model
         'date' => 'date',
         'is_full_day' => 'boolean',
     ];
+
+    public function scopes()
+    {
+        return $this->hasMany(HolidayScope::class);
+    }
+
+    /**
+     * Convenience accessors
+     */
+    public function getScopeLabelAttribute(): string
+    {
+        return match ($this->type) {
+            'school' => 'Whole School',
+            'students_only' => 'Students Only',
+            default => ucfirst($this->type ?? 'General'),
+        };
+    }
+
+    public function getDayTypeLabelAttribute(): string
+    {
+        return $this->is_full_day ? 'Full Day' : 'Half Day';
+    }
 }
 
 

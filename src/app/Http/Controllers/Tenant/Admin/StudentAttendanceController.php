@@ -99,6 +99,7 @@ class StudentAttendanceController extends Controller
         // Fetch holidays for this month for highlighting
         $holidayMap = Holiday::forTenant($tenant->id)
             ->whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->with('scopes')
             ->get()
             ->keyBy(fn ($h) => $h->date->toDateString());
 
@@ -148,7 +149,31 @@ class StudentAttendanceController extends Controller
                     $cell['date'] = $dateKey;
                     $cell['day'] = $dayCounter;
 
-                    $isHoliday = $holidayMap->has($dateKey);
+                    $isHoliday = false;
+                    $holiday = null;
+
+                    if ($holidayMap->has($dateKey)) {
+                        $candidate = $holidayMap->get($dateKey);
+
+                        // If no specific scopes configured, applies to all classes/sections
+                        if ($candidate->scopes->isEmpty()) {
+                            $isHoliday = true;
+                            $holiday = $candidate;
+                        } else {
+                            // Class/section specific holiday
+                            if ($classId) {
+                                foreach ($candidate->scopes as $scope) {
+                                    if ($scope->class_id == $classId) {
+                                        if (!$scope->section_id || !$sectionId || $scope->section_id == $sectionId) {
+                                            $isHoliday = true;
+                                            $holiday = $candidate;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     if ($stats || $isHoliday) {
                         $total = (int) $stats->total;
@@ -164,7 +189,9 @@ class StudentAttendanceController extends Controller
                             'on_leave' => (int) ($stats->on_leave ?? 0),
                             'percentage' => $percentage,
                             'is_holiday' => $isHoliday,
-                            'holiday_title' => $isHoliday ? $holidayMap->get($dateKey)->title : null,
+                            'holiday_title' => $holiday?->title,
+                            'holiday_type' => $holiday?->type,
+                            'holiday_full_day' => $holiday?->is_full_day ?? true,
                         ];
                     }
 

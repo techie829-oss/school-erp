@@ -158,9 +158,16 @@
 
                                     if ($data) {
                                         if (!empty($data['is_holiday'])) {
-                                            $bgClass = 'bg-blue-50';
-                                            $badgeClass = 'bg-blue-100 text-blue-800';
-                                            $label = 'Holiday';
+                                            // Different colors for full vs half-day holidays
+                                            if (!empty($data['holiday_full_day'])) {
+                                                $bgClass = 'bg-blue-50';
+                                                $badgeClass = 'bg-blue-100 text-blue-800';
+                                                $label = 'Holiday';
+                                            } else {
+                                                $bgClass = 'bg-orange-50';
+                                                $badgeClass = 'bg-orange-100 text-orange-800';
+                                                $label = 'Half Day';
+                                            }
                                         } else {
                                             if ($data['percentage'] >= 90) {
                                                 $bgClass = 'bg-green-50';
@@ -189,6 +196,18 @@
                                                 <div class="mt-1 text-[10px] text-gray-600">
                                                     @if(!empty($data['is_holiday']) && $data['holiday_title'])
                                                         {{ $data['holiday_title'] }}
+                                                        @if(!empty($data['holiday_type']))
+                                                            ·
+                                                            @if($data['holiday_type'] === 'school')
+                                                                Whole School
+                                                            @elseif($data['holiday_type'] === 'students_only')
+                                                                Students Only
+                                                            @elseif($data['holiday_type'] === 'staff_only')
+                                                                Staff Only
+                                                            @else
+                                                                {{ ucfirst(str_replace('_', ' ', $data['holiday_type'])) }}
+                                                            @endif
+                                                        @endif
                                                     @else
                                                         P: {{ $data['present'] }} / {{ $data['total'] }},
                                                         A: {{ $data['absent'] }}

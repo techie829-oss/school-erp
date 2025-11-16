@@ -73,11 +73,11 @@
                         <input type="text" id="holiday_title" name="title" required maxlength="255" placeholder="Independence Day" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                     </div>
                     <div>
-                        <label for="holiday_type" class="block text-sm font-medium text-gray-700">Type</label>
+                        <label for="holiday_type" class="block text-sm font-medium text-gray-700">Scope / Type</label>
                         <select id="holiday_type" name="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                             <option value="">Select type</option>
-                            <option value="national">National Holiday</option>
-                            <option value="school">School Holiday</option>
+                            <option value="school">Whole School Holiday</option>
+                            <option value="students_only">Students Only Holiday</option>
                             <option value="exam">Exam / Result Day</option>
                             <option value="event">Event</option>
                             <option value="other">Other</option>
@@ -86,12 +86,38 @@
                     <div class="flex items-center">
                         <input id="holiday_full_day" name="is_full_day" type="checkbox" value="1" checked class="h-4 w-4 text-primary-600 border-gray-300 rounded">
                         <label for="holiday_full_day" class="ml-2 block text-sm text-gray-700">
-                            Full day holiday
+                            Full day holiday (uncheck for half-day / partial)
                         </label>
                     </div>
                     <div>
                         <label for="holiday_notes" class="block text-sm font-medium text-gray-700">Notes</label>
                         <textarea id="holiday_notes" name="notes" rows="2" maxlength="1000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Optional notes (e.g. instructions for staff/students)"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Specific Classes (optional)</label>
+                        <select name="class_ids[]" multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-xs">
+                            @foreach($classes as $class)
+                                <option value="{{ $class->id }}">
+                                    {{ $class->class_name }} ({{ $class->class_numeric }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-[11px] text-gray-500">
+                            Leave empty for all classes. Select one or more classes if the holiday is only for specific standards (e.g. Class 1–5).
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Specific Sections (optional)</label>
+                        <select name="section_ids[]" multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-xs">
+                            @foreach($sections as $section)
+                                <option value="{{ $section->id }}">
+                                    {{ $section->schoolClass->class_name ?? 'Class' }} - {{ $section->section_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-[11px] text-gray-500">
+                            Use this if only some sections of a class are on holiday. If both class and sections are selected, section rules are more specific.
+                        </p>
                     </div>
                     <div class="pt-2">
                         <button type="submit" class="inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
@@ -122,8 +148,9 @@
                             <tr>
                                 <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Date</th>
                                 <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Title</th>
-                                <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Type</th>
-                                <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Full Day</th>
+                                <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Scope</th>
+                                <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Day Type</th>
+                                <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-xs">Applies To</th>
                                 <th class="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider text-xs">Actions</th>
                             </tr>
                         </thead>
@@ -138,7 +165,7 @@
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-gray-700">
                                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
-                                            {{ $holiday->type ? ucfirst($holiday->type) : '—' }}
+                                            {{ $holiday->scope_label }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-gray-700">
@@ -146,6 +173,24 @@
                                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">Full Day</span>
                                         @else
                                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">Half Day</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-gray-700 text-xs">
+                                        @php
+                                            $classScope = $holiday->scopes->whereNotNull('class_id')->pluck('schoolClass.class_name')->unique()->values();
+                                            $sectionScope = $holiday->scopes->whereNotNull('section_id')->map(function($s) {
+                                                return ($s->schoolClass->class_name ?? 'Class') . ' - ' . $s->section->section_name;
+                                            })->unique()->values();
+                                        @endphp
+                                        @if($holiday->scopes->isEmpty())
+                                            All Classes / Sections
+                                        @else
+                                            @if($classScope->count())
+                                                Classes: {{ $classScope->join(', ') }}@if($sectionScope->count()) ; @endif
+                                            @endif
+                                            @if($sectionScope->count())
+                                                Sections: {{ $sectionScope->join(', ') }}
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
