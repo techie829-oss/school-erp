@@ -98,8 +98,7 @@ class DepartmentController extends Controller
                 'is_active' => $request->has('is_active') ? $request->is_active : true,
             ]);
 
-            return redirect()
-                ->route('tenant.admin.departments.index', ['subdomain' => $tenant->id])
+            return redirect(url('/admin/departments'))
                 ->with('success', 'Department created successfully!');
 
         } catch (\Exception $e) {
@@ -194,8 +193,7 @@ class DepartmentController extends Controller
                 'is_active' => $request->has('is_active') ? $request->is_active : $department->is_active,
             ]);
 
-            return redirect()
-                ->route('tenant.admin.departments.index', ['subdomain' => $tenant->id])
+            return redirect(url('/admin/departments'))
                 ->with('success', 'Department updated successfully!');
 
         } catch (\Exception $e) {
@@ -231,8 +229,7 @@ class DepartmentController extends Controller
         try {
             $department->delete();
 
-            return redirect()
-                ->route('tenant.admin.departments.index', ['subdomain' => $tenant->id])
+            return redirect(url('/admin/departments'))
                 ->with('success', 'Department deleted successfully!');
 
         } catch (\Exception $e) {

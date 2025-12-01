@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.auth' => \App\Http\Middleware\TenantAuth::class,
             'validate.tenant.domain' => \App\Http\Middleware\ValidateTenantDomain::class,
             'enforce.admin.access' => \App\Http\Middleware\EnforceAdminAccessPolicy::class,
+            'feature' => \App\Http\Middleware\CheckFeatureEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

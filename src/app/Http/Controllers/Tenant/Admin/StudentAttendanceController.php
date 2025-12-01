@@ -7,6 +7,9 @@ use App\Models\StudentAttendance;
 use App\Models\Student;
 use App\Models\SchoolClass;
 use App\Models\Section;
+use App\Models\Subject;
+use App\Models\Teacher;
+use App\Models\TeacherSubject;
 use App\Models\AttendanceSummary;
 use App\Models\AttendanceSettings;
 use App\Models\Holiday;
@@ -398,6 +401,170 @@ class StudentAttendanceController extends Controller
 
             return redirect('/admin/attendance/students')
                 ->with('success', 'Attendance marked successfully for ' . count($request->attendance) . ' students!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to save attendance: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Show period-wise attendance marking page
+     */
+    public function markPeriod(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $date = $request->get('date', now()->format('Y-m-d'));
+        $classId = $request->get('class_id');
+        $sectionId = $request->get('section_id');
+        $periodNumber = $request->get('period_number', 1);
+        $subjectId = $request->get('subject_id');
+
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+        $sections = [];
+        $subjects = [];
+        $students = collect();
+        $existingAttendance = collect();
+        $teacher = null;
+
+        if ($classId) {
+            $sections = Section::forTenant($tenant->id)
+                ->where('class_id', $classId)
+                ->active()
+                ->get();
+
+            // Get subjects for this class
+            $subjects = Subject::forTenant($tenant->id)
+                ->active()
+                ->whereHas('teachers', function($q) use ($classId) {
+                    $q->where('teacher_subjects.class_id', $classId);
+                })
+                ->get();
+
+            // If subject selected, get the teacher
+            if ($subjectId) {
+                $teacherSubject = TeacherSubject::forTenant($tenant->id)
+                    ->where('class_id', $classId)
+                    ->where('subject_id', $subjectId)
+                    ->primary()
+                    ->first();
+                $teacher = $teacherSubject?->teacher;
+            }
+        }
+
+        if ($classId && $sectionId) {
+            $students = Student::forTenant($tenant->id)
+                ->whereHas('currentEnrollment', function($q) use ($classId, $sectionId) {
+                    $q->where('class_id', $classId)
+                      ->where('section_id', $sectionId);
+                })
+                ->with('currentEnrollment')
+                ->orderBy('full_name')
+                ->get();
+
+            // Get existing period-wise attendance for this date/period/subject
+            $existingAttendance = StudentAttendance::forDate($date)
+                ->forClass($classId)
+                ->forSection($sectionId)
+                ->where('period_number', $periodNumber)
+                ->when($subjectId, function($q) use ($subjectId) {
+                    $q->where('subject_id', $subjectId);
+                })
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->keyBy('student_id');
+        }
+
+        return view('tenant.admin.attendance.students.mark-period', compact(
+            'tenant',
+            'classes',
+            'sections',
+            'subjects',
+            'students',
+            'existingAttendance',
+            'classId',
+            'sectionId',
+            'date',
+            'periodNumber',
+            'subjectId',
+            'teacher'
+        ));
+    }
+
+    /**
+     * Save period-wise attendance
+     */
+    public function savePeriod(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'date' => 'required|date',
+            'class_id' => 'required|exists:classes,id',
+            'section_id' => 'required|exists:sections,id',
+            'period_number' => 'required|integer|min:1|max:10',
+            'subject_id' => 'nullable|exists:subjects,id',
+            'teacher_id' => 'nullable|exists:teachers,id',
+            'attendance' => 'required|array',
+            'attendance.*.student_id' => 'required|exists:students,id',
+            'attendance.*.status' => 'required|in:present,absent,late,half_day,on_leave',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($request->attendance as $record) {
+                StudentAttendance::updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'student_id' => $record['student_id'],
+                        'attendance_date' => $request->date,
+                        'period_number' => $request->period_number,
+                        'subject_id' => $request->subject_id,
+                    ],
+                    [
+                        'class_id' => $request->class_id,
+                        'section_id' => $request->section_id,
+                        'status' => $record['status'],
+                        'teacher_id' => $request->teacher_id,
+                        'remarks' => $record['remarks'] ?? null,
+                        'marked_by' => auth()->id(),
+                        'marked_at' => now(),
+                    ]
+                );
+            }
+
+            // Update monthly summary for affected students
+            $month = Carbon::parse($request->date)->month;
+            $year = Carbon::parse($request->date)->year;
+
+            foreach ($request->attendance as $record) {
+                AttendanceSummary::calculateSummary(
+                    $tenant->id,
+                    'student',
+                    $record['student_id'],
+                    $month,
+                    $year
+                );
+            }
+
+            DB::commit();
+
+            return redirect('/admin/attendance/students')
+                ->with('success', 'Period-wise attendance marked successfully for ' . count($request->attendance) . ' students!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -971,6 +1138,407 @@ class StudentAttendanceController extends Controller
         return response($html)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'attachment; filename="attendance_report.pdf"');
+    }
+
+    /**
+     * Show bulk operations page
+     */
+    public function bulk(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+        $sections = Section::forTenant($tenant->id)->active()->get();
+
+        return view('tenant.admin.attendance.students.bulk', compact(
+            'tenant',
+            'classes',
+            'sections'
+        ));
+    }
+
+    /**
+     * Get students for bulk operations (AJAX)
+     */
+    public function getStudentsForBulk(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $classId = $request->get('class_id');
+        $sectionId = $request->get('section_id');
+
+        if (!$classId) {
+            return response()->json(['students' => []]);
+        }
+
+        $query = Student::forTenant($tenant->id)
+            ->whereHas('currentEnrollment', function($q) use ($classId, $sectionId) {
+                $q->where('class_id', $classId);
+                if ($sectionId) {
+                    $q->where('section_id', $sectionId);
+                }
+            })
+            ->with('currentEnrollment')
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'admission_number']);
+
+        return response()->json(['students' => $query]);
+    }
+
+    /**
+     * Bulk save attendance (mark multiple students for date range)
+     */
+    public function bulkSave(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'date_from' => 'required|date',
+            'date_to' => 'required|date|after_or_equal:date_from',
+            'class_id' => 'required|exists:classes,id',
+            'section_id' => 'nullable|exists:sections,id',
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+            'status' => 'required|in:present,absent,late,half_day,on_leave',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $dateFrom = Carbon::parse($request->date_from);
+            $dateTo = Carbon::parse($request->date_to);
+            $dates = [];
+            $current = $dateFrom->copy();
+
+            while ($current->lte($dateTo)) {
+                $dates[] = $current->format('Y-m-d');
+                $current->addDay();
+            }
+
+            $count = 0;
+            foreach ($request->student_ids as $studentId) {
+                foreach ($dates as $date) {
+                    StudentAttendance::updateOrCreate(
+                        [
+                            'tenant_id' => $tenant->id,
+                            'student_id' => $studentId,
+                            'attendance_date' => $date,
+                            'period_number' => null,
+                        ],
+                        [
+                            'class_id' => $request->class_id,
+                            'section_id' => $request->section_id ?? null,
+                            'status' => $request->status,
+                            'marked_by' => auth()->id(),
+                            'marked_at' => now(),
+                        ]
+                    );
+                    $count++;
+                }
+            }
+
+            // Update summaries for affected students
+            $month = $dateFrom->month;
+            $year = $dateFrom->year;
+            foreach ($request->student_ids as $studentId) {
+                AttendanceSummary::calculateSummary($tenant->id, 'student', $studentId, $month, $year);
+            }
+
+            DB::commit();
+
+            return redirect('/admin/attendance/students/bulk')
+                ->with('success', "Bulk attendance saved: {$count} records for " . count($request->student_ids) . " students from {$dateFrom->format('d M Y')} to {$dateTo->format('d M Y')}");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to save bulk attendance: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Bulk update attendance status
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return back()->with('error', 'Tenant not found');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'attendance_ids' => 'required|array',
+            'attendance_ids.*' => 'exists:student_attendance,id',
+            'status' => 'required|in:present,absent,late,half_day,on_leave',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $updated = StudentAttendance::forTenant($tenant->id)
+                ->whereIn('id', $request->attendance_ids)
+                ->update([
+                    'status' => $request->status,
+                    'marked_by' => auth()->id(),
+                    'marked_at' => now(),
+                ]);
+
+            // Recalculate summaries for affected students
+            $studentIds = StudentAttendance::forTenant($tenant->id)
+                ->whereIn('id', $request->attendance_ids)
+                ->pluck('student_id')
+                ->unique();
+
+            foreach ($studentIds as $studentId) {
+                $attendance = StudentAttendance::forTenant($tenant->id)
+                    ->where('student_id', $studentId)
+                    ->first();
+                if ($attendance) {
+                    $month = Carbon::parse($attendance->attendance_date)->month;
+                    $year = Carbon::parse($attendance->attendance_date)->year;
+                    AttendanceSummary::calculateSummary($tenant->id, 'student', $studentId, $month, $year);
+                }
+            }
+
+            DB::commit();
+
+            return back()->with('success', "Updated {$updated} attendance record(s) to " . ucfirst($request->status));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to update attendance: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * API: Mark attendance (for biometric/QR systems)
+     */
+    public function apiMark(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'student_id' => 'required|exists:students,id',
+            'date' => 'required|date',
+            'status' => 'required|in:present,absent,late,half_day,on_leave',
+            'period_number' => 'nullable|integer|min:1|max:10',
+            'subject_id' => 'nullable|exists:subjects,id',
+            'remarks' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            $student = Student::forTenant($tenant->id)->findOrFail($request->student_id);
+            $enrollment = $student->currentEnrollment;
+
+            if (!$enrollment) {
+                return response()->json(['error' => 'Student not enrolled in any class'], 422);
+            }
+
+            $attendance = StudentAttendance::updateOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'student_id' => $request->student_id,
+                    'attendance_date' => $request->date,
+                    'period_number' => $request->period_number ?? null,
+                ],
+                [
+                    'class_id' => $enrollment->class_id,
+                    'section_id' => $enrollment->section_id,
+                    'status' => $request->status,
+                    'subject_id' => $request->subject_id ?? null,
+                    'remarks' => $request->remarks ?? null,
+                    'marked_by' => auth()->id() ?? null,
+                    'marked_at' => now(),
+                ]
+            );
+
+            // Update summary
+            $month = Carbon::parse($request->date)->month;
+            $year = Carbon::parse($request->date)->year;
+            AttendanceSummary::calculateSummary($tenant->id, 'student', $request->student_id, $month, $year);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Attendance marked successfully',
+                'data' => [
+                    'id' => $attendance->id,
+                    'student_id' => $attendance->student_id,
+                    'date' => $attendance->attendance_date->format('Y-m-d'),
+                    'status' => $attendance->status,
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to mark attendance: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: Bulk mark attendance (for biometric/QR systems)
+     */
+    public function apiMarkBulk(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'attendance' => 'required|array',
+            'attendance.*.student_id' => 'required|exists:students,id',
+            'attendance.*.date' => 'required|date',
+            'attendance.*.status' => 'required|in:present,absent,late,half_day,on_leave',
+            'attendance.*.period_number' => 'nullable|integer|min:1|max:10',
+            'attendance.*.subject_id' => 'nullable|exists:subjects,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $marked = [];
+            $errors = [];
+
+            foreach ($request->attendance as $record) {
+                try {
+                    $student = Student::forTenant($tenant->id)->find($record['student_id']);
+                    if (!$student) {
+                        $errors[] = "Student {$record['student_id']} not found";
+                        continue;
+                    }
+
+                    $enrollment = $student->currentEnrollment;
+                    if (!$enrollment) {
+                        $errors[] = "Student {$record['student_id']} not enrolled";
+                        continue;
+                    }
+
+                    $attendance = StudentAttendance::updateOrCreate(
+                        [
+                            'tenant_id' => $tenant->id,
+                            'student_id' => $record['student_id'],
+                            'attendance_date' => $record['date'],
+                            'period_number' => $record['period_number'] ?? null,
+                        ],
+                        [
+                            'class_id' => $enrollment->class_id,
+                            'section_id' => $enrollment->section_id,
+                            'status' => $record['status'],
+                            'subject_id' => $record['subject_id'] ?? null,
+                            'marked_by' => auth()->id() ?? null,
+                            'marked_at' => now(),
+                        ]
+                    );
+
+                    $marked[] = $attendance->id;
+
+                    // Update summary
+                    $month = Carbon::parse($record['date'])->month;
+                    $year = Carbon::parse($record['date'])->year;
+                    AttendanceSummary::calculateSummary($tenant->id, 'student', $record['student_id'], $month, $year);
+
+                } catch (\Exception $e) {
+                    $errors[] = "Student {$record['student_id']}: " . $e->getMessage();
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bulk attendance marked',
+                'data' => [
+                    'marked' => count($marked),
+                    'errors' => count($errors),
+                    'error_details' => $errors,
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to mark bulk attendance: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API: Get attendance status for a student
+     */
+    public function apiStatus(Request $request, $studentId)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $date = $request->get('date', now()->format('Y-m-d'));
+        $periodNumber = $request->get('period_number');
+
+        $student = Student::forTenant($tenant->id)->findOrFail($studentId);
+
+        $query = StudentAttendance::forTenant($tenant->id)
+            ->where('student_id', $studentId)
+            ->where('attendance_date', $date);
+
+        if ($periodNumber) {
+            $query->where('period_number', $periodNumber);
+        } else {
+            $query->whereNull('period_number');
+        }
+
+        $attendance = $query->first();
+
+        if (!$attendance) {
+            return response()->json([
+                'status' => 'not_marked',
+                'message' => 'Attendance not marked for this date'
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'marked',
+            'data' => [
+                'id' => $attendance->id,
+                'student_id' => $attendance->student_id,
+                'date' => $attendance->attendance_date->format('Y-m-d'),
+                'status' => $attendance->status,
+                'period_number' => $attendance->period_number,
+                'subject_id' => $attendance->subject_id,
+                'marked_at' => $attendance->marked_at?->toISOString(),
+            ]
+        ], 200);
     }
 }
 

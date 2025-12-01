@@ -369,6 +369,17 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
         Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
 
+        // Examination Management
+        Route::prefix('examinations')->name('examinations.')->group(function () {
+            // Grade Scales
+            Route::get('grade-scales', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'index'])->name('grade-scales.index');
+            Route::get('grade-scales/create', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'create'])->name('grade-scales.create');
+            Route::post('grade-scales', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'store'])->name('grade-scales.store');
+            Route::get('grade-scales/{id}/edit', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'edit'])->name('grade-scales.edit');
+            Route::put('grade-scales/{id}', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'update'])->name('grade-scales.update');
+            Route::delete('grade-scales/{id}', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'destroy'])->name('grade-scales.destroy');
+        });
+
         // Attendance Management - Students
         Route::prefix('attendance/students')->name('attendance.students.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'index'])->name('index');
@@ -376,6 +387,12 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('/calendar', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'calendar'])->name('calendar');
             Route::get('/mark', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'mark'])->name('mark');
             Route::post('/save', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'save'])->name('save');
+            Route::get('/mark-period', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'markPeriod'])->name('mark.period');
+            Route::post('/save-period', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'savePeriod'])->name('save.period');
+            Route::get('/bulk', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'bulk'])->name('bulk');
+            Route::get('/bulk/students', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'getStudentsForBulk'])->name('bulk.students');
+            Route::post('/bulk-save', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'bulkSave'])->name('bulk.save');
+            Route::post('/bulk-update', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'bulkUpdate'])->name('bulk.update');
             Route::get('/report', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'report'])->name('report');
             Route::get('/export', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'export'])->name('export');
         });
@@ -452,9 +469,46 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('/reports', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'reports'])->name('reports');
         });
 
+        // LMS Management
+        Route::prefix('lms')->name('lms.')->group(function () {
+            // Courses
+            Route::resource('courses', \App\Http\Controllers\Tenant\Admin\CourseController::class);
+
+            // Course Content (Chapters & Topics)
+            Route::post('courses/{course}/chapters', [\App\Http\Controllers\Tenant\Admin\ContentController::class, 'storeChapter'])->name('chapters.store');
+            Route::put('chapters/{chapter}', [\App\Http\Controllers\Tenant\Admin\ContentController::class, 'updateChapter'])->name('chapters.update');
+            Route::delete('chapters/{chapter}', [\App\Http\Controllers\Tenant\Admin\ContentController::class, 'destroyChapter'])->name('chapters.destroy');
+
+            Route::post('chapters/{chapter}/topics', [\App\Http\Controllers\Tenant\Admin\ContentController::class, 'storeTopic'])->name('topics.store');
+            Route::put('topics/{topic}', [\App\Http\Controllers\Tenant\Admin\ContentController::class, 'updateTopic'])->name('topics.update');
+            Route::delete('topics/{topic}', [\App\Http\Controllers\Tenant\Admin\ContentController::class, 'destroyTopic'])->name('topics.destroy');
+
+            // Assignments
+            Route::post('courses/{course}/assignments', [\App\Http\Controllers\Tenant\Admin\AssignmentController::class, 'store'])->name('assignments.store');
+            Route::put('assignments/{assignment}', [\App\Http\Controllers\Tenant\Admin\AssignmentController::class, 'update'])->name('assignments.update');
+            Route::delete('assignments/{assignment}', [\App\Http\Controllers\Tenant\Admin\AssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+            // Quizzes
+            Route::post('courses/{course}/quizzes', [\App\Http\Controllers\Tenant\Admin\QuizController::class, 'store'])->name('quizzes.store');
+            Route::put('quizzes/{quiz}', [\App\Http\Controllers\Tenant\Admin\QuizController::class, 'update'])->name('quizzes.update');
+            Route::delete('quizzes/{quiz}', [\App\Http\Controllers\Tenant\Admin\QuizController::class, 'destroy'])->name('quizzes.destroy');
+
+            // Quiz Questions
+            Route::post('quizzes/{quiz}/questions', [\App\Http\Controllers\Tenant\Admin\QuizController::class, 'storeQuestion'])->name('questions.store');
+            Route::put('questions/{question}', [\App\Http\Controllers\Tenant\Admin\QuizController::class, 'updateQuestion'])->name('questions.update');
+            Route::delete('questions/{question}', [\App\Http\Controllers\Tenant\Admin\QuizController::class, 'destroyQuestion'])->name('questions.destroy');
+        });
+
         // Notification Logs (SMS / Email) for this tenant
         Route::get('notifications/logs', [\App\Http\Controllers\Tenant\Admin\NotificationLogController::class, 'index'])
             ->name('notifications.logs');
+
+        // API Routes for Biometric/QR Integration
+        Route::prefix('api/attendance')->name('api.attendance.')->middleware(['auth:sanctum', 'tenant'])->group(function () {
+            Route::post('/mark', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'apiMark'])->name('mark');
+            Route::post('/mark-bulk', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'apiMarkBulk'])->name('mark.bulk');
+            Route::get('/status/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentAttendanceController::class, 'apiStatus'])->name('status');
+        });
 
         // Future modules will be added here as they are developed
         // - Grades/Marks

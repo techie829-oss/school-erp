@@ -36,5 +36,8 @@ class AppServiceProvider extends ServiceProvider
             // Tenant is resolved by middleware from the subdomain, not from route parameter
             return null;
         });
+
+        // Register View Composer for admin layout
+        \View::composer('tenant.layouts.admin', \App\Http\View\Composers\AdminLayoutComposer::class);
     }
 }

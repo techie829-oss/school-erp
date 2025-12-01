@@ -98,8 +98,7 @@ class SubjectController extends Controller
                 'is_active' => $request->has('is_active') ? $request->is_active : true,
             ]);
 
-            return redirect()
-                ->route('tenant.admin.subjects.index', ['subdomain' => $tenant->id])
+            return redirect(url('/admin/subjects'))
                 ->with('success', 'Subject created successfully!');
 
         } catch (\Exception $e) {
@@ -190,8 +189,7 @@ class SubjectController extends Controller
                 'is_active' => $request->has('is_active') ? $request->is_active : $subject->is_active,
             ]);
 
-            return redirect()
-                ->route('tenant.admin.subjects.index', ['subdomain' => $tenant->id])
+            return redirect(url('/admin/subjects'))
                 ->with('success', 'Subject updated successfully!');
 
         } catch (\Exception $e) {
@@ -222,8 +220,7 @@ class SubjectController extends Controller
         try {
             $subject->delete();
 
-            return redirect()
-                ->route('tenant.admin.subjects.index', ['subdomain' => $tenant->id])
+            return redirect(url('/admin/subjects'))
                 ->with('success', 'Subject deleted successfully!');
 
         } catch (\Exception $e) {
