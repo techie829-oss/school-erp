@@ -499,6 +499,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             // Fee Collection
             Route::prefix('collection')->name('collection.')->group(function () {
                 Route::get('/', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'index'])->name('index');
+                Route::get('/payments', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'payments'])->name('payments');
                 Route::get('/{studentId}', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'show'])->name('show');
                 Route::get('/{studentId}/collect', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'collect'])->name('collect');
                 Route::post('/{studentId}/payment', [\App\Http\Controllers\Tenant\Admin\FeeCollectionController::class, 'processPayment'])->name('payment');
@@ -507,12 +508,30 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
 
             // Student Fee Cards
             Route::prefix('cards')->name('cards.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'index'])->name('index');
+                Route::get('/bulk-actions', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'bulkActions'])->name('bulk-actions');
+                Route::get('/bulk-preview', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'bulkPreview'])->name('bulk-preview');
+                Route::post('/bulk-export', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'bulkExport'])->name('bulk-export');
                 Route::get('/{studentId}', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'show'])->name('show');
                 Route::get('/{studentId}/print', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'print'])->name('print');
                 Route::post('/{feeCardId}/discount', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'applyDiscount'])->name('discount');
                 Route::post('/{feeItemId}/waive', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'waiveFee'])->name('waive');
                 Route::post('/{feeCardId}/late-fee', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'applyLateFee'])->name('late-fee');
                 Route::post('/{studentId}/reminder', [\App\Http\Controllers\Tenant\Admin\StudentFeeCardController::class, 'sendReminder'])->name('reminder');
+            });
+
+            // No Dues Certificates
+            Route::prefix('no-dues')->name('no-dues.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'index'])->name('index');
+                Route::get('/generate', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'generate'])->name('generate');
+                Route::post('/', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'store'])->name('store');
+                Route::post('/bulk', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'bulkGenerate'])->name('bulk-generate');
+                Route::get('/bulk-actions', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'bulkActions'])->name('bulk-actions');
+                Route::get('/bulk-preview', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'bulkPreview'])->name('bulk-preview');
+                Route::post('/bulk-export', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'bulkExport'])->name('bulk-export');
+                Route::post('/bulk-delete', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'bulkDestroy'])->name('bulk-destroy');
+                Route::get('/{id}/print', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'print'])->name('print');
+                Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\NoDuesController::class, 'destroy'])->name('destroy');
             });
 
             // Payment Receipts

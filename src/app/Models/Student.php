@@ -171,6 +171,11 @@ class Student extends Model
         return $this->hasOne(StudentFeeCard::class);
     }
 
+    public function feeCards()
+    {
+        return $this->hasMany(StudentFeeCard::class);
+    }
+
     public function invoices()
     {
         return $this->hasMany(Invoice::class);

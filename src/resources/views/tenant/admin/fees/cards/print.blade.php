@@ -156,10 +156,28 @@
 </head>
 <body>
     <!-- Print Button (hidden when printing) -->
-    <div class="no-print" style="margin-bottom: 20px; text-align: right;">
-        <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            Print Fee Card
-        </button>
+    <div class="no-print" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="font-size: 24px; color: #111827;">Print Fee Card</h1>
+            <button onclick="updatePrint()" class="print-button" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Update & Print
+            </button>
+        </div>
+        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">Signature & Stamp Options</label>
+                    <label style="display: flex; align-items: center; margin-bottom: 5px;">
+                        <input type="checkbox" id="showPrincipalStamp" {{ $showPrincipalStamp ?? false ? 'checked' : '' }} style="margin-right: 8px;">
+                        <span>Principal Stamp</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" id="showAccountantSign" {{ $showAccountantSign ?? false ? 'checked' : '' }} style="margin-right: 8px;">
+                        <span>Accountant Signature</span>
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Header -->
@@ -290,9 +308,43 @@
 
     <!-- Footer -->
     <div class="footer">
+        @if(($showPrincipalStamp ?? false) || ($showAccountantSign ?? false))
+        <div style="margin-top: 40px; display: flex; justify-content: space-around; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+            @if($showPrincipalStamp ?? false)
+            <div style="text-align: center; width: 200px;">
+                <div style="border: 2px dashed #9ca3af; padding: 20px; min-height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 12px; color: #6b7280;">
+                    Principal Stamp
+                </div>
+                <div style="border-top: 1px solid #111827; padding-top: 5px; font-weight: bold;">Principal</div>
+            </div>
+            @endif
+            @if($showAccountantSign ?? false)
+            <div style="text-align: center; width: 200px;">
+                <div style="border-top: 1px solid #111827; margin-top: 80px; padding-top: 5px; font-weight: bold;">Accountant</div>
+            </div>
+            @endif
+        </div>
+        @else
         <p>This is a computer-generated document. No signature is required.</p>
         <p>For any queries, please contact the school office.</p>
+        @endif
     </div>
+
+    <script>
+        function updatePrint() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('show_principal_stamp', document.getElementById('showPrincipalStamp').checked ? '1' : '0');
+            url.searchParams.set('show_accountant_sign', document.getElementById('showAccountantSign').checked ? '1' : '0');
+            window.location.href = url.toString();
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('show_principal_stamp') || urlParams.has('show_accountant_sign')) {
+                window.print();
+            }
+        };
+    </script>
 </body>
 </html>
 

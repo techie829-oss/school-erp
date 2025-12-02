@@ -46,7 +46,7 @@
         </div>
         <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
             @if($student->studentFeeCard && $student->studentFeeCard->balance_amount > 0)
-                <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}" 
+                <a href="{{ url('/admin/fees/collection/' . $student->id . '/collect') }}"
                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -79,8 +79,8 @@
                     <div class="space-y-3">
                         @if($student->photo)
                             <div class="flex justify-center mb-4">
-                                <img src="{{ $student->photo_url }}" 
-                                     alt="{{ $student->first_name }}" 
+                                <img src="{{ $student->photo_url }}"
+                                     alt="{{ $student->first_name }}"
                                      class="w-24 h-24 rounded-full border-4 border-blue-100">
                             </div>
                         @endif
@@ -272,6 +272,12 @@
                                             <p class="text-gray-500">Method:</p>
                                             <p class="font-medium capitalize">{{ str_replace('_', ' ', $payment->payment_method) }}</p>
                                         </div>
+                                        @if($payment->payment_type)
+                                        <div>
+                                            <p class="text-gray-500">Type:</p>
+                                            <p class="font-medium capitalize">{{ str_replace('_', ' ', $payment->payment_type) }}</p>
+                                        </div>
+                                        @endif
                                         @if($payment->transaction_id)
                                             <div>
                                                 <p class="text-gray-500">Transaction ID:</p>
@@ -295,7 +301,7 @@
                                         <p class="text-sm text-gray-500">
                                             Collected by: {{ $payment->collectedBy->name ?? 'System' }}
                                         </p>
-                                        <a href="{{ url('/admin/fees/collection/receipt/' . $payment->id) }}" 
+                                        <a href="{{ url('/admin/fees/collection/receipt/' . $payment->id) }}"
                                            class="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition text-sm">
                                             <i class="fas fa-receipt mr-1"></i>Receipt
                                         </a>

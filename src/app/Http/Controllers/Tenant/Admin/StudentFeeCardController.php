@@ -9,11 +9,13 @@ use App\Models\StudentFeeItem;
 use App\Models\Payment;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\SchoolClass;
+use App\Models\Section;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use PDF; // We'll use a PDF library like dompdf or snappy
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StudentFeeCardController extends Controller
 {
@@ -25,15 +27,199 @@ class StudentFeeCardController extends Controller
     }
 
     /**
+     * Helper to get tenant consistently
+     */
+    private function getTenant(Request $request)
+    {
+        $tenant = $request->attributes->get('current_tenant');
+        if (!$tenant) {
+            $tenant = $this->tenantService->getCurrentTenant($request);
+        }
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+        return $tenant;
+    }
+
+    /**
+     * Display listing of fee cards
+     */
+    public function index(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $query = Student::forTenant($tenant->id)
+            ->whereHas('feeCards')
+            ->with(['currentEnrollment.schoolClass', 'currentEnrollment.section', 'feeCards']);
+
+        // Filter by class
+        if ($request->has('class_id') && $request->class_id) {
+            $query->whereHas('currentEnrollment', function($q) use ($request) {
+                $q->where('class_id', $request->class_id)->where('is_current', true);
+            });
+        }
+
+        // Filter by section
+        if ($request->has('section_id') && $request->section_id) {
+            $query->whereHas('currentEnrollment', function($q) use ($request) {
+                $q->where('section_id', $request->section_id)->where('is_current', true);
+            });
+        }
+
+        // Search
+        if ($request->has('search') && $request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('full_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('admission_number', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $students = $query->orderBy('full_name')->paginate(20)->withQueryString();
+
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+
+        return view('tenant.admin.fees.cards.index', compact('students', 'classes', 'tenant'));
+    }
+
+    /**
+     * Show bulk actions page (no pagination - all filtered results)
+     */
+    public function bulkActions(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        // Require at least class filter to access bulk actions
+        if (!$request->has('class_id') || !$request->class_id) {
+            return redirect(url('/admin/fees/cards'))
+                ->with('error', 'Please select a class filter first before accessing bulk actions.');
+        }
+
+        $query = Student::forTenant($tenant->id)
+            ->whereHas('feeCards')
+            ->with(['currentEnrollment.schoolClass', 'currentEnrollment.section', 'feeCards']);
+
+        // Filter by class
+        if ($request->has('class_id') && $request->class_id) {
+            $query->whereHas('currentEnrollment', function($q) use ($request) {
+                $q->where('class_id', $request->class_id)->where('is_current', true);
+            });
+        }
+
+        // Filter by section
+        if ($request->has('section_id') && $request->section_id) {
+            $query->whereHas('currentEnrollment', function($q) use ($request) {
+                $q->where('section_id', $request->section_id)->where('is_current', true);
+            });
+        }
+
+        // Search
+        if ($request->has('search') && $request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('full_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('admission_number', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Get ALL results without pagination for bulk actions
+        $students = $query->orderBy('full_name')->get();
+
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+
+        return view('tenant.admin.fees.cards.bulk-actions', compact('students', 'classes', 'tenant'));
+    }
+
+    /**
+     * Bulk preview fee cards
+     */
+    public function bulkPreview(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $request->validate([
+            'student_ids' => 'required|array|min:1',
+            'student_ids.*' => 'exists:students,id',
+            'cards_per_page' => 'required|in:1,2,4',
+            'show_principal_stamp' => 'boolean',
+            'show_accountant_sign' => 'boolean',
+        ]);
+
+        $students = Student::forTenant($tenant->id)
+            ->whereIn('id', $request->student_ids)
+            ->with([
+                'currentEnrollment.schoolClass',
+                'currentEnrollment.section',
+                'feeCards.feePlan',
+                'feeCards.feeItems.feeComponent'
+            ])
+            ->orderBy('full_name')
+            ->get();
+
+        if ($students->isEmpty()) {
+            return back()->with('error', 'No students selected.');
+        }
+
+        $showPrincipalStamp = $request->boolean('show_principal_stamp', false);
+        $showAccountantSign = $request->boolean('show_accountant_sign', false);
+
+        return view('tenant.admin.fees.cards.bulk-preview', compact(
+            'students',
+            'tenant',
+            'showPrincipalStamp',
+            'showAccountantSign'
+        ));
+    }
+
+    /**
+     * Bulk export fee cards as PDF
+     */
+    public function bulkExport(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $request->validate([
+            'student_ids' => 'required|array|min:1',
+            'student_ids.*' => 'exists:students,id',
+            'cards_per_page' => 'required|in:1,2,4',
+            'show_principal_stamp' => 'boolean',
+            'show_accountant_sign' => 'boolean',
+        ]);
+
+        $students = Student::forTenant($tenant->id)
+            ->whereIn('id', $request->student_ids)
+            ->with([
+                'currentEnrollment.schoolClass',
+                'currentEnrollment.section',
+                'feeCards.feePlan',
+                'feeCards.feeItems.feeComponent'
+            ])
+            ->orderBy('full_name')
+            ->get();
+
+        if ($students->isEmpty()) {
+            return back()->with('error', 'No students selected.');
+        }
+
+        $showPrincipalStamp = $request->boolean('show_principal_stamp', false);
+        $showAccountantSign = $request->boolean('show_accountant_sign', false);
+
+        $pdf = Pdf::loadView('tenant.admin.fees.cards.bulk-print', compact(
+            'students',
+            'tenant',
+            'showPrincipalStamp',
+            'showAccountantSign'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'fee-cards-' . now()->format('Y-m-d-His') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
      * Display student fee card details
      */
     public function show(Request $request, $studentId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $student = Student::forTenant($tenant->id)
             ->with([
@@ -79,11 +265,7 @@ class StudentFeeCardController extends Controller
      */
     public function print(Request $request, $studentId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $student = Student::forTenant($tenant->id)
             ->with([
@@ -101,7 +283,16 @@ class StudentFeeCardController extends Controller
             ->orderBy('academic_year', 'desc')
             ->get();
 
-        return view('tenant.admin.fees.cards.print', compact('student', 'feeCards', 'tenant'));
+        $showPrincipalStamp = $request->boolean('show_principal_stamp', false);
+        $showAccountantSign = $request->boolean('show_accountant_sign', false);
+
+        return view('tenant.admin.fees.cards.print', compact(
+            'student',
+            'feeCards',
+            'tenant',
+            'showPrincipalStamp',
+            'showAccountantSign'
+        ));
     }
 
     /**
@@ -109,11 +300,7 @@ class StudentFeeCardController extends Controller
      */
     public function receipt(Request $request, $paymentId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $payment = Payment::forTenant($tenant->id)
             ->with([
@@ -131,11 +318,7 @@ class StudentFeeCardController extends Controller
      */
     public function downloadReceipt(Request $request, $paymentId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $payment = Payment::forTenant($tenant->id)
             ->with([
@@ -155,11 +338,7 @@ class StudentFeeCardController extends Controller
      */
     public function applyDiscount(Request $request, $feeCardId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $feeCard = StudentFeeCard::forTenant($tenant->id)->findOrFail($feeCardId);
 
@@ -219,11 +398,7 @@ class StudentFeeCardController extends Controller
      */
     public function waiveFee(Request $request, $feeItemId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $feeItem = StudentFeeItem::whereHas('studentFeeCard', function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id);
@@ -269,11 +444,7 @@ class StudentFeeCardController extends Controller
      */
     public function applyLateFee(Request $request, $feeCardId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $feeCard = StudentFeeCard::forTenant($tenant->id)
             ->with('feeItems')
@@ -324,11 +495,7 @@ class StudentFeeCardController extends Controller
      */
     public function sendReminder(Request $request, $studentId)
     {
-        $tenant = $this->tenantService->getCurrentTenant($request);
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
+        $tenant = $this->getTenant($request);
 
         $student = Student::forTenant($tenant->id)
             ->with('studentFeeCard')

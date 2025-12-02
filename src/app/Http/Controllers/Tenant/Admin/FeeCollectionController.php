@@ -80,6 +80,93 @@ class FeeCollectionController extends Controller
     }
 
     /**
+     * Display all payments with tracking details
+     */
+    public function payments(Request $request)
+    {
+        $tenant = $this->tenantService->getCurrentTenant($request);
+
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+
+        $query = Payment::forTenant($tenant->id)
+            ->with([
+                'student.currentEnrollment.schoolClass',
+                'student.currentEnrollment.section',
+                'collectedBy',
+                'invoice'
+            ]);
+
+        // Filter by payment method
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by date range
+        if ($request->filled('from_date')) {
+            $query->whereDate('payment_date', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('payment_date', '<=', $request->to_date);
+        }
+
+        // Filter by class
+        if ($request->filled('class_id')) {
+            $query->whereHas('student.currentEnrollment', function($q) use ($request) {
+                $q->where('class_id', $request->class_id)->where('is_current', true);
+            });
+        }
+
+        // Search by payment number, student name, admission number, reference, transaction ID
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('payment_number', 'like', '%' . $search . '%')
+                  ->orWhere('reference_number', 'like', '%' . $search . '%')
+                  ->orWhere('transaction_id', 'like', '%' . $search . '%')
+                  ->orWhereHas('student', function($sq) use ($search) {
+                      $sq->where('admission_number', 'like', '%' . $search . '%')
+                        ->orWhere('first_name', 'like', '%' . $search . '%')
+                        ->orWhere('last_name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        $payments = $query->orderBy('payment_date', 'desc')->orderBy('created_at', 'desc')->paginate(30);
+
+        // Get statistics
+        $stats = [
+            'total_collected' => Payment::forTenant($tenant->id)
+                ->where('status', 'success')
+                ->sum('amount'),
+            'total_collected_today' => Payment::forTenant($tenant->id)
+                ->whereDate('payment_date', today())
+                ->where('status', 'success')
+                ->sum('amount'),
+            'total_collected_this_month' => Payment::forTenant($tenant->id)
+                ->whereMonth('payment_date', now()->month)
+                ->whereYear('payment_date', now()->year)
+                ->where('status', 'success')
+                ->sum('amount'),
+            'by_method' => Payment::forTenant($tenant->id)
+                ->where('status', 'success')
+                ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+                ->groupBy('payment_method')
+                ->get(),
+        ];
+
+        $classes = \App\Models\SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+
+        return view('tenant.admin.fees.collection.payments', compact('payments', 'stats', 'classes', 'tenant'));
+    }
+
+    /**
      * Show fee details for a student
      */
     public function show(Request $request, $studentId)
@@ -120,7 +207,11 @@ class FeeCollectionController extends Controller
             abort(404, 'Tenant not found');
         }
         $student = Student::forTenant($tenant->id)
-            ->with(['schoolClass', 'section', 'studentFeeCard.feeItems.feeComponent'])
+            ->with([
+                'currentEnrollment.schoolClass',
+                'currentEnrollment.section',
+                'studentFeeCard.feeItems.feeComponent'
+            ])
             ->findOrFail($studentId);
 
         if (!$student->studentFeeCard) {
@@ -143,11 +234,20 @@ class FeeCollectionController extends Controller
         if (!$tenant) {
             abort(404, 'Tenant not found');
         }
-        $student = Student::forTenant($tenant->id)->findOrFail($studentId);
+        $student = Student::forTenant($tenant->id)
+            ->with(['studentFeeCard.feeItems'])
+            ->findOrFail($studentId);
+
+        if (!$student->studentFeeCard) {
+            return redirect()->back()
+                ->with('error', 'No fee card assigned to this student!')
+                ->withInput();
+        }
 
         $validator = Validator::make($request->all(), [
             'payment_method' => 'required|in:cash,cheque,bank_transfer,online,razorpay',
-            'amount' => 'required|numeric|min:1',
+            'payment_type' => 'nullable|string|max:100',
+            'amount' => 'required|numeric|min:1|max:' . $student->studentFeeCard->balance_amount,
             'payment_date' => 'required|date',
             'reference_number' => 'nullable|string|max:100',
             'transaction_id' => 'nullable|string|max:100',
@@ -169,7 +269,7 @@ class FeeCollectionController extends Controller
                 ->first();
 
             if (!$invoice) {
-                $invoice = $this->createInvoice($student);
+                $invoice = $this->createInvoice($student, $tenant);
             }
 
             // Create payment
@@ -181,6 +281,7 @@ class FeeCollectionController extends Controller
                 'payment_date' => $request->payment_date,
                 'amount' => $request->amount,
                 'payment_method' => $request->payment_method,
+                'payment_type' => $request->payment_type,
                 'transaction_id' => $request->transaction_id,
                 'reference_number' => $request->reference_number,
                 'status' => 'success',
@@ -197,8 +298,11 @@ class FeeCollectionController extends Controller
             }
             $invoice->save();
 
-            // Update fee card and items (FIFO allocation)
-            $this->allocatePayment($student->studentFeeCard, $request->amount);
+            // Reload student fee card with items
+            $student->load('studentFeeCard.feeItems');
+
+            // Update fee card and items (Allocate based on payment type if provided)
+            $this->allocatePayment($student->studentFeeCard, $request->amount, $request->payment_type);
 
             DB::commit();
 
@@ -219,10 +323,13 @@ class FeeCollectionController extends Controller
     /**
      * Create invoice for student
      */
-    private function createInvoice($student)
+    private function createInvoice($student, $tenant)
     {
-        $tenant = session('tenant');
         $feeCard = $student->studentFeeCard;
+
+        if (!$feeCard) {
+            throw new \Exception('Student does not have a fee card assigned.');
+        }
 
         $invoice = Invoice::create([
             'tenant_id' => $tenant->id,
@@ -256,28 +363,79 @@ class FeeCollectionController extends Controller
     }
 
     /**
-     * Allocate payment to fee items (FIFO)
+     * Allocate payment to fee items
+     * If payment_type is provided, allocate to matching component first
+     * Otherwise, use FIFO (oldest due date first)
      */
-    private function allocatePayment($feeCard, $amount)
+    private function allocatePayment($feeCard, $amount, $paymentType = null)
     {
+        if (!$feeCard) {
+            throw new \Exception('Fee card not found for student.');
+        }
+
         $remainingAmount = $amount;
 
-        // Get unpaid fee items ordered by due date
+        // Reload fee card with items and component names
+        $feeCard->load('feeItems.feeComponent');
+
+        // Get unpaid fee items
         $unpaidItems = $feeCard->feeItems()
+            ->with('feeComponent')
             ->where('status', '!=', 'paid')
-            ->orderBy('due_date', 'asc')
             ->get();
 
-        foreach ($unpaidItems as $item) {
-            if ($remainingAmount <= 0) break;
+        // If payment_type is provided, match by exact component name
+        if ($paymentType && $paymentType !== 'other') {
+            // Find fee item by exact component name match (payment_type now contains the actual component name)
+            $matchingItem = null;
 
-            $dueAmount = $item->net_amount - $item->paid_amount;
-            $paymentForItem = min($remainingAmount, $dueAmount);
+            foreach ($unpaidItems as $item) {
+                if (!$item->feeComponent) continue;
 
-            $item->paid_amount += $paymentForItem;
-            $item->updateStatus();
+                // Direct exact match by component name
+                if ($item->feeComponent->name === $paymentType) {
+                    $matchingItem = $item;
+                    break;
+                }
+            }
 
-            $remainingAmount -= $paymentForItem;
+            // If found matching item, allocate payment ONLY to that component
+            if ($matchingItem) {
+                $dueAmount = $matchingItem->net_amount - $matchingItem->paid_amount;
+
+                // Allocate only up to the amount due for this component
+                $paymentForItem = min($remainingAmount, $dueAmount);
+
+                $matchingItem->paid_amount += $paymentForItem;
+                $matchingItem->updateStatus();
+                $matchingItem->save();
+
+                $remainingAmount -= $paymentForItem;
+
+                // If payment_type is specified and we found a match,
+                // allocate ONLY to that component (no FIFO)
+                // Update fee card and return
+                $feeCard->updateBalance();
+                return;
+            }
+        }
+
+        // If payment_type was not specified or no match found, use FIFO (oldest due date first)
+        if ($remainingAmount > 0 && $unpaidItems->count() > 0) {
+            $sortedItems = $unpaidItems->sortBy('due_date')->values();
+
+            foreach ($sortedItems as $item) {
+                if ($remainingAmount <= 0) break;
+
+                $dueAmount = $item->net_amount - $item->paid_amount;
+                $paymentForItem = min($remainingAmount, $dueAmount);
+
+                $item->paid_amount += $paymentForItem;
+                $item->updateStatus();
+                $item->save();
+
+                $remainingAmount -= $paymentForItem;
+            }
         }
 
         // Update fee card totals
@@ -343,10 +501,18 @@ class FeeCollectionController extends Controller
             case 'payment_method':
                 list($reportData, $summary) = $this->getPaymentMethodReport($tenant, $fromDate, $toDate);
                 break;
+            default:
+                if ($request->get('export') === 'excel') {
+                    return redirect()->back()->with('error', 'Invalid report type selected.');
+                }
+                break;
         }
 
         // Handle export
         if ($request->get('export') === 'excel') {
+            if (!$reportData) {
+                return redirect()->back()->with('error', 'No data to export. Please generate a report first.');
+            }
             return $this->exportToExcel($reportData, $reportType);
         }
 
@@ -358,7 +524,10 @@ class FeeCollectionController extends Controller
         $query = Payment::forTenant($tenant->id)
             ->whereBetween('payment_date', [$fromDate, $toDate])
             ->where('status', 'success')
-            ->with(['student.currentEnrollment.schoolClass']);
+            ->with([
+                'student.currentEnrollment.schoolClass',
+                'collectedBy'
+            ]);
 
         if ($classId) {
             $query->whereHas('student.currentEnrollment', function($q) use ($classId) {
@@ -369,7 +538,7 @@ class FeeCollectionController extends Controller
         $payments = $query->orderBy('payment_date', 'desc')->get();
 
         $data = [
-            'headers' => ['Date', 'Receipt No', 'Student Name', 'Class', 'Amount', 'Method', 'Reference'],
+            'headers' => ['Date', 'Receipt No', 'Student Name', 'Class', 'Amount', 'Method', 'Reference', 'Collected By'],
             'data' => $payments->map(function($payment) {
                 return [
                     $payment->payment_date->format('d M Y'),
@@ -377,8 +546,9 @@ class FeeCollectionController extends Controller
                     $payment->student->full_name,
                     $payment->student->currentEnrollment?->schoolClass?->class_name ?? '-',
                     '₹' . number_format($payment->amount, 2),
-                    ucfirst($payment->payment_method),
+                    ucfirst(str_replace('_', ' ', $payment->payment_method)),
                     $payment->reference_number ?? '-',
+                    $payment->collectedBy->name ?? 'System',
                 ];
             })->toArray()
         ];
@@ -516,18 +686,26 @@ class FeeCollectionController extends Controller
 
     private function exportToExcel($reportData, $reportType)
     {
+        if (!$reportData || !isset($reportData['headers']) || !isset($reportData['data'])) {
+            abort(400, 'Invalid report data for export');
+        }
+
         $filename = 'fee-' . $reportType . '-report-' . now()->format('Y-m-d') . '.csv';
 
         $headers = [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
         $callback = function() use ($reportData) {
             $handle = fopen('php://output', 'w');
+
+            // Add BOM for UTF-8 to ensure Excel displays special characters correctly
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
             fputcsv($handle, $reportData['headers']);
 
-            foreach ($reportData['data'] as $row) {
+            foreach ($reportData['data'] ?? [] as $row) {
                 fputcsv($handle, $row);
             }
 
@@ -590,3 +768,4 @@ class FeeCollectionController extends Controller
         ];
     }
 }
+

@@ -329,9 +329,15 @@
 
                     {{-- Fee Collection --}}
                     @if(($featureSettings['fees'] ?? true))
-                    <a href="{{ url('/admin/fees/collection') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-banknotes class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                    <a href="{{ url('/admin/fees/collection') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection*') && !request()->is('*/admin/fees/collection/payments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-banknotes class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection*') && !request()->is('*/admin/fees/collection/payments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Fee Collection
+                    </a>
+
+                    {{-- All Payments Tracking --}}
+                    <a href="{{ url('/admin/fees/collection/payments') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection/payments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-document-text class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection/payments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        All Payments
                     </a>
 
                     {{-- Fee Components --}}
@@ -350,6 +356,18 @@
                     <a href="{{ url('/admin/fees/reports') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-chart-bar-square class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Fee Reports
+                    </a>
+
+                    {{-- Fee Cards --}}
+                    <a href="{{ url('/admin/fees/cards') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-credit-card class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        Fee Cards
+                    </a>
+
+                    {{-- No Dues Certificates --}}
+                    <a href="{{ url('/admin/fees/no-dues') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/no-dues*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-document-check class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/no-dues*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        No Dues Certificates
                     </a>
                     @endif
 
@@ -461,5 +479,8 @@
             overlay.classList.add('hidden');
         });
     </script>
+
+    <!-- Stack for additional scripts from views -->
+    @stack('scripts')
 </body>
 </html>

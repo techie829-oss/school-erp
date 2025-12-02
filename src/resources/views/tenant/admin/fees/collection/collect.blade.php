@@ -94,7 +94,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Class</p>
-                            <p>{{ $student->schoolClass->name ?? 'N/A' }} - {{ $student->section->name ?? 'N/A' }}</p>
+                            <p>{{ $student->currentEnrollment?->schoolClass?->class_name ?? 'N/A' }} - {{ $student->currentEnrollment?->section?->section_name ?? 'N/A' }}</p>
                         </div>
                     </div>
                 </div>
@@ -200,6 +200,29 @@
                                         <option value="razorpay" {{ old('payment_method') == 'razorpay' ? 'selected' : '' }}>Razorpay</option>
                                     @endif
                                 </select>
+                            </div>
+
+                            <!-- Payment Type -->
+                            <div>
+                                <label for="payment_type" class="block text-sm font-medium text-gray-700">
+                                    Payment Type <span class="text-gray-400 text-xs">(Optional)</span>
+                                </label>
+                                <select name="payment_type" id="payment_type"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('payment_type') border-red-300 @enderror">
+                                    <option value="">Allocate to All (FIFO)</option>
+                                    @foreach($student->studentFeeCard->feeItems as $feeItem)
+                                        @if($feeItem->feeComponent && ($feeItem->net_amount - $feeItem->paid_amount) > 0)
+                                            @php
+                                                $balance = $feeItem->net_amount - $feeItem->paid_amount;
+                                            @endphp
+                                            <option value="{{ $feeItem->feeComponent->name }}" {{ old('payment_type') == $feeItem->feeComponent->name ? 'selected' : '' }}>
+                                                {{ $feeItem->feeComponent->name }} (Balance: ₹{{ number_format($balance, 2) }})
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                    <option value="other" {{ old('payment_type') == 'other' ? 'selected' : '' }}>Other</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Select specific fee component to allocate payment (optional)</p>
                             </div>
 
                             <!-- Reference Number (for cheque/bank transfer) -->

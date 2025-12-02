@@ -18,6 +18,7 @@ class Payment extends Model
         'payment_date',
         'amount',
         'payment_method',
+        'payment_type',
         'transaction_id',
         'reference_number',
         'status',

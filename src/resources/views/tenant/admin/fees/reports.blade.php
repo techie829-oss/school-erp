@@ -58,11 +58,11 @@
                         </svg>
                         Generate Report
                     </button>
-                    <button type="button" onclick="exportReport()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <button type="button" id="exportBtn" onclick="exportReport()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        Export to Excel
+                        <span id="exportBtnText">Export to Excel</span>
                     </button>
                 </div>
                 <a href="{{ url('/admin/fees/reports') }}" class="text-sm text-gray-600 hover:text-gray-900">
@@ -91,7 +91,9 @@
                         <div>
                             <p class="text-xs text-gray-500 uppercase tracking-wide">{{ ucwords(str_replace('_', ' ', $key)) }}</p>
                             <p class="text-xl font-bold text-gray-900">
-                                @if(str_contains($key, 'amount') || str_contains($key, 'total'))
+                                @if($key === 'total_payments')
+                                    {{ number_format($value, 0) }}
+                                @elseif($key === 'average_payment' || str_contains($key, 'amount') || ($key !== 'total_payments' && str_contains($key, 'total')))
                                     ₹{{ number_format($value, 2) }}
                                 @else
                                     {{ $value }}
@@ -149,9 +151,48 @@
 @push('scripts')
 <script>
 function exportReport() {
-    const params = new URLSearchParams(window.location.search);
+    // Get form element
+    const form = document.querySelector('form[method="GET"]');
+    if (!form) {
+        alert('Form not found');
+        return;
+    }
+
+    // Get report type
+    const reportTypeSelect = form.querySelector('[name="report_type"]');
+    if (!reportTypeSelect || !reportTypeSelect.value) {
+        alert('Please select a report type first');
+        reportTypeSelect?.focus();
+        return;
+    }
+
+    // Get all form values
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+
+    // Add all form fields to params (including empty ones that might be needed)
+    for (const [key, value] of formData.entries()) {
+        params.append(key, value);
+    }
+
+    // Add export parameter
     params.set('export', 'excel');
+
+    // Disable button and show loading
+    const exportBtn = document.getElementById('exportBtn');
+    const exportBtnText = document.getElementById('exportBtnText');
+    const originalText = exportBtnText.textContent;
+    exportBtn.disabled = true;
+    exportBtnText.textContent = 'Exporting...';
+
+    // Redirect to export URL (this will trigger download)
     window.location.href = '{{ url("/admin/fees/reports") }}?' + params.toString();
+
+    // Re-enable button after a delay (in case download doesn't start)
+    setTimeout(() => {
+        exportBtn.disabled = false;
+        exportBtnText.textContent = originalText;
+    }, 2000);
 }
 </script>
 @endpush
