@@ -490,6 +490,72 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('categories/{id}/edit', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'edit'])->name('categories.edit');
             Route::put('categories/{id}', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'update'])->name('categories.update');
             Route::delete('categories/{id}', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'destroy'])->name('categories.destroy');
+
+            // Library Reports
+            Route::get('reports', [\App\Http\Controllers\Tenant\Admin\LibraryReportsController::class, 'index'])->name('reports.index');
+
+            // Library Settings
+            Route::get('settings', [\App\Http\Controllers\Tenant\Admin\LibrarySettingsController::class, 'index'])->name('settings.index');
+            Route::put('settings', [\App\Http\Controllers\Tenant\Admin\LibrarySettingsController::class, 'update'])->name('settings.update');
+        });
+
+        // Timetable Management
+        Route::prefix('timetable')->name('timetable.')->group(function () {
+            // Periods
+            Route::get('periods', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'index'])->name('periods.index');
+            Route::get('periods/create', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'create'])->name('periods.create');
+            Route::post('periods', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'store'])->name('periods.store');
+            Route::get('periods/{id}/edit', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'edit'])->name('periods.edit');
+            Route::put('periods/{id}', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'update'])->name('periods.update');
+            Route::delete('periods/{id}', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'destroy'])->name('periods.destroy');
+
+            // Timetables
+            Route::get('classes', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'index'])->name('classes.index');
+            Route::get('classes/create', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'create'])->name('classes.create');
+            Route::post('classes', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'store'])->name('classes.store');
+            Route::get('classes/{id}', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'show'])->name('classes.show');
+            Route::get('classes/{id}/edit', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'edit'])->name('classes.edit');
+            Route::put('classes/{id}', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'update'])->name('classes.update');
+            Route::delete('classes/{id}', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'destroy'])->name('classes.destroy');
+
+            // View Timetables
+            Route::get('view', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'view'])->name('view');
+        });
+
+        // Hostel Management
+        Route::prefix('hostel')->name('hostel.')->group(function () {
+            // Hostels
+            Route::get('hostels', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'index'])->name('hostels.index');
+            Route::get('hostels/create', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'create'])->name('hostels.create');
+            Route::post('hostels', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'store'])->name('hostels.store');
+            Route::get('hostels/{id}', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'show'])->name('hostels.show');
+            Route::get('hostels/{id}/edit', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'edit'])->name('hostels.edit');
+            Route::put('hostels/{id}', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'update'])->name('hostels.update');
+            Route::delete('hostels/{id}', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'destroy'])->name('hostels.destroy');
+            Route::get('hostels/{id}/rooms', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'getRooms'])->name('hostels.rooms');
+
+            // Rooms
+            Route::get('rooms', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'index'])->name('rooms.index');
+            Route::get('rooms/create', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'create'])->name('rooms.create');
+            Route::post('rooms', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'store'])->name('rooms.store');
+            Route::get('rooms/{id}', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'show'])->name('rooms.show');
+            Route::get('rooms/{id}/edit', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'edit'])->name('rooms.edit');
+            Route::put('rooms/{id}', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'update'])->name('rooms.update');
+            Route::delete('rooms/{id}', [\App\Http\Controllers\Tenant\Admin\HostelRoomController::class, 'destroy'])->name('rooms.destroy');
+
+            // Allocations
+            Route::get('allocations', [\App\Http\Controllers\Tenant\Admin\HostelAllocationController::class, 'index'])->name('allocations.index');
+            Route::get('allocations/create', [\App\Http\Controllers\Tenant\Admin\HostelAllocationController::class, 'create'])->name('allocations.create');
+            Route::post('allocations', [\App\Http\Controllers\Tenant\Admin\HostelAllocationController::class, 'store'])->name('allocations.store');
+            Route::post('allocations/{id}/release', [\App\Http\Controllers\Tenant\Admin\HostelAllocationController::class, 'release'])->name('allocations.release');
+
+            // Fees
+            Route::get('fees', [\App\Http\Controllers\Tenant\Admin\HostelFeeController::class, 'index'])->name('fees.index');
+            Route::get('fees/create', [\App\Http\Controllers\Tenant\Admin\HostelFeeController::class, 'create'])->name('fees.create');
+            Route::post('fees', [\App\Http\Controllers\Tenant\Admin\HostelFeeController::class, 'store'])->name('fees.store');
+            Route::get('fees/{id}/edit', [\App\Http\Controllers\Tenant\Admin\HostelFeeController::class, 'edit'])->name('fees.edit');
+            Route::put('fees/{id}', [\App\Http\Controllers\Tenant\Admin\HostelFeeController::class, 'update'])->name('fees.update');
+            Route::delete('fees/{id}', [\App\Http\Controllers\Tenant\Admin\HostelFeeController::class, 'destroy'])->name('fees.destroy');
         });
 
         // Examinations Module (requires exams feature)

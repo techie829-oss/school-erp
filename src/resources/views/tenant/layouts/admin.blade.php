@@ -418,6 +418,54 @@
                                 Categories
                             </a>
                             @endif
+
+                            {{-- Reports --}}
+                            @if(($featureSettings['library'] ?? true))
+                            <a href="{{ url('/admin/library/reports') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/library/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-chart-bar class="mr-3 h-4 w-4 {{ request()->is('*/admin/library/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Reports
+                            </a>
+                            @endif
+
+                            {{-- Settings --}}
+                            @if(($featureSettings['library'] ?? true))
+                            <a href="{{ url('/admin/library/settings') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/library/settings*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-cog class="mr-3 h-4 w-4 {{ request()->is('*/admin/library/settings*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Settings
+                            </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- TIMETABLE SECTION --}}
+                    @php
+                        $timetableActive = request()->is('*/admin/timetable*');
+                    @endphp
+                    <div class="sidebar-section" data-section="timetable">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('timetable')">
+                            <span>Timetable</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $timetableActive ? '' : 'hidden' }}" data-content="timetable">
+                            {{-- Timetables --}}
+                            <a href="{{ url('/admin/timetable/classes') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/timetable/classes*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-calendar class="mr-3 h-4 w-4 {{ request()->is('*/admin/timetable/classes*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Timetables
+                            </a>
+
+                            {{-- Periods --}}
+                            <a href="{{ url('/admin/timetable/periods') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/timetable/periods*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-clock class="mr-3 h-4 w-4 {{ request()->is('*/admin/timetable/periods*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Periods
+                            </a>
+
+                            {{-- View Timetables --}}
+                            <a href="{{ url('/admin/timetable/view') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/timetable/view*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-eye class="mr-3 h-4 w-4 {{ request()->is('*/admin/timetable/view*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                View Timetables
+                            </a>
                         </div>
                     </div>
 
@@ -488,6 +536,44 @@
                                 Reports
                             </a>
                             @endif
+                        </div>
+                    </div>
+
+                    {{-- HOSTEL SECTION --}}
+                    @php
+                        $hostelActive = request()->is('*/admin/hostel*');
+                    @endphp
+                    <div class="sidebar-section" data-section="hostel">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('hostel')">
+                            <span>Hostel</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $hostelActive ? '' : 'hidden' }}" data-content="hostel">
+                            {{-- Hostels --}}
+                            <a href="{{ url('/admin/hostel/hostels') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/hostel/hostels*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-building-office class="mr-3 h-4 w-4 {{ request()->is('*/admin/hostel/hostels*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Hostels
+                            </a>
+
+                            {{-- Rooms --}}
+                            <a href="{{ url('/admin/hostel/rooms') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/hostel/rooms*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-home class="mr-3 h-4 w-4 {{ request()->is('*/admin/hostel/rooms*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Rooms
+                            </a>
+
+                            {{-- Allocations --}}
+                            <a href="{{ url('/admin/hostel/allocations') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/hostel/allocations*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-user-plus class="mr-3 h-4 w-4 {{ request()->is('*/admin/hostel/allocations*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Allocations
+                            </a>
+
+                            {{-- Fees --}}
+                            <a href="{{ url('/admin/hostel/fees') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/hostel/fees*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-currency-rupee class="mr-3 h-4 w-4 {{ request()->is('*/admin/hostel/fees*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Fees
+                            </a>
                         </div>
                     </div>
 
