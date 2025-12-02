@@ -46,71 +46,46 @@
             font-weight: 600;
         }
 
-        /* Bill Info Section */
-        .info-grid {
+        /* Combined Bill and Student Info Section */
+        .details-section {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 25px;
+            gap: 30px;
+        }
+
+        .bill-details-column,
+        .student-details-column {
             font-size: 13px;
         }
 
-        .info-box {
-            background: #f0f9ff;
-            padding: 12px;
-            border-left: 4px solid #2563eb;
+        .detail-item {
+            margin-bottom: 12px;
         }
 
-        .info-label {
+        .detail-label {
             color: #64748b;
             font-size: 11px;
             text-transform: uppercase;
             font-weight: 600;
             margin-bottom: 4px;
+            display: block;
         }
 
-        .info-value {
+        .detail-value {
             color: #1e293b;
             font-weight: 600;
             font-size: 14px;
         }
 
-        /* Student Info Section */
-        .student-section {
-            background: #eff6ff;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 13px;
-        }
-
-        .student-section h3 {
+        .student-details-column h3 {
             color: #2563eb;
             font-size: 13px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .student-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .student-item {
-            color: #334155;
-        }
-
-        .student-label {
-            color: #64748b;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .student-value {
-            color: #1e293b;
             font-weight: 600;
         }
 
@@ -222,7 +197,7 @@
         .total-row.highlight span {
             color: white;
         }
-        
+
         .total-row.highlight .total-amount {
             color: white;
         }
@@ -273,54 +248,55 @@
             <div class="bill-title">TRANSPORT BILL</div>
         </div>
 
-        <!-- Bill Information -->
-        <div class="info-grid">
-            <div class="info-box">
-                <div class="info-label">Bill Number</div>
-                <div class="info-value">{{ $bill->bill_number }}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Bill Date</div>
-                <div class="info-value">{{ $bill->bill_date->format('d M Y') }}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Due Date</div>
-                <div class="info-value">{{ $bill->due_date->format('d M Y') }}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Academic Year</div>
-                <div class="info-value">{{ $bill->academic_year ?? 'N/A' }}</div>
-            </div>
-            @if($bill->term)
-            <div class="info-box">
-                <div class="info-label">Term</div>
-                <div class="info-value">{{ $bill->term }}</div>
-            </div>
-            @endif
-        </div>
-
-        <!-- Student Information -->
-        <div class="student-section">
-            <h3>Student Information</h3>
-            <div class="student-grid">
-                <div class="student-item">
-                    <div class="student-label">Student Name</div>
-                    <div class="student-value">{{ $bill->student->full_name }}</div>
+        <!-- Bill Details and Student Information -->
+        <div class="details-section">
+            <!-- Left Column: Bill Details -->
+            <div class="bill-details-column">
+                <div class="detail-item">
+                    <span class="detail-label">Bill Number</span>
+                    <span class="detail-value">{{ $bill->bill_number }}</span>
                 </div>
-                <div class="student-item">
-                    <div class="student-label">Admission No.</div>
-                    <div class="student-value">{{ $bill->student->admission_number }}</div>
+                <div class="detail-item">
+                    <span class="detail-label">Bill Date</span>
+                    <span class="detail-value">{{ $bill->bill_date->format('d M Y') }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Due Date</span>
+                    <span class="detail-value">{{ $bill->due_date->format('d M Y') }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Academic Year</span>
+                    <span class="detail-value">{{ $bill->academic_year ?? 'N/A' }}</span>
+                </div>
+                @if($bill->term)
+                <div class="detail-item">
+                    <span class="detail-label">Term</span>
+                    <span class="detail-value">{{ $bill->term }}</span>
+                </div>
+                @endif
+            </div>
+
+            <!-- Right Column: Student Information -->
+            <div class="student-details-column">
+                <h3>Student Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Student Name</span>
+                    <span class="detail-value">{{ $bill->student->full_name }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Admission No.</span>
+                    <span class="detail-value">{{ $bill->student->admission_number }}</span>
                 </div>
                 @if($bill->student->currentEnrollment && $bill->student->currentEnrollment->schoolClass)
-                <div class="student-item">
-                    <div class="student-label">Class</div>
-                    <div class="student-value">{{ $bill->student->currentEnrollment->schoolClass->class_name }}</div>
+                <div class="detail-item">
+                    <span class="detail-label">Class</span>
+                    <span class="detail-value">{{ $bill->student->currentEnrollment->schoolClass->class_name }}</span>
                 </div>
                 @endif
                 @if($bill->assignment && $bill->assignment->route)
-                <div class="student-item">
-                    <div class="student-label">Route</div>
-                    <div class="student-value">{{ $bill->assignment->route->name }}</div>
+                <div class="detail-item">
+                    <span class="detail-label">Route</span>
+                    <span class="detail-value">{{ $bill->assignment->route->name }}</span>
                 </div>
                 @endif
             </div>
