@@ -1,327 +1,420 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transport Bill - {{ $bill->bill_number }}</title>
     <style>
-        @page {
-            margin: 0;
-            size: A4 portrait;
-        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 11px;
-            color: #111827;
-            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
         }
-        .bill-container {
-            border: 2px solid #2563eb;
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
             background: white;
-            padding: 15px;
-            max-width: 100%;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .bill-header {
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+
+        /* Header */
+        .header {
             text-align: center;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
         }
+
         .school-name {
-            font-size: 14px;
+            font-size: 18px;
             font-weight: bold;
-            letter-spacing: 0.05em;
-            margin-bottom: 4px;
+            color: #1e3a8a;
+            margin-bottom: 5px;
         }
+
         .bill-title {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 16px;
             color: #2563eb;
-            margin-bottom: 6px;
+            font-weight: 600;
         }
-        .bill-number {
-            font-size: 12px;
-            font-weight: bold;
-            color: #1f2937;
-        }
+
+        /* Bill Info Section */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 12px;
+            gap: 20px;
+            margin-bottom: 25px;
+            font-size: 13px;
         }
-        .info-section {
-            font-size: 10px;
+
+        .info-box {
+            background: #f0f9ff;
+            padding: 12px;
+            border-left: 4px solid #2563eb;
         }
-        .section-title {
-            font-size: 10px;
-            font-weight: bold;
-            color: #374151;
-            margin-bottom: 6px;
-            padding-bottom: 3px;
-            border-bottom: 1px solid #d1d5db;
-            text-transform: uppercase;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 3px;
-            font-size: 10px;
-        }
+
         .info-label {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
             font-weight: 600;
-            color: #6b7280;
-            width: 100px;
-            flex-shrink: 0;
+            margin-bottom: 4px;
         }
+
         .info-value {
-            color: #1f2937;
-            flex: 1;
-            text-align: right;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
         }
-        .items-table {
+
+        /* Student Info Section */
+        .student-section {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .student-section h3 {
+            color: #2563eb;
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .student-item {
+            color: #334155;
+        }
+
+        .student-label {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .student-value {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        /* Table */
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin: 12px 0;
-            font-size: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
         }
-        .items-table th {
-            background: #f3f4f6;
-            padding: 6px 8px;
+
+        thead {
+            background: #2563eb;
+            color: white;
+        }
+
+        th {
+            padding: 10px;
             text-align: left;
             font-weight: 600;
-            font-size: 9px;
-            text-transform: uppercase;
-            border: 1px solid #d1d5db;
+            font-size: 12px;
         }
-        .items-table td {
-            padding: 6px 8px;
-            border: 1px solid #d1d5db;
-            font-size: 10px;
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
         }
+
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tbody tr:hover {
+            background: #f0f9ff;
+        }
+
         .text-right {
             text-align: right;
         }
-        .text-center {
-            text-align: center;
-        }
-        .totals-section {
-            margin-top: 12px;
-            margin-left: auto;
-            width: 280px;
-        }
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px;
-        }
-        .totals-table td {
-            padding: 5px 8px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .totals-table .label {
+
+        .amount {
             font-weight: 600;
-            color: #6b7280;
-            text-align: right;
+            color: #1e293b;
         }
-        .totals-table .amount {
-            text-align: right;
-            color: #1f2937;
-            font-weight: 500;
+
+        /* Summary Section */
+        .summary {
+            display: grid;
+            grid-template-columns: 1fr 250px;
+            gap: 30px;
+            margin-bottom: 20px;
         }
-        .totals-table .total-row {
-            background: #f3f4f6;
-            font-weight: bold;
+
+        .payment-status {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 15px;
+            border-radius: 4px;
         }
-        .totals-table .outstanding-row {
-            background: #fef2f2;
-            color: #dc2626;
-            font-weight: bold;
+
+        .status-label {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
-        .notes-box {
-            margin-top: 12px;
-            padding: 8px;
-            background: #f9fafb;
-            border-left: 3px solid #2563eb;
-            font-size: 10px;
-        }
+
         .status-badge {
             display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 9px;
+            background: #22c55e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
         }
-        .status-paid {
-            background: #d1fae5;
-            color: #065f46;
+
+        .status-badge.partial {
+            background: #f59e0b;
         }
-        .status-sent {
-            background: #dbeafe;
-            color: #1e40af;
+
+        .status-badge.sent {
+            background: #3b82f6;
         }
-        .status-partial {
-            background: #fef3c7;
-            color: #92400e;
+
+        .status-badge.overdue {
+            background: #ef4444;
         }
-        .status-overdue {
-            background: #fee2e2;
-            color: #991b1b;
+
+        .totals-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
         }
-        .bill-footer {
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+
+        .total-row.highlight {
+            background: #2563eb;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+        }
+
+        .total-label {
+            color: #64748b;
+        }
+
+        .total-amount {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .total-row.highlight .total-amount {
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
             text-align: center;
-            font-size: 9px;
-            color: #6b7280;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 11px;
         }
+
+        .notes {
+            background: #fef3c7;
+            border-left: 4px solid #eab308;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #854d0e;
+        }
+
+        /* Print Styles */
         @media print {
             body {
-                padding: 10px;
+                background: white;
+                padding: 0;
             }
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+                padding: 20px;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 10mm;
         }
     </style>
 </head>
 <body>
-    <div class="bill-container">
-        <div class="bill-header">
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
             <div class="school-name">{{ $tenant->data['name'] ?? ($tenant->data['school_name'] ?? 'School ERP') }}</div>
             <div class="bill-title">TRANSPORT BILL</div>
-            <div class="bill-number">Bill No: {{ $bill->bill_number }}</div>
         </div>
 
+        <!-- Bill Information -->
         <div class="info-grid">
-            <div class="info-section">
-                <div class="section-title">Bill Information</div>
-                <div class="info-row">
-                    <span class="info-label">Bill Number:</span>
-                    <span class="info-value">{{ $bill->bill_number }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Bill Date:</span>
-                    <span class="info-value">{{ $bill->bill_date->format('d M Y') }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Due Date:</span>
-                    <span class="info-value">{{ $bill->due_date->format('d M Y') }}</span>
-                </div>
-                @if($bill->academic_year)
-                <div class="info-row">
-                    <span class="info-label">Academic Year:</span>
-                    <span class="info-value">{{ $bill->academic_year }}</span>
-                </div>
-                @endif
-                @if($bill->term)
-                <div class="info-row">
-                    <span class="info-label">Term:</span>
-                    <span class="info-value">{{ $bill->term }}</span>
-                </div>
-                @endif
-                <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value">
-                        <span class="status-badge status-{{ $bill->status }}">
-                            {{ ucfirst($bill->status) }}
-                        </span>
-                    </span>
-                </div>
+            <div class="info-box">
+                <div class="info-label">Bill Number</div>
+                <div class="info-value">{{ $bill->bill_number }}</div>
             </div>
-            <div class="info-section">
-                <div class="section-title">Student Information</div>
-                <div class="info-row">
-                    <span class="info-label">Name:</span>
-                    <span class="info-value">{{ $bill->student->full_name }}</span>
+            <div class="info-box">
+                <div class="info-label">Bill Date</div>
+                <div class="info-value">{{ $bill->bill_date->format('d M Y') }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Due Date</div>
+                <div class="info-value">{{ $bill->due_date->format('d M Y') }}</div>
+            </div>
+            @if($bill->academic_year)
+            <div class="info-box">
+                <div class="info-label">Academic Year</div>
+                <div class="info-value">{{ $bill->academic_year }}</div>
+            </div>
+            @endif
+            @if($bill->term)
+            <div class="info-box">
+                <div class="info-label">Term</div>
+                <div class="info-value">{{ $bill->term }}</div>
+            </div>
+            @endif
+        </div>
+
+        <!-- Student Information -->
+        <div class="student-section">
+            <h3>Student Information</h3>
+            <div class="student-grid">
+                <div class="student-item">
+                    <div class="student-label">Student Name</div>
+                    <div class="student-value">{{ $bill->student->full_name }}</div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Admission No:</span>
-                    <span class="info-value">{{ $bill->student->admission_number }}</span>
+                <div class="student-item">
+                    <div class="student-label">Admission No.</div>
+                    <div class="student-value">{{ $bill->student->admission_number }}</div>
                 </div>
                 @if($bill->student->currentEnrollment && $bill->student->currentEnrollment->schoolClass)
-                <div class="info-row">
-                    <span class="info-label">Class:</span>
-                    <span class="info-value">{{ $bill->student->currentEnrollment->schoolClass->class_name }}</span>
+                <div class="student-item">
+                    <div class="student-label">Class</div>
+                    <div class="student-value">{{ $bill->student->currentEnrollment->schoolClass->class_name }}</div>
                 </div>
                 @endif
                 @if($bill->assignment && $bill->assignment->route)
-                <div class="info-row">
-                    <span class="info-label">Route:</span>
-                    <span class="info-value">{{ $bill->assignment->route->name }}</span>
+                <div class="student-item">
+                    <div class="student-label">Route</div>
+                    <div class="student-value">{{ $bill->assignment->route->name }}</div>
                 </div>
                 @endif
             </div>
         </div>
 
-        <table class="items-table">
+        <!-- Bill Items Table -->
+        <table>
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th class="text-center" style="width: 50px;">Qty</th>
-                    <th class="text-right" style="width: 90px;">Unit Price</th>
-                    <th class="text-right" style="width: 90px;">Discount</th>
-                    <th class="text-right" style="width: 100px;">Amount</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">Amount</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($bill->items as $item)
                 <tr>
                     <td>{{ $item->description }}</td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">Rs. {{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">Rs. {{ number_format($item->discount, 2) }}</td>
-                    <td class="text-right">Rs. {{ number_format($item->amount, 2) }}</td>
+                    <td class="text-right">1</td>
+                    <td class="text-right amount">Rs. {{ number_format($item->unit_price, 2) }}</td>
+                    <td class="text-right amount">Rs. {{ number_format($item->discount, 2) }}</td>
+                    <td class="text-right amount">Rs. {{ number_format($item->amount, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
 
-        <div class="totals-section">
-            <table class="totals-table">
-                <tr>
-                    <td class="label">Subtotal:</td>
-                    <td class="amount">Rs. {{ number_format($bill->total_amount, 2) }}</td>
-                </tr>
+        <!-- Summary Section -->
+        <div class="summary">
+            <div class="payment-status">
+                <div class="status-label">Payment Status</div>
+                <div class="status-badge {{ $bill->status }}">{{ strtoupper($bill->status) }}</div>
+            </div>
+            <div class="totals-box">
+                <div class="total-row">
+                    <span class="total-label">Subtotal</span>
+                    <span class="total-amount">Rs. {{ number_format($bill->total_amount, 2) }}</span>
+                </div>
                 @if($bill->discount_amount > 0)
-                <tr>
-                    <td class="label">Discount:</td>
-                    <td class="amount">-Rs. {{ number_format($bill->discount_amount, 2) }}</td>
-                </tr>
+                <div class="total-row">
+                    <span class="total-label">Discount</span>
+                    <span class="total-amount">-Rs. {{ number_format($bill->discount_amount, 2) }}</span>
+                </div>
                 @endif
                 @if($bill->tax_amount > 0)
-                <tr>
-                    <td class="label">Tax:</td>
-                    <td class="amount">Rs. {{ number_format($bill->tax_amount, 2) }}</td>
-                </tr>
+                <div class="total-row">
+                    <span class="total-label">Tax</span>
+                    <span class="total-amount">Rs. {{ number_format($bill->tax_amount, 2) }}</span>
+                </div>
                 @endif
-                <tr class="total-row">
-                    <td class="label">Total Amount:</td>
-                    <td class="amount">Rs. {{ number_format($bill->net_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Paid Amount:</td>
-                    <td class="amount">Rs. {{ number_format($bill->paid_amount, 2) }}</td>
-                </tr>
-                <tr class="outstanding-row">
-                    <td class="label">Outstanding:</td>
-                    <td class="amount">Rs. {{ number_format($bill->outstanding_amount, 2) }}</td>
-                </tr>
-            </table>
+                <div class="total-row highlight">
+                    <span>Total Amount</span>
+                    <span>Rs. {{ number_format($bill->net_amount, 2) }}</span>
+                </div>
+                <div class="total-row">
+                    <span class="total-label">Paid Amount</span>
+                    <span class="total-amount">Rs. {{ number_format($bill->paid_amount, 2) }}</span>
+                </div>
+                <div class="total-row">
+                    <span class="total-label">Outstanding</span>
+                    <span class="total-amount">Rs. {{ number_format($bill->outstanding_amount, 2) }}</span>
+                </div>
+            </div>
         </div>
 
+        <!-- Notes -->
         @if($bill->notes)
-        <div class="notes-box">
-            <strong>Notes:</strong> {{ $bill->notes }}
+        <div class="notes">
+            <strong>Note:</strong> {{ $bill->notes }}
+        </div>
+        @else
+        <div class="notes">
+            <strong>Note:</strong> Monthly transport fee bill. This is a computer-generated bill. No signature required.
         </div>
         @endif
 
-        <div class="bill-footer">
-            <p>This is a computer-generated bill. No signature required.</p>
-            <p>Generated on {{ now()->format('d M Y, h:i A') }}</p>
+        <!-- Footer -->
+        <div class="footer">
+            Generated on {{ now()->format('d M Y, h:i A') }}
         </div>
     </div>
 </body>
