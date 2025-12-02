@@ -162,230 +162,322 @@
                         Dashboard
                     </a>
 
-                    {{-- ACADEMICS HEADER --}}
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Academics</p>
+                    {{-- ACADEMICS SECTION --}}
+                    @php
+                        $academicsActive = request()->is('*/admin/classes*') || request()->is('*/admin/sections*') || request()->is('*/admin/subjects*') || request()->is('*/admin/departments*');
+                    @endphp
+                    <div class="sidebar-section" data-section="academics">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('academics')">
+                            <span>Academics</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $academicsActive ? '' : 'hidden' }}" data-content="academics">
+                            {{-- Classes --}}
+                            @if(($featureSettings['classes'] ?? true))
+                            <a href="{{ url('/admin/classes') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/classes*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-academic-cap class="mr-3 h-5 w-5 {{ request()->is('*/admin/classes*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Classes
+                            </a>
+                            @endif
+
+                            {{-- Sections --}}
+                            <a href="{{ url('/admin/sections') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/sections*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-squares-2x2 class="mr-3 h-5 w-5 {{ request()->is('*/admin/sections*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Sections
+                            </a>
+
+                            {{-- Subjects --}}
+                            <a href="{{ url('/admin/subjects') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/subjects*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-book-open class="mr-3 h-5 w-5 {{ request()->is('*/admin/subjects*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Subjects
+                            </a>
+
+                            {{-- Departments --}}
+                            <a href="{{ url('/admin/departments') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/departments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-building-office class="mr-3 h-5 w-5 {{ request()->is('*/admin/departments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Departments
+                            </a>
+                        </div>
                     </div>
 
-                    {{-- Classes --}}
-                    @if(($featureSettings['classes'] ?? true))
-                    <a href="{{ url('/admin/classes') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/classes*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-academic-cap class="mr-3 h-5 w-5 {{ request()->is('*/admin/classes*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Classes
-                    </a>
-                    @endif
+                    {{-- STUDENTS SECTION --}}
+                    @php
+                        $studentsActive = request()->is('*/admin/students*') || request()->is('*/admin/attendance/students*') || request()->is('*/admin/attendance/holidays*');
+                    @endphp
+                    <div class="sidebar-section" data-section="students">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('students')">
+                            <span>Students</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $studentsActive ? '' : 'hidden' }}" data-content="students">
+                            {{-- Students --}}
+                            @if(($featureSettings['students'] ?? true))
+                            <a href="{{ url('/admin/students') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/students*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-user-group class="mr-3 h-5 w-5 {{ request()->is('*/admin/students*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Students
+                            </a>
+                            @endif
 
-                    {{-- Sections --}}
-                    <a href="{{ url('/admin/sections') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/sections*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-squares-2x2 class="mr-3 h-5 w-5 {{ request()->is('*/admin/sections*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Sections
-                    </a>
+                            {{-- Student Attendance --}}
+                            @if(($featureSettings['attendance'] ?? true))
+                            <a href="{{ url('/admin/attendance/students') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-clipboard-document-check class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Attendance
+                            </a>
 
-                    {{-- Subjects --}}
-                    <a href="{{ url('/admin/subjects') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/subjects*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-book-open class="mr-3 h-5 w-5 {{ request()->is('*/admin/subjects*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Subjects
-                    </a>
+                            {{-- Student Attendance Reports --}}
+                            <a href="{{ url('/admin/attendance/students/report') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/students/report*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-chart-bar class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/students/report*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Reports
+                            </a>
 
-                    {{-- Departments --}}
-                    <a href="{{ url('/admin/departments') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/departments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-building-office class="mr-3 h-5 w-5 {{ request()->is('*/admin/departments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Departments
-                    </a>
-
-                    {{-- STUDENTS HEADER --}}
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Students</p>
+                            {{-- Holiday Management --}}
+                            <a href="{{ url('/admin/attendance/holidays') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/holidays*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-calendar-days class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/holidays*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Holidays
+                            </a>
+                            @endif
+                        </div>
                     </div>
-
-                    {{-- Students --}}
-                    @if(($featureSettings['students'] ?? true))
-                    <a href="{{ url('/admin/students') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/students*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-user-group class="mr-3 h-5 w-5 {{ request()->is('*/admin/students*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Students
-                    </a>
-                    @endif
-
-                    {{-- Student Attendance --}}
-                    @if(($featureSettings['attendance'] ?? true))
-                    <a href="{{ url('/admin/attendance/students') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-clipboard-document-check class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/students') && !request()->is('*/admin/attendance/students/report') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Attendance
-                    </a>
-
-                    {{-- Student Attendance Reports --}}
-                    <a href="{{ url('/admin/attendance/students/report') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/students/report*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-chart-bar class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/students/report*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Reports
-                    </a>
-
-                    {{-- Holiday Management --}}
-                    <a href="{{ url('/admin/attendance/holidays') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/holidays*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-calendar-days class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/holidays*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Holidays
-                    </a>
-                    @endif
 
                     {{-- DIVIDER --}}
                     <div class="my-4 border-t border-gray-200"></div>
 
-                    {{-- HR & STAFF HEADER --}}
-                    <div class="pt-0 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">HR & Staff</p>
+                    {{-- HR & STAFF SECTION --}}
+                    @php
+                        $staffActive = request()->is('*/admin/teachers*') || request()->is('*/admin/attendance/teachers*');
+                    @endphp
+                    <div class="sidebar-section" data-section="staff">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('staff')">
+                            <span>HR & Staff</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $staffActive ? '' : 'hidden' }}" data-content="staff">
+                            {{-- Teachers --}}
+                            @if(($featureSettings['teachers'] ?? true))
+                            <a href="{{ url('/admin/teachers') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/teachers*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-users class="mr-3 h-5 w-5 {{ request()->is('*/admin/teachers*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Teachers
+                            </a>
+                            @endif
+
+                            {{-- Teacher Attendance --}}
+                            @if(($featureSettings['attendance'] ?? true))
+                            <a href="{{ url('/admin/attendance/teachers') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/teachers') && !request()->is('*/admin/attendance/teachers/report') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-clock class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/teachers') && !request()->is('*/admin/attendance/teachers/report') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Attendance
+                            </a>
+
+                            {{-- Teacher Attendance Reports --}}
+                            <a href="{{ url('/admin/attendance/teachers/report') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/teachers/report*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-chart-bar class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/teachers/report*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Reports
+                            </a>
+                            @endif
+                        </div>
                     </div>
 
-                    {{-- Teachers --}}
-                    @if(($featureSettings['teachers'] ?? true))
-                    <a href="{{ url('/admin/teachers') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/teachers*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-users class="mr-3 h-5 w-5 {{ request()->is('*/admin/teachers*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Teachers
-                    </a>
-                    @endif
-
-                    {{-- Teacher Attendance --}}
-                    @if(($featureSettings['attendance'] ?? true))
-                    <a href="{{ url('/admin/attendance/teachers') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/teachers') && !request()->is('*/admin/attendance/teachers/report') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-clock class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/teachers') && !request()->is('*/admin/attendance/teachers/report') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Attendance
-                    </a>
-
-                    {{-- Teacher Attendance Reports --}}
-                    <a href="{{ url('/admin/attendance/teachers/report') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/teachers/report*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-chart-bar class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/teachers/report*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Reports
-                    </a>
-                    @endif
-
-                    {{-- LEARNING HEADER --}}
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Learning</p>
+                    {{-- LEARNING SECTION --}}
+                    @php
+                        $learningActive = request()->is('*/admin/lms*');
+                    @endphp
+                    <div class="sidebar-section" data-section="learning">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('learning')">
+                            <span>Learning</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $learningActive ? '' : 'hidden' }}" data-content="learning">
+                            {{-- Courses (LMS) --}}
+                            @if(($featureSettings['assignments'] ?? true))
+                            <a href="{{ url('/admin/lms/courses') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/lms/courses*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-book-open class="mr-3 h-5 w-5 {{ request()->is('*/admin/lms/courses*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Courses
+                            </a>
+                            @endif
+                        </div>
                     </div>
 
-                    {{-- Courses (LMS) --}}
-                    @if(($featureSettings['assignments'] ?? true))
-                    <a href="{{ url('/admin/lms/courses') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/lms/courses*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-book-open class="mr-3 h-5 w-5 {{ request()->is('*/admin/lms/courses*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Courses
-                    </a>
-                    @endif
+                    {{-- EXAMINATIONS SECTION --}}
+                    @php
+                        $examinationsActive = request()->is('*/admin/examinations*') || request()->is('*/admin/grades*');
+                    @endphp
+                    <div class="sidebar-section" data-section="examinations">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('examinations')">
+                            <span>Examinations</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $examinationsActive ? '' : 'hidden' }}" data-content="examinations">
+                            {{-- Grade Scales --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/examinations/grade-scales') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/grade-scales*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-scale class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/grade-scales*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Grade Scales
+                            </a>
+                            @endif
 
-                    {{-- EXAMINATIONS HEADER --}}
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Examinations</p>
+                            {{-- Exams --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/examinations/exams') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-text class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Exams
+                            </a>
+                            @endif
+
+                            {{-- Exam Schedules --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/examinations/schedules') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-calendar-days class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Exam Schedules
+                            </a>
+                            @endif
+
+                            {{-- Results Entry --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/examinations/results') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-check class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Results Entry
+                            </a>
+                            @endif
+
+                            {{-- Admit Cards --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/examinations/admit-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/admit-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-identification class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/admit-cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Admit Cards
+                            </a>
+                            @endif
+
+                            {{-- Report Cards --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/examinations/report-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/report-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-text class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/report-cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Report Cards
+                            </a>
+                            @endif
+
+                            {{-- Marks --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/grades/marks') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/grades/marks*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-pencil class="mr-3 h-4 w-4 {{ request()->is('*/admin/grades/marks*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Marks
+                            </a>
+                            @endif
+
+                            {{-- Grade Books --}}
+                            @if(($featureSettings['grades'] ?? true))
+                            <a href="{{ url('/admin/grades/grade-books') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/grades/grade-books*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-book-open class="mr-3 h-4 w-4 {{ request()->is('*/admin/grades/grade-books*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Grade Books
+                            </a>
+                            @endif
+                        </div>
                     </div>
 
-                    {{-- Grade Scales --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/examinations/grade-scales') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/grade-scales*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-scale class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/grade-scales*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Grade Scales
-                    </a>
-                    @endif
+                    {{-- LIBRARY SECTION --}}
+                    @php
+                        $libraryActive = request()->is('*/admin/library*');
+                    @endphp
+                    <div class="sidebar-section" data-section="library">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('library')">
+                            <span>Library</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $libraryActive ? '' : 'hidden' }}" data-content="library">
+                            {{-- Books --}}
+                            @if(($featureSettings['library'] ?? true))
+                            <a href="{{ url('/admin/library/books') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/library/books*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-book-open class="mr-3 h-4 w-4 {{ request()->is('*/admin/library/books*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Books
+                            </a>
+                            @endif
 
-                    {{-- Exams --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/examinations/exams') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-document-text class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Exams
-                    </a>
-                    @endif
+                            {{-- Book Issues --}}
+                            @if(($featureSettings['library'] ?? true))
+                            <a href="{{ url('/admin/library/issues') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/library/issues*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-duplicate class="mr-3 h-4 w-4 {{ request()->is('*/admin/library/issues*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Issues
+                            </a>
+                            @endif
 
-                    {{-- Exam Schedules --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/examinations/schedules') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-calendar-days class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Exam Schedules
-                    </a>
-                    @endif
-
-                    {{-- Results Entry --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/examinations/results') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-document-check class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Results Entry
-                    </a>
-                    @endif
-
-                    {{-- Admit Cards --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/examinations/admit-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/admit-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-identification class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/admit-cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Admit Cards
-                    </a>
-                    @endif
-
-                    {{-- Report Cards --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/examinations/report-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/report-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-document-text class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/report-cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Report Cards
-                    </a>
-                    @endif
-
-                    {{-- Marks --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/grades/marks') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/grades/marks*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-pencil class="mr-3 h-4 w-4 {{ request()->is('*/admin/grades/marks*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Marks
-                    </a>
-                    @endif
-
-                    {{-- Grade Books --}}
-                    @if(($featureSettings['grades'] ?? true))
-                    <a href="{{ url('/admin/grades/grade-books') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/grades/grade-books*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-book-open class="mr-3 h-4 w-4 {{ request()->is('*/admin/grades/grade-books*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Grade Books
-                    </a>
-                    @endif
-
-                    {{-- FINANCE HEADER --}}
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Finance</p>
+                            {{-- Book Categories --}}
+                            @if(($featureSettings['library'] ?? true))
+                            <a href="{{ url('/admin/library/categories') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/library/categories*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-folder class="mr-3 h-4 w-4 {{ request()->is('*/admin/library/categories*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Categories
+                            </a>
+                            @endif
+                        </div>
                     </div>
 
-                    {{-- Fee Collection --}}
-                    @if(($featureSettings['fees'] ?? true))
-                    <a href="{{ url('/admin/fees/collection') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection*') && !request()->is('*/admin/fees/collection/payments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-banknotes class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection*') && !request()->is('*/admin/fees/collection/payments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Fee Collection
-                    </a>
+                    {{-- FINANCE SECTION --}}
+                    @php
+                        $financeActive = request()->is('*/admin/fees*');
+                    @endphp
+                    <div class="sidebar-section" data-section="finance">
+                        <button type="button" class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors" onclick="toggleSection('finance')">
+                            <span>Finance</span>
+                            <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="sidebar-section-content {{ $financeActive ? '' : 'hidden' }}" data-content="finance">
+                            {{-- Fee Collection --}}
+                            @if(($featureSettings['fees'] ?? true))
+                            <a href="{{ url('/admin/fees/collection') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection*') && !request()->is('*/admin/fees/collection/payments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-banknotes class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection*') && !request()->is('*/admin/fees/collection/payments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Fee Collection
+                            </a>
 
-                    {{-- All Payments Tracking --}}
-                    <a href="{{ url('/admin/fees/collection/payments') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection/payments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-document-text class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection/payments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        All Payments
-                    </a>
+                            {{-- All Payments Tracking --}}
+                            <a href="{{ url('/admin/fees/collection/payments') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/collection/payments*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-text class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/collection/payments*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                All Payments
+                            </a>
 
-                    {{-- Fee Components --}}
-                    <a href="{{ url('/admin/fees/components') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/components*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-circle-stack class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/components*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Fee Components
-                    </a>
+                            {{-- Fee Components --}}
+                            <a href="{{ url('/admin/fees/components') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/components*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-circle-stack class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/components*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Fee Components
+                            </a>
 
-                    {{-- Fee Plans --}}
-                    <a href="{{ url('/admin/fees/plans') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/plans*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-document-text class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/plans*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Fee Plans
-                    </a>
+                            {{-- Fee Plans --}}
+                            <a href="{{ url('/admin/fees/plans') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/plans*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-text class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/plans*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Fee Plans
+                            </a>
 
-                    {{-- Fee Reports --}}
-                    <a href="{{ url('/admin/fees/reports') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-chart-bar-square class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Fee Reports
-                    </a>
+                            {{-- Fee Reports --}}
+                            <a href="{{ url('/admin/fees/reports') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-chart-bar-square class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Fee Reports
+                            </a>
 
-                    {{-- Fee Cards --}}
-                    <a href="{{ url('/admin/fees/cards') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-credit-card class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Fee Cards
-                    </a>
+                            {{-- Fee Cards --}}
+                            <a href="{{ url('/admin/fees/cards') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-credit-card class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Fee Cards
+                            </a>
 
-                    {{-- No Dues Certificates --}}
-                    <a href="{{ url('/admin/fees/no-dues') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/no-dues*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-document-check class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/no-dues*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        No Dues Certificates
-                    </a>
-                    @endif
+                            {{-- No Dues Certificates --}}
+                            <a href="{{ url('/admin/fees/no-dues') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/fees/no-dues*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-document-check class="mr-3 h-5 w-5 {{ request()->is('*/admin/fees/no-dues*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                No Dues Certificates
+                            </a>
+                            @endif
+                        </div>
+                    </div>
 
                     {{-- SETTINGS HEADER --}}
                     <div class="pt-4 pb-2">
@@ -494,7 +586,71 @@
             sidebar.classList.add('-translate-x-full');
             overlay.classList.add('hidden');
         });
+
+        // Collapsible sidebar sections
+        function toggleSection(sectionName) {
+            const section = document.querySelector(`[data-section="${sectionName}"]`);
+            const content = section.querySelector(`[data-content="${sectionName}"]`);
+            const icon = section.querySelector('.section-icon');
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                // Save state to localStorage
+                localStorage.setItem(`sidebar-section-${sectionName}`, 'open');
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+                // Save state to localStorage
+                localStorage.setItem(`sidebar-section-${sectionName}`, 'closed');
+            }
+        }
+
+        // Initialize section states from localStorage and active states
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.sidebar-section');
+            sections.forEach(section => {
+                const sectionName = section.getAttribute('data-section');
+                const content = section.querySelector(`[data-content="${sectionName}"]`);
+                const icon = section.querySelector('.section-icon');
+
+                // Check if section has active link (should be open)
+                const hasActive = content.querySelector('a.bg-primary-100, a.text-primary-700');
+
+                // Get saved state from localStorage
+                const savedState = localStorage.getItem(`sidebar-section-${sectionName}`);
+
+                // If section has active link, always open it
+                if (hasActive) {
+                    content.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                } else if (savedState === 'open') {
+                    // Restore saved open state
+                    content.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    // Default to closed
+                    content.classList.add('hidden');
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        });
     </script>
+
+    <style>
+        .sidebar-section-content {
+            transition: all 0.3s ease-in-out;
+            overflow: hidden;
+        }
+        .sidebar-section-content.hidden {
+            max-height: 0;
+            opacity: 0;
+        }
+        .sidebar-section-content:not(.hidden) {
+            max-height: 1000px;
+            opacity: 1;
+        }
+    </style>
 
     <!-- Stack for additional scripts from views -->
     @stack('scripts')

@@ -408,6 +408,34 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('grade-books/{id}/print', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'print'])->name('grade-books.print');
         });
 
+        // Library Management (requires library feature)
+        Route::prefix('library')->name('library.')->middleware('feature:library')->group(function () {
+            // Books
+            Route::get('books', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'index'])->name('books.index');
+            Route::get('books/create', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'create'])->name('books.create');
+            Route::post('books', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'store'])->name('books.store');
+            Route::get('books/{id}', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'show'])->name('books.show');
+            Route::get('books/{id}/edit', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'edit'])->name('books.edit');
+            Route::put('books/{id}', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'update'])->name('books.update');
+            Route::delete('books/{id}', [\App\Http\Controllers\Tenant\Admin\LibraryController::class, 'destroy'])->name('books.destroy');
+
+            // Book Issues
+            Route::get('issues', [\App\Http\Controllers\Tenant\Admin\BookIssueController::class, 'index'])->name('issues.index');
+            Route::get('issues/create', [\App\Http\Controllers\Tenant\Admin\BookIssueController::class, 'create'])->name('issues.create');
+            Route::post('issues', [\App\Http\Controllers\Tenant\Admin\BookIssueController::class, 'store'])->name('issues.store');
+            Route::get('issues/{id}', [\App\Http\Controllers\Tenant\Admin\BookIssueController::class, 'show'])->name('issues.show');
+            Route::post('issues/{id}/return', [\App\Http\Controllers\Tenant\Admin\BookIssueController::class, 'returnBook'])->name('issues.return');
+            Route::post('issues/{id}/renew', [\App\Http\Controllers\Tenant\Admin\BookIssueController::class, 'renewBook'])->name('issues.renew');
+
+            // Book Categories
+            Route::get('categories', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'index'])->name('categories.index');
+            Route::get('categories/create', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'create'])->name('categories.create');
+            Route::post('categories', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'store'])->name('categories.store');
+            Route::get('categories/{id}/edit', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'edit'])->name('categories.edit');
+            Route::put('categories/{id}', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'update'])->name('categories.update');
+            Route::delete('categories/{id}', [\App\Http\Controllers\Tenant\Admin\BookCategoryController::class, 'destroy'])->name('categories.destroy');
+        });
+
         // Examinations Module (requires exams feature)
         Route::prefix('examinations')->name('examinations.')->middleware('feature:exams')->group(function () {
             // Exams
