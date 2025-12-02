@@ -246,22 +246,29 @@
 - `vehicles` table (id, tenant_id, vehicle_number, vehicle_type, capacity, driver_id, route_id, status)
 - `routes` table (id, tenant_id, name, start_location, end_location, distance, fare, status)
 - `route_stops` table (id, route_id, stop_name, stop_order, fare_from_start)
-- `transport_assignments` table (id, tenant_id, student_id, route_id, vehicle_id, stop_id, start_date, end_date, status)
+- `transport_assignments` table (id, tenant_id, student_id, route_id, vehicle_id, stop_id, start_date, end_date, status, booking_date, booking_status)
 - `drivers` table (id, tenant_id, name, phone, license_number, address, status)
+- `transport_bills` table (id, tenant_id, student_id, assignment_id, bill_number, bill_date, due_date, total_amount, paid_amount, discount_amount, tax_amount, net_amount, status, academic_year, term)
+- `transport_bill_items` table (id, bill_id, description, quantity, unit_price, discount, amount)
+- `transport_payments` table (id, tenant_id, student_id, bill_id, payment_number, payment_date, amount, payment_method, transaction_id, reference_number, status, collected_by, notes)
 
 ##### Controllers
 
 - `TransportController.php` - Route & vehicle management
 - `VehicleController.php` - Vehicle management
 - `DriverController.php` - Driver management
-- `TransportAssignmentController.php` - Student assignments
+- `TransportAssignmentController.php` - Student assignments & booking
+- `TransportBillController.php` - Transport billing & invoice management
+- `TransportPaymentController.php` - Transport payment collection
 
 ##### Views
 
 - `transport/routes/*` (index, create, edit, show)
 - `transport/vehicles/*` (index, create, edit, show)
 - `transport/drivers/*` (index, create, edit, show)
-- `transport/assignments/*` (index, create, edit)
+- `transport/assignments/*` (index, create, edit, booking)
+- `transport/bills/*` (index, create, edit, show, print)
+- `transport/payments/*` (index, collect, show, receipt)
 - `transport/reports/*` (index)
 
 ##### Routes
@@ -269,20 +276,42 @@
 - `/admin/transport/routes`
 - `/admin/transport/vehicles`
 - `/admin/transport/drivers`
-- `/admin/transport/assignments`
+- `/admin/transport/assignments` (includes booking)
+- `/admin/transport/bills` (billing & invoices)
+- `/admin/transport/payments` (payment collection)
 - `/admin/transport/reports`
 
 ##### Features
 
-- Route management
-- Vehicle management
-- Driver management
-- Student transport assignment
-- Transport fee collection
+- Route management (with stops and fare calculation)
+- Vehicle management (assign drivers, track capacity)
+- Driver management (profiles, licenses, contact info)
+- Student transport booking/assignment
+  - Book transport for students
+  - Assign to routes and vehicles
+  - Select pickup/drop points
+  - Manage booking status
+- Transport billing system
+  - Generate transport bills/invoices
+  - Monthly/term-wise billing
+  - Bill items (route fare, stop charges, etc.)
+  - Discount and tax support
+  - Bill printing
+- Transport payment collection
+  - Collect payments against bills
+  - Multiple payment methods
+  - Payment receipts
+  - Payment history tracking
+  - Outstanding balance tracking
 - Transport reports
+  - Route utilization
+  - Vehicle occupancy
+  - Payment reports
+  - Outstanding bills
+  - Student transport history
 
-**Estimated Time:** 3 weeks  
-**Dependencies:** Students
+**Estimated Time:** 3-4 weeks  
+**Dependencies:** Students, Fees module (for payment patterns)
 
 ---
 
