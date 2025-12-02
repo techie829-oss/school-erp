@@ -227,33 +227,36 @@ class MarkController extends Controller
         $subjectId = $request->get('subject_id');
         $examId = $request->get('exam_id');
 
-        if (!$classId || !$subjectId) {
-            return redirect(url('/admin/grades/marks'))
-                ->with('error', 'Please select class and subject first.');
-        }
-
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $subjects = Subject::forTenant($tenant->id)->active()->get();
         $exams = Exam::forTenant($tenant->id)->where('status', '!=', 'archived')->get();
 
-        // Get students for the class/section
-        $studentsQuery = Student::forTenant($tenant->id)
-            ->whereHas('currentEnrollment', function($q) use ($classId, $sectionId) {
-                $q->where('class_id', $classId);
-                if ($sectionId) {
-                    $q->where('section_id', $sectionId);
-                }
-            })
-            ->with('currentEnrollment')
-            ->active();
+        $students = collect();
+        $sections = collect();
 
-        $students = $studentsQuery->orderBy('full_name')->get();
+        // Only load students and sections if class is selected
+        if ($classId) {
+            // Get sections for the class
+            $sections = Section::forTenant($tenant->id)
+                ->where('class_id', $classId)
+                ->orderBy('section_name')
+                ->get();
 
-        // Get sections for the class
-        $sections = Section::forTenant($tenant->id)
-            ->where('class_id', $classId)
-            ->orderBy('section_name')
-            ->get();
+            // Get students for the class/section if both class and subject are selected
+            if ($subjectId) {
+                $studentsQuery = Student::forTenant($tenant->id)
+                    ->whereHas('currentEnrollment', function($q) use ($classId, $sectionId) {
+                        $q->where('class_id', $classId);
+                        if ($sectionId) {
+                            $q->where('section_id', $sectionId);
+                        }
+                    })
+                    ->with('currentEnrollment')
+                    ->active();
+
+                $students = $studentsQuery->orderBy('full_name')->get();
+            }
+        }
 
         return view('tenant.admin.grades.marks.entry', compact(
             'classes', 'sections', 'subjects', 'exams', 'students', 'tenant',

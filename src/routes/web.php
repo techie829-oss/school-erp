@@ -387,6 +387,27 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::delete('grade-scales/{id}', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'destroy'])->name('grade-scales.destroy');
         });
 
+        // Grades & Marks Management
+        Route::prefix('grades')->name('grades.')->middleware('feature:grades')->group(function () {
+            // Marks
+            Route::get('marks', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'index'])->name('marks.index');
+            Route::get('marks/create', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'create'])->name('marks.create');
+            Route::post('marks', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'store'])->name('marks.store');
+            Route::get('marks/entry', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'entry'])->name('marks.entry');
+            Route::post('marks/bulk-entry', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'bulkEntry'])->name('marks.bulk-entry');
+            Route::get('marks/{id}/edit', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'edit'])->name('marks.edit');
+            Route::put('marks/{id}', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'update'])->name('marks.update');
+            Route::delete('marks/{id}', [\App\Http\Controllers\Tenant\Admin\MarkController::class, 'destroy'])->name('marks.destroy');
+
+            // Grade Books
+            Route::get('grade-books', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'index'])->name('grade-books.index');
+            Route::get('grade-books/generate', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'generate'])->name('grade-books.generate');
+            Route::post('grade-books', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'store'])->name('grade-books.store');
+            Route::post('grade-books/bulk', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'bulkGenerate'])->name('grade-books.bulk-generate');
+            Route::get('grade-books/{id}', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'show'])->name('grade-books.show');
+            Route::get('grade-books/{id}/print', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'print'])->name('grade-books.print');
+        });
+
         // Examinations Module (requires exams feature)
         Route::prefix('examinations')->name('examinations.')->middleware('feature:exams')->group(function () {
             // Exams

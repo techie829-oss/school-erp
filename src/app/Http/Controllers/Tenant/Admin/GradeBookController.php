@@ -87,7 +87,7 @@ class GradeBookController extends Controller
         $gradeBooks = $query->latest('generated_at')->paginate(20)->withQueryString();
 
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
-        
+
         // Get available academic years from marks
         $academicYears = Mark::forTenant($tenant->id)
             ->distinct()
@@ -136,7 +136,7 @@ class GradeBookController extends Controller
             $yearParts = explode('-', $gradeBook->academic_year);
             $startYear = (int)$yearParts[0];
             $endYear = (int)$yearParts[1] ?? $startYear + 1;
-            
+
             $marksQuery->whereBetween('assessment_date', [
                 $startYear . '-04-01',
                 $endYear . '-03-31'
@@ -248,7 +248,7 @@ class GradeBookController extends Controller
                 $yearParts = explode('-', $request->academic_year);
                 $startYear = (int)$yearParts[0];
                 $endYear = (int)$yearParts[1] ?? $startYear + 1;
-                
+
                 $marksQuery->whereBetween('assessment_date', [
                     $startYear . '-04-01',
                     $endYear . '-03-31'
@@ -400,7 +400,7 @@ class GradeBookController extends Controller
                     $yearParts = explode('-', $request->academic_year);
                     $startYear = (int)$yearParts[0];
                     $endYear = (int)$yearParts[1] ?? $startYear + 1;
-                    
+
                     $marksQuery->whereBetween('assessment_date', [
                         $startYear . '-04-01',
                         $endYear . '-03-31'
@@ -503,7 +503,7 @@ class GradeBookController extends Controller
             $yearParts = explode('-', $gradeBook->academic_year);
             $startYear = (int)$yearParts[0];
             $endYear = (int)$yearParts[1] ?? $startYear + 1;
-            
+
             $marksQuery->whereBetween('assessment_date', [
                 $startYear . '-04-01',
                 $endYear . '-03-31'
@@ -545,7 +545,7 @@ class GradeBookController extends Controller
 
         foreach ($gradeBooks as $gradeBook) {
             // If percentage and total are different from previous, increment rank
-            if ($previousPercentage !== null && 
+            if ($previousPercentage !== null &&
                 ($gradeBook->percentage != $previousPercentage || $gradeBook->total_marks != $previousTotal)) {
                 $rank = $gradeBooks->where('percentage', '>', $gradeBook->percentage)
                     ->count() + 1;

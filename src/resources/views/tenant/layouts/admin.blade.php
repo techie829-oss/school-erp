@@ -322,6 +322,22 @@
                     </a>
                     @endif
 
+                    {{-- Marks --}}
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/grades/marks') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/grades/marks*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-pencil class="mr-3 h-4 w-4 {{ request()->is('*/admin/grades/marks*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        Marks
+                    </a>
+                    @endif
+
+                    {{-- Grade Books --}}
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/grades/grade-books') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/grades/grade-books*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-book-open class="mr-3 h-4 w-4 {{ request()->is('*/admin/grades/grade-books*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        Grade Books
+                    </a>
+                    @endif
+
                     {{-- FINANCE HEADER --}}
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Finance</p>
