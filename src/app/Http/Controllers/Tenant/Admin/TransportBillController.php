@@ -1,0 +1,194 @@
+<?php
+
+namespace App\Http\Controllers\Tenant\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\TransportBill;
+use App\Models\TransportBillItem;
+use App\Models\TransportAssignment;
+use App\Models\Student;
+use App\Services\TenantService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+class TransportBillController extends Controller
+{
+    protected $tenantService;
+
+    public function __construct(TenantService $tenantService)
+    {
+        $this->tenantService = $tenantService;
+    }
+
+    protected function getTenant(Request $request)
+    {
+        $tenant = $request->attributes->get('current_tenant');
+        if (!$tenant) {
+            $tenant = $this->tenantService->getCurrentTenant($request);
+        }
+        if (!$tenant) {
+            abort(404, 'Tenant not found');
+        }
+        return $tenant;
+    }
+
+    public function index(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $query = TransportBill::forTenant($tenant->id)
+            ->with(['student', 'assignment.route']);
+
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('student_id') && $request->student_id) {
+            $query->where('student_id', $request->student_id);
+        }
+
+        if ($request->has('search') && $request->search) {
+            $query->where('bill_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('student', function($q) use ($request) {
+                      $q->where('full_name', 'like', '%' . $request->search . '%')
+                        ->orWhere('admission_number', 'like', '%' . $request->search . '%');
+                  });
+        }
+
+        $bills = $query->latest('bill_date')->paginate(20)->withQueryString();
+        $students = Student::forTenant($tenant->id)->active()->orderBy('full_name')->get();
+
+        return view('tenant.admin.transport.bills.index', compact('bills', 'students', 'tenant'));
+    }
+
+    public function create(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+        $students = Student::forTenant($tenant->id)->active()->orderBy('full_name')->get();
+        $assignments = TransportAssignment::forTenant($tenant->id)
+            ->where('status', 'active')
+            ->where('booking_status', 'active')
+            ->with(['student', 'route'])
+            ->orderBy('booking_date')
+            ->get();
+
+        return view('tenant.admin.transport.bills.create', compact('students', 'assignments', 'tenant'));
+    }
+
+    public function store(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $validator = Validator::make($request->all(), [
+            'student_id' => 'required|exists:students,id',
+            'assignment_id' => 'nullable|exists:transport_assignments,id',
+            'bill_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:bill_date',
+            'academic_year' => 'nullable|string|max:50',
+            'term' => 'nullable|string|max:50',
+            'items' => 'required|array|min:1',
+            'items.*.description' => 'required|string|max:255',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.discount' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            // Calculate totals
+            $totalAmount = 0;
+            foreach ($request->items as $item) {
+                $itemAmount = ($item['unit_price'] * $item['quantity']) - ($item['discount'] ?? 0);
+                $totalAmount += $itemAmount;
+            }
+
+            $discountAmount = $request->discount_amount ?? 0;
+            $taxAmount = $request->tax_amount ?? 0;
+            $netAmount = $totalAmount - $discountAmount + $taxAmount;
+
+            $bill = TransportBill::create([
+                'tenant_id' => $tenant->id,
+                'student_id' => $request->student_id,
+                'assignment_id' => $request->assignment_id,
+                'bill_number' => TransportBill::generateBillNumber($tenant->id),
+                'bill_date' => $request->bill_date,
+                'due_date' => $request->due_date,
+                'academic_year' => $request->academic_year,
+                'term' => $request->term,
+                'total_amount' => $totalAmount,
+                'discount_amount' => $discountAmount,
+                'tax_amount' => $taxAmount,
+                'net_amount' => $netAmount,
+                'paid_amount' => 0,
+                'status' => 'sent',
+                'notes' => $request->notes,
+            ]);
+
+            // Create bill items
+            foreach ($request->items as $item) {
+                $itemAmount = ($item['unit_price'] * $item['quantity']) - ($item['discount'] ?? 0);
+                TransportBillItem::create([
+                    'bill_id' => $bill->id,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'discount' => $item['discount'] ?? 0,
+                    'amount' => $itemAmount,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect(url('/admin/transport/bills'))->with('success', 'Transport bill created successfully. Bill Number: ' . $bill->bill_number);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to create bill: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function show(Request $request, $id)
+    {
+        $tenant = $this->getTenant($request);
+        $bill = TransportBill::forTenant($tenant->id)
+            ->with(['student', 'assignment.route', 'items', 'payments.collectedBy'])
+            ->findOrFail($id);
+
+        return view('tenant.admin.transport.bills.show', compact('bill', 'tenant'));
+    }
+
+    public function print(Request $request, $id)
+    {
+        $tenant = $this->getTenant($request);
+        $bill = TransportBill::forTenant($tenant->id)
+            ->with(['student', 'assignment.route', 'items'])
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('tenant.admin.transport.bills.print', compact('bill', 'tenant'));
+        return $pdf->download('transport-bill-' . $bill->bill_number . '.pdf');
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $tenant = $this->getTenant($request);
+        $bill = TransportBill::forTenant($tenant->id)
+            ->withCount('payments')
+            ->findOrFail($id);
+
+        if ($bill->payments_count > 0) {
+            return back()->with('error', 'Cannot delete bill with existing payments.');
+        }
+
+        $bill->delete();
+
+        return redirect(url('/admin/transport/bills'))->with('success', 'Bill deleted successfully.');
+    }
+}

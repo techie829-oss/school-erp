@@ -408,6 +408,61 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('grade-books/{id}/print', [\App\Http\Controllers\Tenant\Admin\GradeBookController::class, 'print'])->name('grade-books.print');
         });
 
+        // Transport Management (requires transport feature)
+        Route::prefix('transport')->name('transport.')->middleware('feature:transport')->group(function () {
+            // Routes
+            Route::get('routes', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'index'])->name('routes.index');
+            Route::get('routes/create', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'create'])->name('routes.create');
+            Route::post('routes', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'store'])->name('routes.store');
+            Route::get('routes/{id}', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'show'])->name('routes.show');
+            Route::get('routes/{id}/edit', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'edit'])->name('routes.edit');
+            Route::put('routes/{id}', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'update'])->name('routes.update');
+            Route::delete('routes/{id}', [\App\Http\Controllers\Tenant\Admin\RouteController::class, 'destroy'])->name('routes.destroy');
+
+            // Vehicles
+            Route::get('vehicles', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'index'])->name('vehicles.index');
+            Route::get('vehicles/create', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'create'])->name('vehicles.create');
+            Route::post('vehicles', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'store'])->name('vehicles.store');
+            Route::get('vehicles/{id}', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'show'])->name('vehicles.show');
+            Route::get('vehicles/{id}/edit', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'edit'])->name('vehicles.edit');
+            Route::put('vehicles/{id}', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'update'])->name('vehicles.update');
+            Route::delete('vehicles/{id}', [\App\Http\Controllers\Tenant\Admin\VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
+            // Drivers
+            Route::get('drivers', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'index'])->name('drivers.index');
+            Route::get('drivers/create', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'create'])->name('drivers.create');
+            Route::post('drivers', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'store'])->name('drivers.store');
+            Route::get('drivers/{id}', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'show'])->name('drivers.show');
+            Route::get('drivers/{id}/edit', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'edit'])->name('drivers.edit');
+            Route::put('drivers/{id}', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'update'])->name('drivers.update');
+            Route::delete('drivers/{id}', [\App\Http\Controllers\Tenant\Admin\DriverController::class, 'destroy'])->name('drivers.destroy');
+
+            // Transport Assignments (Bookings)
+            Route::get('assignments', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'index'])->name('assignments.index');
+            Route::get('assignments/create', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'create'])->name('assignments.create');
+            Route::post('assignments', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'store'])->name('assignments.store');
+            Route::get('assignments/{id}', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'show'])->name('assignments.show');
+            Route::get('assignments/{id}/edit', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'edit'])->name('assignments.edit');
+            Route::put('assignments/{id}', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'update'])->name('assignments.update');
+            Route::delete('assignments/{id}', [\App\Http\Controllers\Tenant\Admin\TransportAssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+            // Transport Bills
+            Route::get('bills', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'index'])->name('bills.index');
+            Route::get('bills/create', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'create'])->name('bills.create');
+            Route::post('bills', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'store'])->name('bills.store');
+            Route::get('bills/{id}', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'show'])->name('bills.show');
+            Route::get('bills/{id}/print', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'print'])->name('bills.print');
+            Route::delete('bills/{id}', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'destroy'])->name('bills.destroy');
+
+            // Transport Payments
+            Route::get('payments', [\App\Http\Controllers\Tenant\Admin\TransportPaymentController::class, 'index'])->name('payments.index');
+            Route::get('payments/collect', [\App\Http\Controllers\Tenant\Admin\TransportPaymentController::class, 'collect'])->name('payments.collect');
+            Route::get('payments/collect/{studentId}', [\App\Http\Controllers\Tenant\Admin\TransportPaymentController::class, 'collect'])->name('payments.collect.student');
+            Route::post('payments', [\App\Http\Controllers\Tenant\Admin\TransportPaymentController::class, 'store'])->name('payments.store');
+            Route::get('payments/{id}', [\App\Http\Controllers\Tenant\Admin\TransportPaymentController::class, 'show'])->name('payments.show');
+            Route::get('payments/{id}/receipt', [\App\Http\Controllers\Tenant\Admin\TransportPaymentController::class, 'receipt'])->name('payments.receipt');
+        });
+
         // Library Management (requires library feature)
         Route::prefix('library')->name('library.')->middleware('feature:library')->group(function () {
             // Books
