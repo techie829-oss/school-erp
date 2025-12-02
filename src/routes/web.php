@@ -450,6 +450,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('bills', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'index'])->name('bills.index');
             Route::get('bills/create', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'create'])->name('bills.create');
             Route::post('bills', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'store'])->name('bills.store');
+            Route::get('bills/reports', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'reports'])->name('bills.reports');
             Route::get('bills/{id}', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'show'])->name('bills.show');
             Route::get('bills/{id}/print', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'print'])->name('bills.print');
             Route::delete('bills/{id}', [\App\Http\Controllers\Tenant\Admin\TransportBillController::class, 'destroy'])->name('bills.destroy');

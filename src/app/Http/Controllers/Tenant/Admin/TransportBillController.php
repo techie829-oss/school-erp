@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\TransportBill;
 use App\Models\TransportBillItem;
 use App\Models\TransportAssignment;
+use App\Models\TransportPayment;
+use App\Models\Route;
 use App\Models\Student;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
@@ -190,5 +192,158 @@ class TransportBillController extends Controller
         $bill->delete();
 
         return redirect(url('/admin/transport/bills'))->with('success', 'Bill deleted successfully.');
+    }
+
+    public function reports(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $students = Student::forTenant($tenant->id)->active()->orderBy('full_name')->get();
+        $routes = Route::forTenant($tenant->id)->active()->orderBy('name')->get();
+
+        // Check if report generation requested
+        if (!$request->has('report_type')) {
+            return view('tenant.admin.transport.reports', compact('students', 'routes', 'tenant'));
+        }
+
+        $reportType = $request->get('report_type', 'collection');
+        $fromDate = $request->get('from_date', now()->startOfMonth()->format('Y-m-d'));
+        $toDate = $request->get('to_date', now()->format('Y-m-d'));
+        $studentId = $request->get('student_id');
+        $routeId = $request->get('route_id');
+
+        $reportData = null;
+        $summary = null;
+
+        switch ($reportType) {
+            case 'collection':
+                list($reportData, $summary) = $this->getCollectionReport($tenant, $fromDate, $toDate, $studentId, $routeId);
+                break;
+            case 'outstanding':
+                list($reportData, $summary) = $this->getOutstandingReport($tenant, $studentId, $routeId);
+                break;
+            case 'route_wise':
+                list($reportData, $summary) = $this->getRouteWiseReport($tenant, $fromDate, $toDate);
+                break;
+            case 'payment_method':
+                list($reportData, $summary) = $this->getPaymentMethodReport($tenant, $fromDate, $toDate);
+                break;
+        }
+
+        return view('tenant.admin.transport.reports', compact('students', 'routes', 'tenant', 'reportData', 'summary'));
+    }
+
+    private function getCollectionReport($tenant, $fromDate, $toDate, $studentId = null, $routeId = null)
+    {
+        $query = TransportPayment::forTenant($tenant->id)
+            ->whereBetween('payment_date', [$fromDate, $toDate])
+            ->with(['student', 'bill']);
+
+        if ($studentId) {
+            $query->where('student_id', $studentId);
+        }
+
+        if ($routeId) {
+            $query->whereHas('bill.assignment', function($q) use ($routeId) {
+                $q->where('route_id', $routeId);
+            });
+        }
+
+        $payments = $query->orderBy('payment_date', 'desc')->get();
+
+        $summary = [
+            'total_payments' => $payments->count(),
+            'total_amount' => $payments->sum('amount'),
+            'average_payment' => $payments->count() > 0 ? $payments->sum('amount') / $payments->count() : 0,
+        ];
+
+        return [$payments, $summary];
+    }
+
+    private function getOutstandingReport($tenant, $studentId = null, $routeId = null)
+    {
+        $query = TransportBill::forTenant($tenant->id)
+            ->whereIn('status', ['sent', 'partial', 'overdue'])
+            ->with(['student', 'assignment.route']);
+
+        if ($studentId) {
+            $query->where('student_id', $studentId);
+        }
+
+        if ($routeId) {
+            $query->whereHas('assignment', function($q) use ($routeId) {
+                $q->where('route_id', $routeId);
+            });
+        }
+
+        $bills = $query->orderBy('due_date')->get();
+
+        $summary = [
+            'total_bills' => $bills->count(),
+            'total_outstanding' => $bills->sum('outstanding_amount'),
+            'total_amount' => $bills->sum('net_amount'),
+            'total_paid' => $bills->sum('paid_amount'),
+        ];
+
+        return [$bills, $summary];
+    }
+
+    private function getRouteWiseReport($tenant, $fromDate, $toDate)
+    {
+        $bills = TransportBill::forTenant($tenant->id)
+            ->whereBetween('bill_date', [$fromDate, $toDate])
+            ->with(['assignment.route'])
+            ->get();
+
+        $routeData = $bills->groupBy(function($bill) {
+            return $bill->assignment->route->name ?? 'Unassigned';
+        })->map(function($bills) {
+            return [
+                'route_name' => $bills->first()->assignment->route->name ?? 'Unassigned',
+                'total_bills' => $bills->count(),
+                'total_amount' => $bills->sum('net_amount'),
+                'total_collected' => $bills->sum('paid_amount'),
+                'total_outstanding' => $bills->sum('outstanding_amount'),
+            ];
+        })->values();
+
+        $summary = [
+            'total_routes' => $routeData->count(),
+            'total_bills' => $bills->count(),
+            'total_amount' => $bills->sum('net_amount'),
+            'total_collected' => $bills->sum('paid_amount'),
+            'total_outstanding' => $bills->sum('outstanding_amount'),
+        ];
+
+        return [$routeData, $summary];
+    }
+
+    private function getPaymentMethodReport($tenant, $fromDate, $toDate)
+    {
+        $payments = TransportPayment::forTenant($tenant->id)
+            ->whereBetween('payment_date', [$fromDate, $toDate])
+            ->get();
+
+        $methodData = $payments->groupBy('payment_method')->map(function($payments, $method) {
+            return [
+                'method' => ucfirst(str_replace('_', ' ', $method)),
+                'count' => $payments->count(),
+                'total_amount' => $payments->sum('amount'),
+                'percentage' => 0, // Will calculate after
+            ];
+        })->values();
+
+        $totalAmount = $payments->sum('amount');
+        $methodData = $methodData->map(function($item) use ($totalAmount) {
+            $item['percentage'] = $totalAmount > 0 ? ($item['total_amount'] / $totalAmount) * 100 : 0;
+            return $item;
+        });
+
+        $summary = [
+            'total_payments' => $payments->count(),
+            'total_amount' => $totalAmount,
+        ];
+
+        return [$methodData, $summary];
     }
 }

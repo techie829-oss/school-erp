@@ -480,6 +480,14 @@
                                 Payments
                             </a>
                             @endif
+
+                            {{-- Reports --}}
+                            @if(($featureSettings['transport'] ?? true))
+                            <a href="{{ url('/admin/transport/bills/reports') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/transport/bills/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-chart-bar class="mr-3 h-4 w-4 {{ request()->is('*/admin/transport/bills/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Reports
+                            </a>
+                            @endif
                         </div>
                     </div>
 
