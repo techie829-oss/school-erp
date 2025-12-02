@@ -313,7 +313,7 @@ class TransportSeeder extends Seeder
         foreach ($activeAssignments as $index => $assignment) {
             // Generate unique bill number per tenant
             $billNumber = TransportBill::generateBillNumber($tenantId);
-            
+
             // If bill number already exists, add tenant prefix
             if (TransportBill::where('bill_number', $billNumber)->exists()) {
                 $tenantPrefix = strtoupper(substr($tenantId, 0, 3));
@@ -377,13 +377,13 @@ class TransportSeeder extends Seeder
             if ($bill->status === 'paid' || $bill->status === 'partial') {
                 // Generate unique payment number per tenant
                 $paymentNumber = TransportPayment::generatePaymentNumber($tenantId);
-                
+
                 // If payment number already exists, add tenant prefix
                 if (TransportPayment::where('payment_number', $paymentNumber)->exists()) {
                     $tenantPrefix = strtoupper(substr($tenantId, 0, 3));
                     $paymentNumber = $tenantPrefix . '-' . $paymentNumber;
                 }
-                
+
                 $paymentMethod = $paymentMethods[array_rand($paymentMethods)];
 
                 $payments[] = TransportPayment::create([
