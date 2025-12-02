@@ -67,15 +67,23 @@ class DepartmentSeeder extends Seeder
         ];
 
         foreach ($departments as $dept) {
-            Department::create([
-                'tenant_id' => $tenant->id,
-                'department_name' => $dept['department_name'],
-                'department_code' => $dept['department_code'],
-                'description' => $dept['description'],
-                'is_active' => true,
-            ]);
+            $department = Department::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'department_name' => $dept['department_name'],
+                ],
+                [
+                    'department_code' => $dept['department_code'],
+                    'description' => $dept['description'],
+                    'is_active' => true,
+                ]
+            );
 
-            $this->command->info("✓ Created: {$dept['department_name']}");
+            if ($department->wasRecentlyCreated) {
+                $this->command->info("✓ Created: {$dept['department_name']}");
+            } else {
+                $this->command->info("⊘ Exists: {$dept['department_name']}");
+            }
         }
 
         $this->command->info("\n✅ Successfully created " . count($departments) . " departments!");

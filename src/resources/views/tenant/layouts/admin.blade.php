@@ -282,42 +282,45 @@
                     </a>
                     @endif
 
-                    {{-- TODO: Implement these examination features --}}
                     {{-- Exams --}}
-                    {{-- <a href="{{ url('/admin/examinations/exams') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/examinations/exams') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-document-text class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Exams
-                    </a> --}}
+                    </a>
+                    @endif
 
                     {{-- Exam Schedules --}}
-                    {{-- <a href="{{ url('/admin/examinations/schedules') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/examinations/schedules') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-calendar-days class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Exam Schedules
-                    </a> --}}
+                    </a>
+                    @endif
 
                     {{-- Results Entry --}}
-                    {{-- <a href="{{ url('/admin/examinations/results') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/examinations/results') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-document-check class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/results*') || request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Results Entry
-                    </a> --}}
+                    </a>
+                    @endif
 
                     {{-- Admit Cards --}}
-                    {{-- <a href="{{ url('/admin/examinations/admit-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/admit-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/examinations/admit-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/admit-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-identification class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/admit-cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Admit Cards
-                    </a> --}}
+                    </a>
+                    @endif
 
                     {{-- Report Cards --}}
-                    {{-- <a href="{{ url('/admin/examinations/report-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/report-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    @if(($featureSettings['grades'] ?? true))
+                    <a href="{{ url('/admin/examinations/report-cards') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/report-cards*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-document-text class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/report-cards*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Report Cards
-                    </a> --}}
-
-                    {{-- Examination Reports --}}
-                    {{-- <a href="{{ url('/admin/examinations/reports') }}" class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/reports*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <x-heroicon-o-chart-bar-square class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/reports*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                        Reports
-                    </a> --}}
+                    </a>
+                    @endif
 
                     {{-- FINANCE HEADER --}}
                     <div class="pt-4 pb-2">

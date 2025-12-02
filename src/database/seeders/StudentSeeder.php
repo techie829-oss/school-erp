@@ -36,6 +36,17 @@ class StudentSeeder extends Seeder
         $academicYear = $currentYear . '-' . ($currentYear + 1);
         $totalStudents = 0;
 
+        // Get highest existing admission number globally (admission_number is globally unique)
+        $year = now()->year;
+        $maxAdmissionNumber = Student::where('admission_number', 'like', "STU-{$year}-%")
+            ->pluck('admission_number')
+            ->map(function($id) {
+                return (int) substr($id, -3);
+            })
+            ->max();
+
+        $nextAdmissionNumber = $maxAdmissionNumber ? $maxAdmissionNumber + 1 : 1;
+
         // Sample first names
         $maleNames = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Arnav', 'Ayaan', 'Krishna', 'Ishaan', 'Shaurya', 'Atharv', 'Advait', 'Pranav', 'Ved'];
         $femaleNames = ['Aadhya', 'Ananya', 'Pari', 'Anika', 'Sara', 'Diya', 'Navya', 'Ira', 'Myra', 'Saanvi', 'Kiara', 'Avni', 'Riya', 'Aarohi', 'Shanaya'];
@@ -50,6 +61,7 @@ class StudentSeeder extends Seeder
             foreach ($class->sections as $section) {
                 // Create 8-12 students per section
                 $studentsPerSection = rand(8, 12);
+                $createdInSection = 0;
 
                 for ($i = 1; $i <= $studentsPerSection; $i++) {
                     $gender = fake()->randomElement(['male', 'female']);
@@ -63,13 +75,42 @@ class StudentSeeder extends Seeder
                     $dob = now()->subYears($ageForClass)->subMonths(rand(0, 11))->format('Y-m-d');
 
                     // Generate unique email
-                    $uniqueId = $class->class_numeric . $section->section_name . $i;
+                    $uniqueId = $class->class_numeric . $section->section_name . $i . time() . rand(1000, 9999);
                     $email = strtolower($firstName . '.' . $lastName . $uniqueId . '@student.school.com');
 
+                    // Check if email already exists globally
+                    if (Student::where('email', $email)->exists()) {
+                        continue; // Skip this student
+                    }
+
+                    // Generate unique admission number (globally unique)
+                    $admissionNumber = null;
+                    $attempts = 0;
+                    while (true) {
+                        $admissionNumber = sprintf('STU-%d-%03d', $year, $nextAdmissionNumber);
+                        $exists = Student::where('admission_number', $admissionNumber)->exists();
+                        if (!$exists) {
+                            break;
+                        }
+                        $nextAdmissionNumber++;
+                        $attempts++;
+                        if ($attempts > 100) {
+                            $this->command->error("Unable to generate unique admission number");
+                            break;
+                        }
+                    }
+
+                    if (!$admissionNumber) {
+                        continue;
+                    }
+
+                    $nextAdmissionNumber++; // Increment for next student
+
                     // Create student
-                    $student = Student::create([
-                        'tenant_id' => $tenant->id,
-                        'admission_number' => Student::generateAdmissionNumber($tenant->id),
+                    try {
+                        $student = Student::create([
+                            'tenant_id' => $tenant->id,
+                            'admission_number' => $admissionNumber,
                         'admission_date' => now()->subMonths(rand(1, 24))->format('Y-m-d'),
                         'first_name' => $firstName,
                         'last_name' => $lastName,
@@ -104,18 +145,26 @@ class StudentSeeder extends Seeder
                         'is_active' => true,
                     ]);
 
-                    // Enroll student in this class
-                    $student->enrollInClass(
-                        $class->id,
-                        $section->id,
-                        $academicYear,
-                        $i // Roll number
-                    );
+                        // Enroll student in this class
+                        $student->enrollInClass(
+                            $class->id,
+                            $section->id,
+                            $academicYear,
+                            $createdInSection + 1 // Roll number
+                        );
 
-                    $totalStudents++;
+                        $totalStudents++;
+                        $createdInSection++;
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        if ($e->getCode() == 23000) {
+                            // Duplicate entry, skip this student
+                            continue;
+                        }
+                        throw $e;
+                    }
                 }
 
-                $this->command->info("  ✓ Created {$studentsPerSection} students for {$class->class_name}-{$section->section_name}");
+                $this->command->info("  ✓ Created {$createdInSection} students for {$class->class_name}-{$section->section_name}");
             }
         }
 

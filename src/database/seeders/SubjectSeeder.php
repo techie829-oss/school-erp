@@ -58,16 +58,24 @@ class SubjectSeeder extends Seeder
         ];
 
         foreach ($subjects as $subj) {
-            Subject::create([
-                'tenant_id' => $tenant->id,
-                'subject_name' => $subj['name'],
-                'subject_code' => $subj['code'],
-                'subject_type' => $subj['type'],
-                'description' => $subj['desc'],
-                'is_active' => true,
-            ]);
+            $subject = Subject::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'subject_name' => $subj['name'],
+                ],
+                [
+                    'subject_code' => $subj['code'],
+                    'subject_type' => $subj['type'],
+                    'description' => $subj['desc'],
+                    'is_active' => true,
+                ]
+            );
 
-            $this->command->info("✓ Created: {$subj['name']} ({$subj['type']})");
+            if ($subject->wasRecentlyCreated) {
+                $this->command->info("✓ Created: {$subj['name']} ({$subj['type']})");
+            } else {
+                $this->command->info("⊘ Exists: {$subj['name']} ({$subj['type']})");
+            }
         }
 
         $this->command->info("\n✅ Successfully created " . count($subjects) . " subjects!");

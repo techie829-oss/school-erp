@@ -205,4 +205,21 @@ class ClassController extends Controller
 
         return redirect(url('/admin/classes'))->with('success', 'Class deleted successfully!');
     }
+
+    /**
+     * Get sections for a class (API endpoint)
+     */
+    public function getSections(Request $request, $id)
+    {
+        $tenant = TenantContextService::getCurrentTenant();
+
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $class = SchoolClass::forTenant($tenant->id)->findOrFail($id);
+        $sections = $class->sections()->active()->get(['id', 'section_name']);
+
+        return response()->json($sections);
+    }
 }

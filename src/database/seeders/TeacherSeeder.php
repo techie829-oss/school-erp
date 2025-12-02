@@ -193,45 +193,111 @@ class TeacherSeeder extends Seeder
             ],
         ];
 
+        // Get all existing employee IDs globally (employee_id is unique across all tenants)
+        $year = now()->year;
+        $maxNumber = Teacher::where('employee_id', 'like', "TCH-{$year}-%")
+            ->pluck('employee_id')
+            ->map(function($id) {
+                return (int) substr($id, -3);
+            })
+            ->max();
+
+        // Start counter from highest existing number + 1, or 1 if none exist
+        $nextEmployeeNumber = $maxNumber ? $maxNumber + 1 : 1;
+
+        $this->command->info("Starting employee ID generation from: TCH-{$year}-" . str_pad($nextEmployeeNumber, 3, '0', STR_PAD_LEFT));
+
         foreach ($teachers as $teacherData) {
+            // Check if teacher already exists by email (email is globally unique)
+            $existingTeacher = Teacher::where('email', $teacherData['email'])->first();
+
+            if ($existingTeacher) {
+                $this->command->info("⊘ Exists: {$teacherData['first_name']} {$teacherData['last_name']} (email: {$teacherData['email']})");
+                continue;
+            }
+
             // Find department
             $department = $departments->where('department_name', $teacherData['department'])->first();
 
+            // Generate unique employee ID - find next available number
+            // Note: employee_id has GLOBAL unique constraint, so check all tenants
+            $employeeId = null;
+            $attempts = 0;
+            do {
+                $employeeId = sprintf('TCH-%d-%03d', $year, $nextEmployeeNumber);
+                // Check globally (employee_id is unique across all tenants)
+                $exists = Teacher::where('employee_id', $employeeId)->exists();
+                if ($exists) {
+                    $nextEmployeeNumber++;
+                }
+                $attempts++;
+                if ($attempts > 100) {
+                    $this->command->error("Unable to generate unique employee ID for {$teacherData['first_name']} {$teacherData['last_name']}");
+                    break;
+                }
+            } while ($exists);
+
+            if ($attempts > 100) {
+                continue;
+            }
+
+            // Increment for next teacher
+            $nextEmployeeNumber++;
+
             // Create teacher
-            $teacher = Teacher::create([
-                'tenant_id' => $tenant->id,
-                'employee_id' => Teacher::generateEmployeeId($tenant->id),
-                'first_name' => $teacherData['first_name'],
-                'last_name' => $teacherData['last_name'],
-                'gender' => $teacherData['gender'],
-                'date_of_birth' => $teacherData['dob'],
-                'blood_group' => ['A+', 'B+', 'O+', 'AB+'][array_rand(['A+', 'B+', 'O+', 'AB+'])],
-                'nationality' => 'Indian',
-                'category' => 'general',
-                'email' => $teacherData['email'],
-                'phone' => $teacherData['phone'],
-                'current_address' => [
-                    'address' => fake()->streetAddress(),
-                    'city' => fake()->city(),
-                    'state' => fake()->state(),
-                    'pincode' => fake()->postcode(),
-                    'country' => 'India',
-                ],
-                'department_id' => $department?->id,
-                'designation' => $teacherData['designation'],
-                'employment_type' => $teacherData['employment_type'],
-                'date_of_joining' => now()->subYears($teacherData['experience'])->format('Y-m-d'),
-                'highest_qualification' => $teacherData['qualification'],
-                'experience_years' => $teacherData['experience'],
-                'salary_amount' => $teacherData['salary'],
-                'bank_name' => 'State Bank of India',
-                'bank_account_number' => fake()->numerify('##########'),
-                'bank_ifsc_code' => 'SBIN' . fake()->numerify('0######'),
-                'pan_number' => strtoupper(fake()->bothify('?????####?')),
-                'aadhar_number' => fake()->numerify('############'),
-                'is_active' => true,
-                'status' => 'active',
-            ]);
+            try {
+                $teacher = Teacher::create([
+                    'tenant_id' => $tenant->id,
+                    'employee_id' => $employeeId,
+                    'first_name' => $teacherData['first_name'],
+                    'last_name' => $teacherData['last_name'],
+                    'gender' => $teacherData['gender'],
+                    'date_of_birth' => $teacherData['dob'],
+                    'blood_group' => ['A+', 'B+', 'O+', 'AB+'][array_rand(['A+', 'B+', 'O+', 'AB+'])],
+                    'nationality' => 'Indian',
+                    'category' => 'general',
+                    'email' => $teacherData['email'],
+                    'phone' => $teacherData['phone'],
+                    'current_address' => [
+                        'address' => fake()->streetAddress(),
+                        'city' => fake()->city(),
+                        'state' => fake()->state(),
+                        'pincode' => fake()->postcode(),
+                        'country' => 'India',
+                    ],
+                    'department_id' => $department?->id,
+                    'designation' => $teacherData['designation'],
+                    'employment_type' => $teacherData['employment_type'],
+                    'date_of_joining' => now()->subYears($teacherData['experience'])->format('Y-m-d'),
+                    'highest_qualification' => $teacherData['qualification'],
+                    'experience_years' => $teacherData['experience'],
+                    'salary_amount' => $teacherData['salary'],
+                    'bank_name' => 'State Bank of India',
+                    'bank_account_number' => fake()->numerify('##########'),
+                    'bank_ifsc_code' => 'SBIN' . fake()->numerify('0######'),
+                    'pan_number' => strtoupper(fake()->bothify('?????####?')),
+                    'aadhar_number' => fake()->numerify('############'),
+                    'is_active' => true,
+                    'status' => 'active',
+                ]);
+
+                $this->command->info("✓ Created: {$teacherData['first_name']} {$teacherData['last_name']} ({$employeeId})");
+
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == 23000) {
+                    $message = $e->getMessage();
+                    $this->command->error("SQL Error for {$teacherData['first_name']} {$teacherData['last_name']}: " . substr($message, 0, 200));
+                    if (str_contains($message, 'employee_id')) {
+                        $this->command->warn("⊘ Skipped (duplicate employee_id): {$teacherData['first_name']} {$teacherData['last_name']} - {$employeeId}");
+                    } elseif (str_contains($message, 'email')) {
+                        $this->command->warn("⊘ Skipped (duplicate email): {$teacherData['first_name']} {$teacherData['last_name']}");
+                    } else {
+                        $this->command->warn("⊘ Skipped (duplicate): {$teacherData['first_name']} {$teacherData['last_name']}");
+                    }
+                    continue;
+                }
+                throw $e;
+            }
 
             // Assign subjects
             foreach ($teacherData['subjects'] as $subjectName) {
@@ -244,21 +310,24 @@ class TeacherSeeder extends Seeder
                 }
             }
 
-            // Add a qualification
-            TeacherQualification::create([
-                'tenant_id' => $tenant->id,
-                'teacher_id' => $teacher->id,
-                'qualification_type' => 'academic',
-                'degree_name' => $teacherData['qualification'],
-                'specialization' => $teacherData['subjects'][0] ?? null,
-                'institution_name' => fake()->company() . ' University',
-                'university_board' => fake()->randomElement(['Delhi University', 'Mumbai University', 'Bangalore University', 'Pune University']),
-                'year_of_passing' => now()->subYears($teacherData['experience'] + 2)->year,
-                'grade_percentage' => fake()->randomElement(['First Class', '75%', '80%', '85%']),
-                'is_verified' => true,
-            ]);
+            // Add a qualification (if not exists)
+            TeacherQualification::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'teacher_id' => $teacher->id,
+                    'degree_name' => $teacherData['qualification'],
+                ],
+                [
+                    'qualification_type' => 'academic',
+                    'specialization' => $teacherData['subjects'][0] ?? null,
+                    'institution_name' => fake()->company() . ' University',
+                    'university_board' => fake()->randomElement(['Delhi University', 'Mumbai University', 'Bangalore University', 'Pune University']),
+                    'year_of_passing' => now()->subYears($teacherData['experience'] + 2)->year,
+                    'grade_percentage' => fake()->randomElement(['First Class', '75%', '80%', '85%']),
+                    'is_verified' => true,
+                ]
+            );
 
-            $this->command->info("✓ Created: {$teacher->full_name} ({$teacher->employee_id}) - {$teacherData['department']}");
         }
 
         $this->command->info("\n✅ Successfully created " . count($teachers) . " teachers with qualifications!");

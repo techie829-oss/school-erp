@@ -322,6 +322,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('classes/create', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'create'])->name('classes.create');
             Route::post('classes', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'store'])->name('classes.store');
             Route::get('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'show'])->name('classes.show')->where('id', '[0-9]+');
+            Route::get('classes/{id}/sections', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'getSections'])->name('classes.sections')->where('id', '[0-9]+');
             Route::get('classes/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'edit'])->name('classes.edit')->where('id', '[0-9]+');
             Route::put('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update')->where('id', '[0-9]+');
             Route::patch('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'update'])->name('classes.update.patch')->where('id', '[0-9]+');
@@ -384,6 +385,55 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('grade-scales/{id}/edit', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'edit'])->name('grade-scales.edit');
             Route::put('grade-scales/{id}', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'update'])->name('grade-scales.update');
             Route::delete('grade-scales/{id}', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'destroy'])->name('grade-scales.destroy');
+        });
+
+        // Examinations Module (requires exams feature)
+        Route::prefix('examinations')->name('examinations.')->middleware('feature:exams')->group(function () {
+            // Exams
+            Route::get('exams', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'index'])->name('exams.index');
+            Route::get('exams/create', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'create'])->name('exams.create');
+            Route::post('exams', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'store'])->name('exams.store');
+            Route::get('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'show'])->name('exams.show');
+            Route::get('exams/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'edit'])->name('exams.edit');
+            Route::put('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'update'])->name('exams.update');
+            Route::delete('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'destroy'])->name('exams.destroy');
+
+            // Exam Schedules
+            Route::get('schedules', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'index'])->name('schedules.index');
+            Route::get('schedules/create', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'create'])->name('schedules.create');
+            Route::post('schedules', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'store'])->name('schedules.store');
+            Route::get('schedules/bulk-create', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'bulkCreate'])->name('schedules.bulk-create');
+            Route::post('schedules/bulk', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'bulkStore'])->name('schedules.bulk-store');
+            Route::get('schedules/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'edit'])->name('schedules.edit');
+            Route::put('schedules/{id}', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'update'])->name('schedules.update');
+            Route::delete('schedules/{id}', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
+
+            // Exam Results
+            Route::get('results', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'index'])->name('results.index');
+            Route::get('results/entry', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'entry'])->name('results.entry');
+            Route::post('results', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'store'])->name('results.store');
+            Route::get('results/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'edit'])->name('results.edit');
+            Route::put('results/{id}', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'update'])->name('results.update');
+            Route::delete('results/{id}', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'destroy'])->name('results.destroy');
+
+            // Admit Cards
+            Route::get('admit-cards', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'index'])->name('admit-cards.index');
+            Route::get('admit-cards/bulk-actions', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'bulkActions'])->name('admit-cards.bulk-actions');
+            Route::get('admit-cards/generate', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'generate'])->name('admit-cards.generate');
+            Route::post('admit-cards', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'store'])->name('admit-cards.store');
+            Route::post('admit-cards/bulk', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'bulkGenerate'])->name('admit-cards.bulk-generate');
+            Route::get('admit-cards/bulk-preview', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'bulkPreview'])->name('admit-cards.bulk-preview');
+            Route::post('admit-cards/bulk-export', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'bulkExport'])->name('admit-cards.bulk-export');
+            Route::post('admit-cards/bulk-delete', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'bulkDestroy'])->name('admit-cards.bulk-destroy');
+            Route::delete('admit-cards/{id}', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'destroy'])->name('admit-cards.destroy');
+            Route::get('admit-cards/{id}/print', [\App\Http\Controllers\Tenant\Admin\AdmitCardController::class, 'print'])->name('admit-cards.print');
+
+            // Report Cards
+            Route::get('report-cards', [\App\Http\Controllers\Tenant\Admin\ReportCardController::class, 'index'])->name('report-cards.index');
+            Route::get('report-cards/generate', [\App\Http\Controllers\Tenant\Admin\ReportCardController::class, 'generate'])->name('report-cards.generate');
+            Route::post('report-cards', [\App\Http\Controllers\Tenant\Admin\ReportCardController::class, 'store'])->name('report-cards.store');
+            Route::post('report-cards/bulk', [\App\Http\Controllers\Tenant\Admin\ReportCardController::class, 'bulkGenerate'])->name('report-cards.bulk-generate');
+            Route::get('report-cards/{id}/print', [\App\Http\Controllers\Tenant\Admin\ReportCardController::class, 'print'])->name('report-cards.print');
         });
 
         // Attendance Management - Students

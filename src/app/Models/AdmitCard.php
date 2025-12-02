@@ -105,5 +105,10 @@ class AdmitCard extends Model
 
         return null;
     }
+
+    public function getExamDetailsAttribute()
+    {
+        return $this->exam_details_json;
+    }
 }
 
