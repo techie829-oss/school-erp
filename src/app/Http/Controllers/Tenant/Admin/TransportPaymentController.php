@@ -178,7 +178,13 @@ class TransportPaymentController extends Controller
             ->with(['student', 'bill'])
             ->findOrFail($id);
 
-        $pdf = Pdf::loadView('tenant.admin.transport.payments.receipt', compact('payment', 'tenant'));
-        return $pdf->download('transport-payment-receipt-' . $payment->payment_number . '.pdf');
+        // If download parameter is set, generate and download PDF
+        if ($request->has('download') && $request->download === 'pdf') {
+            $pdf = Pdf::loadView('tenant.admin.transport.payments.receipt', compact('payment', 'tenant'));
+            return $pdf->download('transport-payment-receipt-' . $payment->payment_number . '.pdf');
+        }
+
+        // Otherwise, show preview page
+        return view('tenant.admin.transport.payments.receipt', compact('payment', 'tenant'));
     }
 }
