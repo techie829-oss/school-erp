@@ -55,15 +55,20 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
+            width: 100%;
         }
 
         .bill-details-column,
         .student-details-column {
             font-size: 13px;
+            display: flex;
+            flex-direction: column;
         }
 
         .detail-item {
             margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
         }
 
         .detail-label {
@@ -79,6 +84,7 @@
             color: #1e293b;
             font-weight: 600;
             font-size: 14px;
+            display: block;
         }
 
         .student-details-column h3 {
