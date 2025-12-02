@@ -70,20 +70,20 @@ class TransportPaymentController extends Controller
     {
         $tenant = $this->getTenant($request);
 
+        $students = Student::forTenant($tenant->id)->active()->orderBy('full_name')->get();
+        
+        // Load all unpaid bills for dropdown
+        $bills = TransportBill::forTenant($tenant->id)
+            ->unpaid()
+            ->with(['student', 'assignment.route'])
+            ->orderBy('due_date')
+            ->get();
+
         if ($studentId) {
             $student = Student::forTenant($tenant->id)->findOrFail($studentId);
-            $bills = TransportBill::forTenant($tenant->id)
-                ->where('student_id', $studentId)
-                ->unpaid()
-                ->with('assignment.route')
-                ->orderBy('due_date')
-                ->get();
         } else {
             $student = null;
-            $bills = collect();
         }
-
-        $students = Student::forTenant($tenant->id)->active()->orderBy('full_name')->get();
 
         return view('tenant.admin.transport.payments.collect', compact('student', 'bills', 'students', 'tenant'));
     }
