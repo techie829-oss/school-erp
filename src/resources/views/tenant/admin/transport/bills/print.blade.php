@@ -144,10 +144,6 @@
             background: #f8fafc;
         }
 
-        tbody tr:hover {
-            background: #f0f9ff;
-        }
-
         .text-right {
             text-align: right;
         }
@@ -190,17 +186,6 @@
             font-weight: 600;
         }
 
-        .status-badge.partial {
-            background: #f59e0b;
-        }
-
-        .status-badge.sent {
-            background: #3b82f6;
-        }
-
-        .status-badge.overdue {
-            background: #ef4444;
-        }
 
         .totals-box {
             background: #f8fafc;
@@ -234,6 +219,10 @@
             color: #1e293b;
         }
 
+        .total-row.highlight span {
+            color: white;
+        }
+        
         .total-row.highlight .total-amount {
             color: white;
         }
@@ -298,12 +287,10 @@
                 <div class="info-label">Due Date</div>
                 <div class="info-value">{{ $bill->due_date->format('d M Y') }}</div>
             </div>
-            @if($bill->academic_year)
             <div class="info-box">
                 <div class="info-label">Academic Year</div>
-                <div class="info-value">{{ $bill->academic_year }}</div>
+                <div class="info-value">{{ $bill->academic_year ?? 'N/A' }}</div>
             </div>
-            @endif
             @if($bill->term)
             <div class="info-box">
                 <div class="info-label">Term</div>
@@ -354,7 +341,7 @@
                 @foreach($bill->items as $item)
                 <tr>
                     <td>{{ $item->description }}</td>
-                    <td class="text-right">1</td>
+                    <td class="text-right">{{ $item->quantity }}</td>
                     <td class="text-right amount">Rs. {{ number_format($item->unit_price, 2) }}</td>
                     <td class="text-right amount">Rs. {{ number_format($item->discount, 2) }}</td>
                     <td class="text-right amount">Rs. {{ number_format($item->amount, 2) }}</td>
@@ -367,7 +354,7 @@
         <div class="summary">
             <div class="payment-status">
                 <div class="status-label">Payment Status</div>
-                <div class="status-badge {{ $bill->status }}">{{ strtoupper($bill->status) }}</div>
+                <div class="status-badge">{{ strtoupper($bill->status) }}</div>
             </div>
             <div class="totals-box">
                 <div class="total-row">
@@ -388,7 +375,7 @@
                 @endif
                 <div class="total-row highlight">
                     <span>Total Amount</span>
-                    <span>Rs. {{ number_format($bill->net_amount, 2) }}</span>
+                    <span class="total-amount">Rs. {{ number_format($bill->net_amount, 2) }}</span>
                 </div>
                 <div class="total-row">
                     <span class="total-label">Paid Amount</span>
