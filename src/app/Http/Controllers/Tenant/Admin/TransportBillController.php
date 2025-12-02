@@ -174,8 +174,14 @@ class TransportBillController extends Controller
             ->with(['student', 'assignment.route', 'items'])
             ->findOrFail($id);
 
-        $pdf = Pdf::loadView('tenant.admin.transport.bills.print', compact('bill', 'tenant'));
-        return $pdf->download('transport-bill-' . $bill->bill_number . '.pdf');
+        // If download parameter is set, generate and download PDF
+        if ($request->has('download') && $request->download === 'pdf') {
+            $pdf = Pdf::loadView('tenant.admin.transport.bills.print', compact('bill', 'tenant'));
+            return $pdf->download('transport-bill-' . $bill->bill_number . '.pdf');
+        }
+
+        // Otherwise, show preview page
+        return view('tenant.admin.transport.bills.print', compact('bill', 'tenant'));
     }
 
     public function destroy(Request $request, $id)

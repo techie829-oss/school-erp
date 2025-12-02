@@ -17,6 +17,91 @@
             padding: 20px;
         }
 
+        .no-print {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: white;
+            border-bottom: 2px solid #2563eb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .print-button {
+            background-color: #2563eb;
+            color: white;
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .print-button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .download-button {
+            background-color: #10b981;
+            color: white;
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .download-button:hover {
+            background-color: #059669;
+        }
+
+        .back-button {
+            background-color: #6b7280;
+            color: white;
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #4b5563;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -235,10 +320,14 @@
                 background: white;
                 padding: 0;
             }
+            .no-print {
+                display: none !important;
+            }
             .container {
                 box-shadow: none;
                 max-width: 100%;
                 padding: 20px;
+                margin: 0;
             }
         }
 
@@ -249,6 +338,24 @@
     </style>
 </head>
 <body>
+    <!-- Control Panel -->
+    <div class="no-print">
+        <div class="header-row">
+            <h1 class="header-title">Transport Bill Preview</h1>
+            <div class="button-group">
+                <a href="{{ url('/admin/transport/bills/' . $bill->id) }}" class="back-button">
+                    ← Back
+                </a>
+                <a href="{{ url('/admin/transport/bills/' . $bill->id . '/print?download=pdf') }}" class="download-button">
+                    Download PDF
+                </a>
+                <button onclick="window.print()" class="print-button">
+                    Print / Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Header -->
         <div class="header">
