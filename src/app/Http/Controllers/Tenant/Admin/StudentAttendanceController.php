@@ -1127,17 +1127,12 @@ class StudentAttendanceController extends Controller
     }
 
     /**
-     * Export to PDF
+     * Export to PDF (Print Preview)
      */
     private function exportToPDF($reportData, $tenant)
     {
-        // For now, return a simple HTML-to-PDF approach
-        // In production, use a package like dompdf or snappy
-        $html = view('tenant.admin.attendance.students.exports.pdf', compact('reportData', 'tenant'))->render();
-
-        return response($html)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="attendance_report.pdf"');
+        // Return view for print preview instead of download
+        return view('tenant.admin.attendance.students.exports.pdf', compact('reportData', 'tenant'));
     }
 
     /**

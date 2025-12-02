@@ -3,269 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance Report - {{ $tenant->data['name'] ?? 'School ERP' }}</title>
+    <title>Student Attendance Report - Print</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        @media print {
+            .no-print {
+                display: none !important;
+            }
         }
         body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 12px;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
             color: #333;
-            line-height: 1.6;
         }
-        .header {
+        .print-header {
             text-align: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #333;
         }
-        .header h1 {
+        .print-header h1 {
+            margin: 0;
             font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
+            color: #1f2937;
         }
-        .header p {
+        .print-header p {
+            margin: 5px 0;
+            color: #6b7280;
             font-size: 14px;
-            color: #666;
         }
         .report-info {
             margin-bottom: 20px;
             padding: 15px;
-            background-color: #f5f5f5;
+            background-color: #f9fafb;
             border-radius: 5px;
         }
-        .report-info table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .report-info td {
-            padding: 5px 10px;
-        }
-        .report-info td:first-child {
-            font-weight: bold;
-            width: 150px;
-        }
-        .summary {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #e8f4f8;
-            border-radius: 5px;
-        }
-        .summary h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #1e3a8a;
-        }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-        .summary-item {
-            text-align: center;
-            padding: 10px;
-            background-color: white;
-            border-radius: 5px;
-        }
-        .summary-item .label {
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .summary-item .value {
+        .report-info h2 {
+            margin: 0 0 10px 0;
             font-size: 18px;
-            font-weight: bold;
-            color: #1e3a8a;
+            color: #1f2937;
+        }
+        .report-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #4b5563;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        thead {
-            background-color: #1e3a8a;
-            color: white;
-        }
-        thead th {
+        th, td {
             padding: 10px;
             text-align: left;
-            font-weight: bold;
-            font-size: 11px;
+            border: 1px solid #d1d5db;
         }
-        tbody td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 11px;
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #1f2937;
         }
-        tbody tr:nth-child(even) {
+        tr:nth-child(even) {
             background-color: #f9fafb;
         }
-        tbody tr:hover {
+        .summary-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-item {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
             background-color: #f3f4f6;
+            border-radius: 5px;
+            text-align: center;
         }
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 10px;
+        .summary-item .label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .summary-item .value {
+            font-size: 20px;
             font-weight: bold;
+            color: #1f2937;
         }
-        .status-present {
-            background-color: #10b981;
-            color: white;
-        }
-        .status-absent {
-            background-color: #ef4444;
-            color: white;
-        }
-        .status-late {
-            background-color: #f59e0b;
-            color: white;
-        }
-        .status-on-leave {
-            background-color: #6366f1;
-            color: white;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
+        .print-actions {
+            margin-bottom: 20px;
             text-align: center;
-            font-size: 10px;
-            color: #666;
         }
-        .no-data {
+        .btn-print {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-print:hover {
+            background-color: #1d4ed8;
+        }
+        .text-center {
             text-align: center;
-            padding: 40px;
-            color: #999;
         }
-        @media print {
-            body {
-                margin: 0;
-            }
-            .no-print {
-                display: none;
-            }
+        .text-right {
+            text-align: right;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-present {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .badge-absent {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .badge-late {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .badge-half-day {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .badge-on-leave {
+            background-color: #e9d5ff;
+            color: #6b21a8;
         }
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="no-print print-actions">
+        <button onclick="window.print()" class="btn-print">Print Report</button>
+    </div>
+
+    <div class="print-header">
         <h1>{{ $tenant->data['name'] ?? 'School ERP' }}</h1>
         <p>Student Attendance Report</p>
+        <p>Generated: {{ now()->format('F d, Y h:i A') }}</p>
     </div>
 
     <div class="report-info">
-        <table>
-            <tr>
-                <td>Report Type:</td>
-                <td>{{ ucfirst(str_replace('_', ' ', $reportData['type'] ?? 'daily')) }}</td>
-                <td>Generated On:</td>
-                <td>{{ now()->format('F d, Y h:i A') }}</td>
-            </tr>
-            @if(isset($reportData['date']))
-            <tr>
-                <td>Date:</td>
-                <td>{{ \Carbon\Carbon::parse($reportData['date'])->format('F d, Y') }}</td>
-                <td></td>
-                <td></td>
-            </tr>
-            @endif
-            @if(isset($reportData['date_from']) && isset($reportData['date_to']))
-            <tr>
-                <td>Date Range:</td>
-                <td>{{ \Carbon\Carbon::parse($reportData['date_from'])->format('M d, Y') }} - {{ \Carbon\Carbon::parse($reportData['date_to'])->format('M d, Y') }}</td>
-                <td></td>
-                <td></td>
-            </tr>
-            @endif
-        </table>
+        <h2>{{ $reportData['title'] }}</h2>
+        @if(isset($reportData['date']))
+            <p><strong>Date:</strong> {{ \Carbon\Carbon::parse($reportData['date'])->format('F d, Y') }}</p>
+        @endif
+        @if(isset($reportData['date_from']) && isset($reportData['date_to']))
+            <p><strong>Period:</strong> {{ \Carbon\Carbon::parse($reportData['date_from'])->format('M d, Y') }} to {{ \Carbon\Carbon::parse($reportData['date_to'])->format('M d, Y') }}</p>
+        @endif
     </div>
 
     @if(isset($reportData['summary']))
-    <div class="summary">
-        <h3>Summary</h3>
-        <div class="summary-grid">
-            <div class="summary-item">
-                <div class="label">Total Students</div>
-                <div class="value">{{ $reportData['summary']['total'] ?? 0 }}</div>
-            </div>
-            <div class="summary-item">
-                <div class="label">Present</div>
-                <div class="value">{{ $reportData['summary']['present'] ?? 0 }}</div>
-            </div>
-            <div class="summary-item">
-                <div class="label">Absent</div>
-                <div class="value">{{ $reportData['summary']['absent'] ?? 0 }}</div>
-            </div>
-            <div class="summary-item">
-                <div class="label">Attendance %</div>
-                <div class="value">{{ number_format($reportData['summary']['percentage'] ?? 0, 1) }}%</div>
-            </div>
+    <div class="summary-box">
+        @if(isset($reportData['summary']['total']))
+        <div class="summary-item">
+            <div class="label">Total Students</div>
+            <div class="value">{{ $reportData['summary']['total'] }}</div>
         </div>
+        @endif
+        @if(isset($reportData['summary']['present']))
+        <div class="summary-item">
+            <div class="label">Present</div>
+            <div class="value">{{ $reportData['summary']['present'] }}</div>
+        </div>
+        @endif
+        @if(isset($reportData['summary']['absent']))
+        <div class="summary-item">
+            <div class="label">Absent</div>
+            <div class="value">{{ $reportData['summary']['absent'] }}</div>
+        </div>
+        @endif
+        @if(isset($reportData['summary']['late']))
+        <div class="summary-item">
+            <div class="label">Late</div>
+            <div class="value">{{ $reportData['summary']['late'] }}</div>
+        </div>
+        @endif
+        @if(isset($reportData['summary']['percentage']))
+        <div class="summary-item">
+            <div class="label">Attendance %</div>
+            <div class="value">{{ number_format($reportData['summary']['percentage'], 2) }}%</div>
+        </div>
+        @endif
     </div>
     @endif
 
-    @if(isset($reportData['records']) && $reportData['records']->count() > 0)
     <table>
         <thead>
+            @if($reportData['type'] === 'daily')
             <tr>
-                <th>#</th>
-                <th>Admission No.</th>
                 <th>Student Name</th>
+                <th>Admission No</th>
                 <th>Class</th>
                 <th>Section</th>
                 <th>Status</th>
-                @if(isset($reportData['type']) && $reportData['type'] == 'student_wise')
+                <th>Remarks</th>
+            </tr>
+            @elseif($reportData['type'] === 'monthly' || $reportData['type'] === 'defaulters')
+            <tr>
+                <th>Student Name</th>
+                <th>Admission No</th>
+                <th>Class</th>
                 <th>Total Days</th>
                 <th>Present</th>
                 <th>Absent</th>
-                <th>Percentage</th>
-                @else
-                <th>Time</th>
-                <th>Remarks</th>
-                @endif
+                <th>Late</th>
+                <th>Half Day</th>
+                <th>On Leave</th>
+                <th>Attendance %</th>
             </tr>
+            @elseif($reportData['type'] === 'class_wise')
+            <tr>
+                <th>Class</th>
+                <th>Students</th>
+                <th>Total Days</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>Late</th>
+                <th>Half Day</th>
+                <th>On Leave</th>
+                <th>Attendance %</th>
+            </tr>
+            @elseif($reportData['type'] === 'student_wise')
+            <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Remarks</th>
+            </tr>
+            @endif
         </thead>
         <tbody>
-            @foreach($reportData['records'] as $index => $record)
-            <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $record->student->admission_number ?? 'N/A' }}</td>
-                <td>{{ $record->student->full_name ?? 'N/A' }}</td>
-                <td>{{ $record->class->name ?? 'N/A' }}</td>
-                <td>{{ $record->section->name ?? 'N/A' }}</td>
-                <td>
-                    <span class="status-badge status-{{ $record->status }}">
-                        {{ ucfirst($record->status) }}
-                    </span>
-                </td>
-                @if(isset($reportData['type']) && $reportData['type'] == 'student_wise')
-                <td>{{ $record->total_days ?? 0 }}</td>
-                <td>{{ $record->present_days ?? 0 }}</td>
-                <td>{{ $record->absent_days ?? 0 }}</td>
-                <td>{{ number_format($record->percentage ?? 0, 1) }}%</td>
-                @else
-                <td>{{ $record->check_in_time ? \Carbon\Carbon::parse($record->check_in_time)->format('h:i A') : 'N/A' }}</td>
-                <td>{{ $record->remarks ?? '-' }}</td>
-                @endif
-            </tr>
-            @endforeach
+            @if($reportData['type'] === 'daily')
+                @foreach($reportData['records'] as $record)
+                <tr>
+                    <td>{{ $record->student->full_name ?? 'N/A' }}</td>
+                    <td>{{ $record->student->admission_number ?? 'N/A' }}</td>
+                    <td>{{ $record->schoolClass->class_name ?? ($record->student->currentEnrollment->schoolClass->class_name ?? 'N/A') }}</td>
+                    <td>{{ $record->section->section_name ?? ($record->student->currentEnrollment->section->section_name ?? 'N/A') }}</td>
+                    <td>
+                        <span class="badge badge-{{ str_replace('_', '-', $record->status) }}">
+                            {{ ucfirst(str_replace('_', ' ', $record->status)) }}
+                        </span>
+                    </td>
+                    <td>{{ $record->remarks ?? '-' }}</td>
+                </tr>
+                @endforeach
+            @elseif($reportData['type'] === 'monthly' || $reportData['type'] === 'defaulters')
+                @foreach($reportData['records'] as $record)
+                <tr>
+                    <td>{{ $record['student']->full_name ?? 'N/A' }}</td>
+                    <td>{{ $record['student']->admission_number ?? 'N/A' }}</td>
+                    <td>{{ $record['class_name'] ?? 'N/A' }}</td>
+                    <td class="text-center">{{ $record['total_days'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['present'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['absent'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['late'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['half_day'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['on_leave'] ?? 0 }}</td>
+                    <td class="text-center">{{ number_format($record['percentage'] ?? 0, 2) }}%</td>
+                </tr>
+                @endforeach
+            @elseif($reportData['type'] === 'class_wise')
+                @foreach($reportData['records'] as $record)
+                <tr>
+                    <td>{{ $record['class_name'] ?? 'N/A' }}</td>
+                    <td class="text-center">{{ $record['student_count'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['total_days'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['present'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['absent'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['late'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['half_day'] ?? 0 }}</td>
+                    <td class="text-center">{{ $record['on_leave'] ?? 0 }}</td>
+                    <td class="text-center">{{ number_format($record['percentage'] ?? 0, 2) }}%</td>
+                </tr>
+                @endforeach
+            @elseif($reportData['type'] === 'student_wise')
+                @foreach($reportData['records'] as $record)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($record->attendance_date)->format('M d, Y') }}</td>
+                    <td>
+                        <span class="badge badge-{{ str_replace('_', '-', $record->status) }}">
+                            {{ ucfirst(str_replace('_', ' ', $record->status)) }}
+                        </span>
+                    </td>
+                    <td>{{ $record->remarks ?? '-' }}</td>
+                </tr>
+                @endforeach
+            @endif
         </tbody>
     </table>
-    @else
-    <div class="no-data">
-        <p>No attendance records found for the selected criteria.</p>
-    </div>
-    @endif
-
-    <div class="footer">
-        <p>This is a computer-generated report. Generated on {{ now()->format('F d, Y h:i A') }}</p>
-        <p>{{ $tenant->data['name'] ?? 'School ERP' }} - Student Attendance Management System</p>
-    </div>
 </body>
 </html>
-
