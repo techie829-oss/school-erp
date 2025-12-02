@@ -99,14 +99,14 @@ class NoticeController extends Controller
         try {
             $notice = Notice::create([
                 'tenant_id' => $tenant->id,
-                'title' => $request->title,
-                'content' => $request->content,
-                'notice_type' => $request->notice_type,
-                'priority' => $request->priority,
-                'target_audience' => $request->target_audience,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-                'status' => $request->status,
+                'title' => $request->input('title'),
+                'content' => $request->input('content'),
+                'notice_type' => $request->input('notice_type'),
+                'priority' => $request->input('priority'),
+                'target_audience' => $request->input('target_audience'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'status' => $request->input('status'),
                 'created_by' => auth()->id(),
             ]);
 
@@ -114,7 +114,6 @@ class NoticeController extends Controller
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $path = $file->store('notices/' . $tenant->id, 'public');
-                    
                     NoticeAttachment::create([
                         'notice_id' => $notice->id,
                         'file_path' => $path,
@@ -186,21 +185,21 @@ class NoticeController extends Controller
         DB::beginTransaction();
         try {
             $notice->update([
-                'title' => $request->title,
-                'content' => $request->content,
-                'notice_type' => $request->notice_type,
-                'priority' => $request->priority,
-                'target_audience' => $request->target_audience,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-                'status' => $request->status,
+                'title' => $request->input('title'),
+                'content' => $request->input('content'),
+                'notice_type' => $request->input('notice_type'),
+                'priority' => $request->input('priority'),
+                'target_audience' => $request->input('target_audience'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'status' => $request->input('status'),
             ]);
 
             // Handle new file attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $path = $file->store('notices/' . $tenant->id, 'public');
-                    
+
                     NoticeAttachment::create([
                         'notice_id' => $notice->id,
                         'file_path' => $path,

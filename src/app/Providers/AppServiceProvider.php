@@ -39,5 +39,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Register View Composer for admin layout
         \View::composer('tenant.layouts.admin', \App\Http\View\Composers\AdminLayoutComposer::class);
+        
+        // Register CMS Settings View Composer for admin, CMS, and school layouts
+        \View::composer(['tenant.layouts.admin', 'tenant.layouts.cms', 'school.layout'], \App\Http\View\Composers\CmsSettingsComposer::class);
     }
 }

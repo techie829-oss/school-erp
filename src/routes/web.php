@@ -283,6 +283,27 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             return redirect('/admin/dashboard');
         });
 
+        // Profile & Password
+        Route::get('profile/change-password', function () {
+            return view('tenant.admin.profile.change-password');
+        })->name('profile.change-password');
+        Route::post('profile/change-password', function (\Illuminate\Http\Request $request) {
+            $request->validate([
+                'current_password' => 'required',
+                'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+            ]);
+
+            if (!\Illuminate\Support\Facades\Hash::check($request->current_password, auth()->user()->password)) {
+                return back()->withErrors(['current_password' => 'The current password is incorrect.']);
+            }
+
+            auth()->user()->update([
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            ]);
+
+            return redirect()->back()->with('success', 'Password updated successfully!');
+        })->name('profile.update-password');
+
         // Student Management (Manual routes - using studentId to avoid conflict with tenant parameter)
         Route::middleware('feature:students')->group(function () {
             Route::get('students', [\App\Http\Controllers\Tenant\Admin\StudentController::class, 'index'])->name('students.index');
@@ -748,6 +769,61 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         // Notification Logs (SMS / Email) for this tenant
         Route::get('notifications/logs', [\App\Http\Controllers\Tenant\Admin\NotificationLogController::class, 'index'])
             ->name('notifications.logs');
+
+        // Notice Board
+        Route::prefix('notices')->name('notices.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/mark-read', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'markAsRead'])->name('mark-read');
+        });
+
+        // CMS (Content Management System)
+        Route::prefix('cms')->name('cms.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\CmsController::class, 'index'])->name('index');
+
+            // CMS Settings & Theme (Phase 0)
+            Route::prefix('settings')->name('settings.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\CmsSettingsController::class, 'index'])->name('index');
+                Route::get('/general', [\App\Http\Controllers\Tenant\Admin\CmsSettingsController::class, 'general'])->name('general');
+                Route::post('/general', [\App\Http\Controllers\Tenant\Admin\CmsSettingsController::class, 'updateGeneral'])->name('update-general');
+                Route::get('/theme', [\App\Http\Controllers\Tenant\Admin\CmsThemeController::class, 'index'])->name('theme');
+                Route::post('/theme', [\App\Http\Controllers\Tenant\Admin\CmsThemeController::class, 'update'])->name('update-theme');
+                Route::get('/social', [\App\Http\Controllers\Tenant\Admin\CmsSettingsController::class, 'social'])->name('social');
+                Route::post('/social', [\App\Http\Controllers\Tenant\Admin\CmsSettingsController::class, 'updateSocial'])->name('update-social');
+            });
+
+            // Pages (Phase 1) - Will be added
+            // Media Library (Phase 1) - Will be added
+            // Blog/Posts (Phase 1) - Will be added
+            // Menus, Sliders, Galleries (Phase 2) - Will be added
+            // FAQs, Testimonials, SEO (Phase 3) - Will be added
+        });
+
+        // Events & Calendar
+        Route::prefix('events')->name('events.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'destroy'])->name('destroy');
+
+            // Categories
+            Route::prefix('categories')->name('categories.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\EventCategoryController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Tenant\Admin\EventCategoryController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\Tenant\Admin\EventCategoryController::class, 'store'])->name('store');
+                Route::get('/{id}/edit', [\App\Http\Controllers\Tenant\Admin\EventCategoryController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [\App\Http\Controllers\Tenant\Admin\EventCategoryController::class, 'update'])->name('update');
+                Route::delete('/{id}', [\App\Http\Controllers\Tenant\Admin\EventCategoryController::class, 'destroy'])->name('destroy');
+            });
+        });
 
         // API Routes for Biometric/QR Integration
         Route::prefix('api/attendance')->name('api.attendance.')->middleware(['auth:sanctum', 'tenant'])->group(function () {

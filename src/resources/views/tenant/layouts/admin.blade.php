@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'School ERP') - {{ tenant('data.name') ?? 'School Management' }}</title>
+    <title>@yield('title', 'School ERP') - {{ $cmsSiteName ?? (($tenantSubdomain ?? tenant('data.subdomain')) ? ucfirst($tenantSubdomain ?? tenant('data.subdomain')) : (tenant('data.name') ?? 'School Management')) }}</title>
+
+    @if($cmsFavicon ?? null)
+        <link rel="icon" type="image/x-icon" href="{{ $cmsFavicon }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -136,14 +140,18 @@
         <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0 overflow-y-auto">
             <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 sticky top-0 bg-white z-10">
                 <div class="flex items-center">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
-                        </svg>
-                    </div>
+                    @if($cmsLogo ?? null)
+                        <img src="{{ $cmsLogo }}" alt="{{ $cmsSiteName ?? 'Logo' }}" class="h-8 w-auto max-w-[120px] object-contain">
+                    @else
+                        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                            </svg>
+                        </div>
+                    @endif
                     <div class="ml-3">
-                        <h1 class="text-lg font-semibold text-gray-900">{{ tenant('data.name') ?? 'School ERP' }}</h1>
-                        <p class="text-xs text-gray-500">Management System</p>
+                        <h1 class="text-lg font-semibold text-gray-900">{{ $tenantSubdomain ? ucfirst($tenantSubdomain) : (tenant('data.subdomain') ? ucfirst(tenant('data.subdomain')) : 'School ERP') }}</h1>
+                        <p class="text-xs text-gray-500">{{ $cmsSiteTagline ?? 'Management System' }}</p>
                     </div>
                 </div>
                 <button id="sidebar-toggle" class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100">
@@ -160,6 +168,18 @@
                     <a href="{{ url('/admin/dashboard') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/dashboard') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
                         <x-heroicon-o-home class="mr-3 h-5 w-5 {{ request()->is('*/admin/dashboard') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                         Dashboard
+                    </a>
+
+                    {{-- NOTICE BOARD --}}
+                    <a href="{{ url('/admin/notices') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/notices*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-megaphone class="mr-3 h-5 w-5 {{ request()->is('*/admin/notices*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        Notice Board
+                    </a>
+
+                    {{-- EVENTS & CALENDAR --}}
+                    <a href="{{ url('/admin/events') }}" class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/events*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <x-heroicon-o-calendar-days class="mr-3 h-5 w-5 {{ request()->is('*/admin/events*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                        Events & Calendar
                     </a>
 
                     {{-- ACADEMICS SECTION --}}
@@ -668,34 +688,65 @@
                 </button>
 
                 <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                    <div class="flex flex-1"></div>
+                    <div class="flex flex-1 items-center">
+                        <!-- Full Site Name in Top Bar -->
+                        <div class="hidden md:block">
+                            <h2 class="text-lg font-semibold text-gray-900">{{ $cmsSiteName ?? tenant('data.name') ?? 'School ERP' }}</h2>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-x-4 lg:gap-x-6">
-                        <!-- User Menu -->
-                        <div class="relative">
-                            <div class="flex items-center space-x-3">
-                                <!-- User Avatar -->
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                                        <span class="text-sm font-medium text-white">
-                                            {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
-                                        </span>
-                                    </div>
-                                    <div class="hidden sm:block">
-                                        <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name ?? 'Admin' }}</p>
-                                        <p class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', auth()->user()->admin_type ?? 'Admin')) }}</p>
-                                    </div>
-                                </div>
+                        <!-- CMS Toggle Switch (2-Way) -->
+                        <div class="flex items-center bg-gray-100 rounded-lg p-1">
+                            <button type="button"
+                                    id="admin-mode-btn"
+                                    onclick="window.location.href='{{ url('/admin/dashboard') }}'"
+                                    class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 {{ request()->is('*/admin/cms*') ? 'text-gray-600 hover:text-gray-900' : 'bg-white text-primary-600 shadow-sm' }}">
+                                Admin
+                            </button>
+                            <button type="button"
+                                    id="cms-mode-btn"
+                                    onclick="window.location.href='{{ url('/admin/cms') }}'"
+                                    class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 {{ request()->is('*/admin/cms*') ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
+                                CMS
+                            </button>
+                        </div>
 
-                                <!-- Logout -->
-                                <form method="POST" action="{{ url('/logout') }}" class="inline">
-                                    @csrf
-                                    <button type="submit" class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        <!-- User Menu Dropdown -->
+                        <div class="relative">
+                            <button id="user-menu-button" type="button" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg p-1">
+                                <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                                    <span class="text-sm font-medium text-white">
+                                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+                                    </span>
+                                </div>
+                                <div class="hidden sm:block text-left">
+                                    <p class="text-sm font-medium text-gray-700">{{ auth()->user()->name ?? 'Admin' }}</p>
+                                    <p class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', auth()->user()->admin_type ?? 'Admin')) }}</p>
+                                </div>
+                                <svg id="user-menu-arrow" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                <div class="py-1">
+                                    <a href="{{ url('/admin/profile/change-password') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                                         </svg>
-                                        <span class="hidden sm:inline">Logout</span>
-                                    </button>
-                                </form>
+                                        Change Password
+                                    </a>
+                                    <form method="POST" action="{{ url('/logout') }}">
+                                        @csrf
+                                        <button type="submit" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600">
+                                            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                            </svg>
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -741,6 +792,31 @@
 
             sidebar.classList.add('-translate-x-full');
             overlay.classList.add('hidden');
+        });
+
+        // CMS Toggle (2-Way Switch - handled by onclick on buttons)
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // User Menu Dropdown
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenuDropdown = document.getElementById('user-menu-dropdown');
+            const userMenuArrow = document.getElementById('user-menu-arrow');
+
+            if (userMenuButton && userMenuDropdown) {
+                userMenuButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userMenuDropdown.classList.toggle('hidden');
+                    userMenuArrow.classList.toggle('rotate-180');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        userMenuDropdown.classList.add('hidden');
+                        userMenuArrow.classList.remove('rotate-180');
+                    }
+                });
+            }
         });
 
         // Collapsible sidebar sections

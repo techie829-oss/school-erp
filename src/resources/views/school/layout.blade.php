@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $tenant['name'] ?? 'School ERP' }} - @yield('title', 'School Management System')</title>
-    <meta name="description" content="@yield('description', $tenant['description'] ?? 'Excellence in Education')">
+    <title>{{ $cmsSiteName ?? $tenant['name'] ?? 'School ERP' }} - @yield('title', 'School Management System')</title>
+    <meta name="description" content="@yield('description', $cmsSiteTagline ?? $tenant['description'] ?? 'Excellence in Education')">
+    
+    @if($cmsFavicon ?? null)
+        <link rel="icon" type="image/x-icon" href="{{ $cmsFavicon }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -104,15 +108,19 @@
                     <!-- Logo and School Name -->
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
-                            <div class="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
-                                <span class="text-white font-bold text-xl">S</span>
-                            </div>
+                            @if($cmsLogo ?? null)
+                                <img src="{{ $cmsLogo }}" alt="{{ $cmsSiteName ?? 'Logo' }}" class="h-12 w-auto max-w-[150px] object-contain">
+                            @else
+                                <div class="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-xl">{{ strtoupper(substr($cmsSiteName ?? $tenant['name'] ?? 'S', 0, 1)) }}</span>
+                                </div>
+                            @endif
                             <div class="ml-4">
                                 <h1 class="text-lg font-bold text-gray-900 leading-tight">
-                                    <span class="hidden sm:inline">{{ $tenant['name'] ?? 'School ERP' }}</span>
-                                    <span class="sm:hidden">{{ $tenant['short_name'] ?? 'S V P Inter Collage' }}</span>
+                                    <span class="hidden sm:inline">{{ $cmsSiteName ?? $tenant['name'] ?? 'School ERP' }}</span>
+                                    <span class="sm:hidden">{{ $tenant['short_name'] ?? substr($cmsSiteName ?? $tenant['name'] ?? 'School', 0, 20) }}</span>
                                 </h1>
-                                <p class="text-xs text-gray-500 leading-tight">{{ $tenant['location'] ?? 'Location' }}</p>
+                                <p class="text-xs text-gray-500 leading-tight">{{ $cmsSiteTagline ?? $tenant['location'] ?? 'Location' }}</p>
                             </div>
                         </div>
                     </div>
@@ -219,14 +227,25 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div class="col-span-1 md:col-span-2">
                         <h3 class="text-lg font-semibold mb-4 text-white">
-                            {{ $tenant['name'] ?? 'School ERP' }}
+                            {{ $cmsSiteName ?? $tenant['name'] ?? 'School ERP' }}
                         </h3>
                         <p class="text-gray-300 mb-4">
-                            {{ $tenant['description'] ?? 'Excellence in Education' }}
+                            {{ $cmsSiteTagline ?? $tenant['description'] ?? 'Excellence in Education' }}
                         </p>
+                        @if($cmsFooterText ?? null)
+                            <p class="text-gray-300 mb-4">{{ $cmsFooterText }}</p>
+                        @endif
                         <div class="text-gray-400 text-sm space-y-1">
-                            @if(isset($tenant['location']) && $tenant['location'])
+                            @if($cmsContactAddress ?? null)
+                            <p><strong>Address:</strong> {{ $cmsContactAddress }}</p>
+                            @elseif(isset($tenant['location']) && $tenant['location'])
                             <p><strong>Location:</strong> {{ $tenant['location'] }}</p>
+                            @endif
+                            @if($cmsContactPhone ?? null)
+                            <p><strong>Phone:</strong> {{ $cmsContactPhone }}</p>
+                            @endif
+                            @if($cmsContactEmail ?? null)
+                            <p><strong>Email:</strong> {{ $cmsContactEmail }}</p>
                             @endif
                             @if(isset($tenant['student_count']) && $tenant['student_count'])
                             <p><strong>Students:</strong> {{ number_format($tenant['student_count']) }}</p>
@@ -260,7 +279,7 @@
                 </div>
 
                 <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-                    <p>&copy; {{ date('Y') }} {{ $tenant['name'] ?? 'School ERP' }}. All rights reserved.</p>
+                    <p>&copy; {{ date('Y') }} {{ $cmsSiteName ?? $tenant['name'] ?? 'School ERP' }}. All rights reserved.</p>
                     <p class="text-sm mt-2">Powered by School ERP System</p>
                 </div>
             </div>
