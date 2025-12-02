@@ -148,7 +148,6 @@
     @endif
 </div>
 
-@push('scripts')
 <script>
 function exportReport() {
     // Get form element
@@ -162,7 +161,9 @@ function exportReport() {
     const reportTypeSelect = form.querySelector('[name="report_type"]');
     if (!reportTypeSelect || !reportTypeSelect.value) {
         alert('Please select a report type first');
-        reportTypeSelect?.focus();
+        if (reportTypeSelect) {
+            reportTypeSelect.focus();
+        }
         return;
     }
 
@@ -181,20 +182,21 @@ function exportReport() {
     // Disable button and show loading
     const exportBtn = document.getElementById('exportBtn');
     const exportBtnText = document.getElementById('exportBtnText');
-    const originalText = exportBtnText.textContent;
-    exportBtn.disabled = true;
-    exportBtnText.textContent = 'Exporting...';
+    if (exportBtn && exportBtnText) {
+        const originalText = exportBtnText.textContent;
+        exportBtn.disabled = true;
+        exportBtnText.textContent = 'Exporting...';
+
+        // Re-enable button after a delay (in case download doesn't start)
+        setTimeout(() => {
+            exportBtn.disabled = false;
+            exportBtnText.textContent = originalText;
+        }, 2000);
+    }
 
     // Redirect to export URL (this will trigger download)
     window.location.href = '{{ url("/admin/fees/reports") }}?' + params.toString();
-
-    // Re-enable button after a delay (in case download doesn't start)
-    setTimeout(() => {
-        exportBtn.disabled = false;
-        exportBtnText.textContent = originalText;
-    }, 2000);
 }
 </script>
-@endpush
 @endsection
 
