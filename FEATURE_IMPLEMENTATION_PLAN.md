@@ -30,10 +30,10 @@
 ### 1. ✅ Student Management
 
 - **Status:** Complete
-- **Controllers:** `StudentController.php`
-- **Views:** `students/*` (index, create, edit, show)
-- **Routes:** All CRUD routes implemented
-- **Features:**
+- ##### Controllers `StudentController.php`
+- ##### Views `students/*` (index, create, edit, show)
+- ##### Routes All CRUD routes implemented
+- ##### Features
   - Student enrollment & profiles
   - Academic history tracking
   - Document management
@@ -44,10 +44,10 @@
 ### 2. ✅ Teacher Management
 
 - **Status:** Complete
-- **Controllers:** `TeacherController.php`
-- **Views:** `teachers/*` (index, create, edit, show)
-- **Routes:** All CRUD routes implemented
-- **Features:**
+- ##### Controllers `TeacherController.php`
+- ##### Views `teachers/*` (index, create, edit, show)
+- ##### Routes All CRUD routes implemented
+- ##### Features
   - Teacher profiles
   - Department assignment
   - Employment management
@@ -56,10 +56,10 @@
 ### 3. ✅ Class Management
 
 - **Status:** Complete
-- **Controllers:** `ClassController.php`
-- **Views:** `classes/*` (index, create, edit, show)
-- **Routes:** All CRUD routes implemented
-- **Features:**
+- ##### Controllers `ClassController.php`
+- ##### Views `classes/*` (index, create, edit, show)
+- ##### Routes All CRUD routes implemented
+- ##### Features
   - Class creation & management
   - Section management
   - Subject assignment
@@ -67,10 +67,10 @@
 ### 4. ✅ Attendance System
 
 - **Status:** Complete (95%)
-- **Controllers:** `StudentAttendanceController.php`, `TeacherAttendanceController.php`, `HolidayController.php`
-- **Views:** `attendance/*` (students, teachers, holidays)
-- **Routes:** All routes implemented
-- **Features:**
+- ##### Controllers `StudentAttendanceController.php`, `TeacherAttendanceController.php`, `HolidayController.php`
+- ##### Views `attendance/*` (students, teachers, holidays)
+- ##### Routes All routes implemented
+- ##### Features
   - Student attendance marking
   - Teacher attendance marking
   - Calendar view
@@ -84,10 +84,10 @@
 ### 5. ✅ Fee Management
 
 - **Status:** Complete
-- **Controllers:** `FeeComponentController.php`, `FeePlanController.php`, `FeeCollectionController.php`, `StudentFeeCardController.php`
-- **Views:** `fees/*` (components, plans, collection, cards, receipts, reports)
-- **Routes:** All routes implemented
-- **Features:**
+- ##### Controllers `FeeComponentController.php`, `FeePlanController.php`, `FeeCollectionController.php`, `StudentFeeCardController.php`
+- ##### Views `fees/*` (components, plans, collection, cards, receipts, reports)
+- ##### Routes All routes implemented
+- ##### Features
   - Fee components
   - Fee plans
   - Fee collection
@@ -98,24 +98,24 @@
 ### 6. ✅ Subject Management
 
 - **Status:** Complete
-- **Controllers:** `SubjectController.php`
-- **Views:** `subjects/*` (index, create, edit, show)
-- **Routes:** All CRUD routes implemented
+- ##### Controllers `SubjectController.php`
+- ##### Views `subjects/*` (index, create, edit, show)
+- ##### Routes All CRUD routes implemented
 
 ### 7. ✅ Department Management
 
 - **Status:** Complete
-- **Controllers:** `DepartmentController.php`
-- **Views:** `departments/*` (index, create, edit, show)
-- **Routes:** All CRUD routes implemented
+- ##### Controllers `DepartmentController.php`
+- ##### Views `departments/*` (index, create, edit, show)
+- ##### Routes All CRUD routes implemented
 
 ### 8. ✅ LMS (Learning Management System)
 
 - **Status:** Complete
-- **Controllers:** `CourseController.php`, `ContentController.php`, `AssignmentController.php`, `QuizController.php`
-- **Views:** `lms/courses/*` (index, create, edit, show)
-- **Routes:** All routes implemented
-- **Features:**
+- ##### Controllers `CourseController.php`, `ContentController.php`, `AssignmentController.php`, `QuizController.php`
+- ##### Views `lms/courses/*` (index, create, edit, show)
+- ##### Routes All routes implemented
+- ##### Features
   - Course management
   - Chapters & topics
   - Assignments
@@ -124,10 +124,10 @@
 ### 9. ✅ Examinations Module
 
 - **Status:** Complete
-- **Controllers:** `ExamController.php`, `ExamScheduleController.php`, `ExamResultController.php`, `AdmitCardController.php`, `ReportCardController.php`, `ExaminationReportController.php`
-- **Views:** `examinations/*` (exams, schedules, results, admit-cards, report-cards, reports)
-- **Routes:** All routes implemented
-- **Features:**
+- ##### Controllers `ExamController.php`, `ExamScheduleController.php`, `ExamResultController.php`, `AdmitCardController.php`, `ReportCardController.php`, `ExaminationReportController.php`
+- ##### Views `examinations/*` (exams, schedules, results, admit-cards, report-cards, reports)
+- ##### Routes All routes implemented
+- ##### Features
   - Exam creation with multiple types (Unit Test, Mid-term, Final, etc.)
   - Exam schedule management (bulk & individual)
   - Result entry (individual & bulk)
@@ -155,7 +155,7 @@
 
 #### Implementation Plan
 
-**Phase 1: Database & Models (Week 1)**
+##### Phase 1: Database & Models (Week 1)
 
 - [ ] Create `marks` table migration
   - Fields: id, tenant_id, student_id, class_id, section_id, subject_id, exam_id, marks_obtained, max_marks, grade, remarks, created_at, updated_at
@@ -164,14 +164,14 @@
 - [ ] Create models: `Mark.php`, `GradeBook.php`
 - [ ] Add relationships
 
-**Phase 2: Controllers (Week 2)**
+##### Phase 2: Controllers (Week 2)
 
 - [ ] Create `MarkController.php`
   - Methods: index, create, store, edit, update, destroy, bulkEntry
 - [ ] Create `GradeBookController.php`
   - Methods: index, show, generate, print
 
-**Phase 3: Views (Week 2)**
+##### Phase 3: Views (Week 2)
 
 - [ ] Create `grades/marks/index.blade.php`
 - [ ] Create `grades/marks/entry.blade.php`
@@ -179,12 +179,12 @@
 - [ ] Create `grades/grade-books/show.blade.php`
 - [ ] Create `grades/reports/index.blade.php`
 
-**Phase 4: Routes (Week 2)**
+##### Phase 4: Routes (Week 2)
 
 - [ ] Add mark routes to `web.php`
 - [ ] Add grade book routes to `web.php`
 
-**Phase 5: Features (Week 3)**
+##### Phase 5: Features (Week 3)
 
 - [ ] Marks entry interface
 - [ ] Bulk marks entry
@@ -241,7 +241,7 @@
 
 #### Implementation Plan
 
-**Database Schema:**
+##### Database Schema
 
 - `vehicles` table (id, tenant_id, vehicle_number, vehicle_type, capacity, driver_id, route_id, status)
 - `routes` table (id, tenant_id, name, start_location, end_location, distance, fare, status)
@@ -249,14 +249,14 @@
 - `transport_assignments` table (id, tenant_id, student_id, route_id, vehicle_id, stop_id, start_date, end_date, status)
 - `drivers` table (id, tenant_id, name, phone, license_number, address, status)
 
-**Controllers:**
+##### Controllers
 
 - `TransportController.php` - Route & vehicle management
 - `VehicleController.php` - Vehicle management
 - `DriverController.php` - Driver management
 - `TransportAssignmentController.php` - Student assignments
 
-**Views:**
+##### Views
 
 - `transport/routes/*` (index, create, edit, show)
 - `transport/vehicles/*` (index, create, edit, show)
@@ -264,7 +264,7 @@
 - `transport/assignments/*` (index, create, edit)
 - `transport/reports/*` (index)
 
-**Routes:**
+##### Routes
 
 - `/admin/transport/routes`
 - `/admin/transport/vehicles`
@@ -272,7 +272,7 @@
 - `/admin/transport/assignments`
 - `/admin/transport/reports`
 
-**Features:**
+##### Features
 
 - Route management
 - Vehicle management
@@ -293,21 +293,21 @@
 
 #### Implementation Plan
 
-**Database Schema:**
+##### Database Schema
 
 - `hostels` table (id, tenant_id, name, address, capacity, available_beds, warden_id, status)
 - `hostel_rooms` table (id, hostel_id, room_number, room_type, capacity, available_beds, floor, status)
 - `hostel_allocations` table (id, tenant_id, student_id, hostel_id, room_id, bed_number, allocation_date, release_date, status)
 - `hostel_fees` table (id, tenant_id, hostel_id, fee_type, amount, frequency, status)
 
-**Controllers:**
+##### Controllers
 
 - `HostelController.php` - Hostel management
 - `HostelRoomController.php` - Room management
 - `HostelAllocationController.php` - Student allocation
 - `HostelFeeController.php` - Fee management
 
-**Views:**
+##### Views
 
 - `hostel/hostels/*` (index, create, edit, show)
 - `hostel/rooms/*` (index, create, edit, show)
@@ -315,7 +315,7 @@
 - `hostel/fees/*` (index, create, edit)
 - `hostel/reports/*` (index)
 
-**Routes:**
+##### Routes
 
 - `/admin/hostel/hostels`
 - `/admin/hostel/rooms`
@@ -323,7 +323,7 @@
 - `/admin/hostel/fees`
 - `/admin/hostel/reports`
 
-**Features:**
+##### Features
 
 - Hostel management
 - Room management
@@ -343,30 +343,30 @@
 
 #### Implementation Plan
 
-**Database Schema:**
+##### Database Schema
 
 - `timetables` table (id, tenant_id, class_id, section_id, academic_year, term, status)
 - `timetable_periods` table (id, timetable_id, day, period_number, start_time, end_time, subject_id, teacher_id, room)
 - `periods` table (id, tenant_id, period_number, start_time, end_time, duration_minutes, break_type)
 
-**Controllers:**
+##### Controllers
 
 - `TimetableController.php` - Timetable management
 - `PeriodController.php` - Period management
 
-**Views:**
+##### Views
 
 - `timetable/classes/*` (index, create, edit, show)
 - `timetable/periods/*` (index, create, edit)
 - `timetable/view/*` (class-wise, teacher-wise, room-wise)
 
-**Routes:**
+##### Routes
 
 - `/admin/timetable/classes`
 - `/admin/timetable/periods`
 - `/admin/timetable/view`
 
-**Features:**
+##### Features
 
 - Class timetable creation
 - Period management
@@ -387,18 +387,18 @@
 
 #### Implementation Plan
 
-**Database Schema:**
+##### Database Schema
 
 - `events` table (id, tenant_id, title, description, event_type, start_date, end_date, start_time, end_time, location, organizer_id, status, created_at, updated_at)
 - `event_participants` table (id, event_id, participant_type, participant_id, status)
 - `event_categories` table (id, tenant_id, name, color, description)
 
-**Controllers:**
+##### Controllers
 
 - `EventController.php` - Event management
 - `EventCategoryController.php` - Category management
 
-**Views:**
+##### Views
 
 - `events/index.blade.php` (calendar view)
 - `events/create.blade.php`
@@ -406,12 +406,12 @@
 - `events/show.blade.php`
 - `events/categories/*` (index, create, edit)
 
-**Routes:**
+##### Routes
 
 - `/admin/events`
 - `/admin/events/categories`
 
-**Features:**
+##### Features
 
 - Event creation & management
 - Calendar view (monthly, weekly, daily)
@@ -432,28 +432,28 @@
 
 #### Implementation Plan
 
-**Database Schema:**
+##### Database Schema
 
 - `notices` table (id, tenant_id, title, content, notice_type, priority, target_audience, start_date, end_date, status, created_by, created_at, updated_at)
 - `notice_attachments` table (id, notice_id, file_path, file_name, file_size)
 - `notice_reads` table (id, notice_id, user_id, read_at)
 
-**Controllers:**
+##### Controllers
 
 - `NoticeController.php` - Notice management
 
-**Views:**
+##### Views
 
 - `notices/index.blade.php`
 - `notices/create.blade.php`
 - `notices/edit.blade.php`
 - `notices/show.blade.php`
 
-**Routes:**
+##### Routes
 
 - `/admin/notices`
 
-**Features:**
+##### Features
 
 - Notice creation & management
 - Notice categories
