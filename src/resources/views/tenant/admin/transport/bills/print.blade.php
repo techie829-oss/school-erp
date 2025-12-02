@@ -59,25 +59,6 @@
             background-color: #1d4ed8;
         }
 
-        .download-button {
-            background-color: #10b981;
-            color: white;
-            padding: 8px 24px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background-color 0.2s;
-        }
-
-        .download-button:hover {
-            background-color: #059669;
-        }
-
         .back-button {
             background-color: #6b7280;
             color: white;
@@ -345,9 +326,6 @@
             <div class="button-group">
                 <a href="{{ url('/admin/transport/bills/' . $bill->id) }}" class="back-button">
                     ← Back
-                </a>
-                <a href="{{ url('/admin/transport/bills/' . $bill->id . '/print?download=pdf') }}" class="download-button">
-                    Download PDF
                 </a>
                 <button onclick="window.print()" class="print-button">
                     Print / Export PDF

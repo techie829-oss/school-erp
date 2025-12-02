@@ -122,11 +122,8 @@
                     <input type="hidden" name="cards_per_page" value="{{ request('cards_per_page', 1) }}">
                     <input type="hidden" name="show_principal_stamp" value="{{ request('show_principal_stamp', 0) }}">
                     <input type="hidden" name="show_accountant_sign" value="{{ request('show_accountant_sign', 0) }}">
-                    <button type="submit" style="background-color: #10b981; color: white; padding: 8px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-left: 10px;">
-                        Download PDF
-                    </button>
                 </form>
-                <button onclick="window.print()" class="print-button">Print</button>
+                <button onclick="window.print()" class="print-button">Print / Export PDF</button>
             </div>
         </div>
     </div>

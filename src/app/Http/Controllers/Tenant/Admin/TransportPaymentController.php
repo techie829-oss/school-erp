@@ -71,7 +71,7 @@ class TransportPaymentController extends Controller
         $tenant = $this->getTenant($request);
 
         $students = Student::forTenant($tenant->id)->active()->orderBy('full_name')->get();
-        
+
         // Load all unpaid bills for dropdown
         $bills = TransportBill::forTenant($tenant->id)
             ->unpaid()
@@ -178,13 +178,7 @@ class TransportPaymentController extends Controller
             ->with(['student', 'bill'])
             ->findOrFail($id);
 
-        // If download parameter is set, generate and download PDF
-        if ($request->has('download') && $request->download === 'pdf') {
-            $pdf = Pdf::loadView('tenant.admin.transport.payments.receipt', compact('payment', 'tenant'));
-            return $pdf->download('transport-payment-receipt-' . $payment->payment_number . '.pdf');
-        }
-
-        // Otherwise, show preview page
+        // Show preview page - user can print from browser
         return view('tenant.admin.transport.payments.receipt', compact('payment', 'tenant'));
     }
 }

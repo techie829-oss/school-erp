@@ -290,9 +290,6 @@
                 <a href="{{ url('/admin/examinations/admit-cards/bulk-actions?' . http_build_query($filters)) }}" style="background-color: #6b7280; color: white; padding: 8px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block;">
                     ← Back
                 </a>
-                <button onclick="downloadPDF()" style="background-color: #10b981; color: white; padding: 8px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    Download PDF
-                </button>
                 <button onclick="window.print()" class="print-button">
                     <svg class="print-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path>
@@ -429,30 +426,5 @@
             </div>
         @endforeach
     </div>
-
-    <form id="downloadForm" action="{{ url('/admin/examinations/admit-cards/bulk-export') }}" method="POST" style="display: none;">
-        @csrf
-        @foreach($filters as $key => $value)
-            @if(is_array($value))
-                @foreach($value as $item)
-                    <input type="hidden" name="{{ $key }}[]" value="{{ $item }}">
-                @endforeach
-            @else
-                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-            @endif
-        @endforeach
-        <input type="hidden" name="cards_per_page" value="{{ $cardsPerPage }}">
-        <input type="hidden" name="show_exam_schedule" value="{{ $showExamSchedule ? '1' : '0' }}">
-        <input type="hidden" name="show_qr_code" value="{{ $showQrCode ? '1' : '0' }}">
-        <input type="hidden" name="show_principal_stamp" value="{{ $showPrincipalStamp ? '1' : '0' }}">
-        <input type="hidden" name="show_class_teacher_sign" value="{{ $showClassTeacherSign ? '1' : '0' }}">
-        <input type="hidden" name="show_supervisor_sign" value="{{ $showSupervisorSign ? '1' : '0' }}">
-    </form>
-
-    <script>
-        function downloadPDF() {
-            document.getElementById('downloadForm').submit();
-        }
-    </script>
 </body>
 </html>

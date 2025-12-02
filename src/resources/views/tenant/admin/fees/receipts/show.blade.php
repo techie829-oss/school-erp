@@ -174,11 +174,8 @@
     <!-- Print Button -->
     <div class="no-print">
         <button onclick="window.print()" style="padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-            Print Receipt
+            Print / Export PDF
         </button>
-        <a href="{{ url('/admin/fees/receipts/' . $payment->id . '/download') }}" style="margin-left: 10px; padding: 12px 24px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px;">
-            Download PDF
-        </a>
     </div>
 
     <div class="receipt-container">
