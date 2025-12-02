@@ -52,8 +52,8 @@
             padding: 20px;
             border-radius: 6px;
             margin-bottom: 25px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: row;
             gap: 30px;
             width: 100%;
         }
@@ -63,6 +63,8 @@
             font-size: 13px;
             display: flex;
             flex-direction: column;
+            flex: 1;
+            min-width: 0;
         }
 
         .detail-item {
