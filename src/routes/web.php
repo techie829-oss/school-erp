@@ -797,7 +797,14 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
                 Route::post('/social', [\App\Http\Controllers\Tenant\Admin\CmsSettingsController::class, 'updateSocial'])->name('update-social');
             });
 
-            // Pages (Phase 1) - Will be added
+            // Pages (Phase 1) - Static for now
+            Route::prefix('pages')->name('pages.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Tenant\Admin\CmsPageController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Tenant\Admin\CmsPageController::class, 'create'])->name('create');
+                Route::get('/{id}', [\App\Http\Controllers\Tenant\Admin\CmsPageController::class, 'show'])->name('show');
+                Route::get('/{id}/edit', [\App\Http\Controllers\Tenant\Admin\CmsPageController::class, 'edit'])->name('edit');
+            });
+
             // Media Library (Phase 1) - Will be added
             // Blog/Posts (Phase 1) - Will be added
             // Menus, Sliders, Galleries (Phase 2) - Will be added
