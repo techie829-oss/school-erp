@@ -382,27 +382,31 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::delete('documents/{documentId}', [\App\Http\Controllers\Tenant\Admin\TeacherController::class, 'deleteDocument'])->name('teachers.delete-document')->where('documentId', '[0-9]+');
         });
 
-        // Department Management
-        Route::get('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'index'])->name('departments.index');
-        Route::get('departments/create', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'create'])->name('departments.create');
-        Route::post('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'store'])->name('departments.store');
-        Route::get('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'show'])->name('departments.show')->where('departmentId', '[0-9]+');
-        Route::get('departments/{departmentId}/edit', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'edit'])->name('departments.edit')->where('departmentId', '[0-9]+');
-        Route::put('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update')->where('departmentId', '[0-9]+');
-        Route::patch('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update.patch')->where('departmentId', '[0-9]+');
-        Route::delete('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'destroy'])->name('departments.destroy')->where('departmentId', '[0-9]+');
+        // Department Management (requires classes feature)
+        Route::middleware('feature:classes')->group(function () {
+            Route::get('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'index'])->name('departments.index');
+            Route::get('departments/create', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'create'])->name('departments.create');
+            Route::post('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'store'])->name('departments.store');
+            Route::get('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'show'])->name('departments.show')->where('departmentId', '[0-9]+');
+            Route::get('departments/{departmentId}/edit', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'edit'])->name('departments.edit')->where('departmentId', '[0-9]+');
+            Route::put('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update')->where('departmentId', '[0-9]+');
+            Route::patch('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update.patch')->where('departmentId', '[0-9]+');
+            Route::delete('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'destroy'])->name('departments.destroy')->where('departmentId', '[0-9]+');
+        });
 
-        // Subject Management
-        Route::get('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'index'])->name('subjects.index');
-        Route::get('subjects/create', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'create'])->name('subjects.create');
-        Route::post('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'store'])->name('subjects.store');
-        Route::get('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'show'])->name('subjects.show')->where('subjectId', '[0-9]+');
-        Route::get('subjects/{subjectId}/edit', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'edit'])->name('subjects.edit')->where('subjectId', '[0-9]+');
-        Route::put('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update')->where('subjectId', '[0-9]+');
-        Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
-        Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
+        // Subject Management (requires classes feature)
+        Route::middleware('feature:classes')->group(function () {
+            Route::get('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'index'])->name('subjects.index');
+            Route::get('subjects/create', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'create'])->name('subjects.create');
+            Route::post('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'store'])->name('subjects.store');
+            Route::get('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'show'])->name('subjects.show')->where('subjectId', '[0-9]+');
+            Route::get('subjects/{subjectId}/edit', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'edit'])->name('subjects.edit')->where('subjectId', '[0-9]+');
+            Route::put('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update')->where('subjectId', '[0-9]+');
+            Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
+            Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
+        });
 
-        // Examination Management
+        // Examination Management - Grade Scales (requires grades feature)
         Route::prefix('examinations')->name('examinations.')->middleware('feature:grades')->group(function () {
             // Grade Scales
             Route::get('grade-scales', [\App\Http\Controllers\Tenant\Admin\GradeScaleController::class, 'index'])->name('grade-scales.index');
@@ -525,8 +529,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::put('settings', [\App\Http\Controllers\Tenant\Admin\LibrarySettingsController::class, 'update'])->name('settings.update');
         });
 
-        // Timetable Management
-        Route::prefix('timetable')->name('timetable.')->group(function () {
+        // Timetable Management (requires timetable feature)
+        Route::prefix('timetable')->name('timetable.')->middleware('feature:timetable')->group(function () {
             // Periods
             Route::get('periods', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'index'])->name('periods.index');
             Route::get('periods/create', [\App\Http\Controllers\Tenant\Admin\PeriodController::class, 'create'])->name('periods.create');
@@ -548,8 +552,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('view', [\App\Http\Controllers\Tenant\Admin\TimetableController::class, 'view'])->name('view');
         });
 
-        // Hostel Management
-        Route::prefix('hostel')->name('hostel.')->group(function () {
+        // Hostel Management (requires hostel feature)
+        Route::prefix('hostel')->name('hostel.')->middleware('feature:hostel')->group(function () {
             // Hostels
             Route::get('hostels', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'index'])->name('hostels.index');
             Route::get('hostels/create', [\App\Http\Controllers\Tenant\Admin\HostelController::class, 'create'])->name('hostels.create');
@@ -775,8 +779,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::get('notifications/logs', [\App\Http\Controllers\Tenant\Admin\NotificationLogController::class, 'index'])
             ->name('notifications.logs');
 
-        // Notice Board
-        Route::prefix('notices')->name('notices.')->group(function () {
+        // Notice Board (requires notice_board feature)
+        Route::prefix('notices')->name('notices.')->middleware('feature:notice_board')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Tenant\Admin\NoticeController::class, 'store'])->name('store');
@@ -816,8 +820,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             // FAQs, Testimonials, SEO (Phase 3) - Will be added
         });
 
-        // Events & Calendar
-        Route::prefix('events')->name('events.')->group(function () {
+        // Events & Calendar (requires events feature)
+        Route::prefix('events')->name('events.')->middleware('feature:events')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Tenant\Admin\EventController::class, 'store'])->name('store');
