@@ -107,6 +107,12 @@ Route::domain(config('all.domains.admin'))->group(function () {
         // Tenant Status Management
         Route::post('/tenants/{tenant}/toggle-status', [\App\Http\Controllers\Admin\TenantController::class, 'toggleStatus'])->name('tenants.toggle-status')->where('tenant', '[a-z0-9-]+');
 
+        // Tenant Settings (Superadmin only)
+        Route::get('/tenants/{tenant}/settings/features', [\App\Http\Controllers\Admin\TenantController::class, 'settingsFeatures'])->name('tenants.settings.features')->where('tenant', '[a-z0-9-]+');
+        Route::post('/tenants/{tenant}/settings/features', [\App\Http\Controllers\Admin\TenantController::class, 'updateSettingsFeatures'])->name('tenants.settings.features.update')->where('tenant', '[a-z0-9-]+');
+        Route::get('/tenants/{tenant}/settings/notifications', [\App\Http\Controllers\Admin\TenantController::class, 'settingsNotifications'])->name('tenants.settings.notifications')->where('tenant', '[a-z0-9-]+');
+        Route::post('/tenants/{tenant}/settings/notifications', [\App\Http\Controllers\Admin\TenantController::class, 'updateSettingsNotifications'])->name('tenants.settings.notifications.update')->where('tenant', '[a-z0-9-]+');
+
         // Vhost Management
         Route::prefix('vhost')->name('vhost.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\VhostController::class, 'index'])->name('index');
@@ -329,11 +335,10 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'index'])->name('index');
             Route::post('/general', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateGeneral'])->name('update.general');
-            Route::post('/features', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateFeatures'])->name('update.features');
+            // Features and Notifications routes removed - only superadmin can configure via /admin/tenants/{tenant}/settings/*
             Route::post('/academic', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAcademic'])->name('update.academic');
             Route::post('/attendance', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateAttendance'])->name('update.attendance');
             Route::post('/payment', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updatePayment'])->name('update.payment');
-            Route::post('/notifications', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'updateNotifications'])->name('update.notifications');
             Route::delete('/logo', [\App\Http\Controllers\Tenant\Admin\SettingsController::class, 'deleteLogo'])->name('delete.logo');
         });
 

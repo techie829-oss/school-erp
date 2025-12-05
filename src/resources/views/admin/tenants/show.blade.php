@@ -212,6 +212,36 @@
                                 </div>
                             </a>
 
+                            <a href="{{ route('admin.tenants.settings.features', $tenant) }}"
+                                class="flex items-center p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-200">
+                                <div class="p-2 bg-indigo-100 rounded-lg mr-3">
+                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Module Settings</h4>
+                                    <p class="text-sm text-gray-600">Enable/disable modules</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('admin.tenants.settings.notifications', $tenant) }}"
+                                class="flex items-center p-3 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors border border-teal-200">
+                                <div class="p-2 bg-teal-100 rounded-lg mr-3">
+                                    <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">SMS & Email Config</h4>
+                                    <p class="text-sm text-gray-600">Configure notifications</p>
+                                </div>
+                            </a>
+
                             <form method="POST" action="{{ route('admin.tenants.toggle-status', $tenant) }}"
                                 class="flex items-center p-3 {{ $tenant->data['is_active'] ?? true ? 'bg-red-50 hover:bg-red-100 border-red-200' : 'bg-green-50 hover:bg-green-100 border-green-200' }} rounded-lg transition-colors cursor-pointer border"
                                 onsubmit="return confirm('Are you sure you want to {{ $tenant->data['is_active'] ?? true ? 'deactivate' : 'activate' }} this tenant?')">

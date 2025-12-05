@@ -31,13 +31,11 @@ class SettingsController extends Controller
             abort(404, 'Tenant not found');
         }
 
-        // Get all settings grouped
+        // Get all settings grouped (features and notifications removed - only superadmin can configure)
         $generalSettings = TenantSetting::getAllForTenant($tenant->id, 'general');
-        $featureSettings = TenantSetting::getAllForTenant($tenant->id, 'features');
         $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
         $attendanceSettings = AttendanceSettings::getForTenant($tenant->id);
         $paymentSettings = TenantSetting::getAllForTenant($tenant->id, 'payment');
-        $notificationSettings = TenantSetting::getAllForTenant($tenant->id, 'notifications');
 
         // Get tenant data
         $tenantData = $tenant->data ?? [];
@@ -46,11 +44,9 @@ class SettingsController extends Controller
             'tenant',
             'tenantData',
             'generalSettings',
-            'featureSettings',
             'academicSettings',
             'attendanceSettings',
-            'paymentSettings',
-            'notificationSettings'
+            'paymentSettings'
         ));
     }
 
@@ -110,9 +106,13 @@ class SettingsController extends Controller
 
     /**
      * Update feature settings (enable/disable modules)
+     * NOTE: This is now restricted to superadmin only. Tenant admins cannot update these settings.
      */
     public function updateFeatures(Request $request)
     {
+        // Restrict access - only superadmin can update module settings
+        abort(403, 'Module settings can only be configured by superadmin. Please contact your system administrator.');
+
         $tenant = $this->tenantService->getCurrentTenant($request);
 
         if (!$tenant) {
@@ -395,9 +395,13 @@ class SettingsController extends Controller
 
     /**
      * Update notification settings (SMS & Email)
+     * NOTE: This is now restricted to superadmin only. Tenant admins cannot update these settings.
      */
     public function updateNotifications(Request $request)
     {
+        // Restrict access - only superadmin can update SMS/email settings
+        abort(403, 'SMS and email configuration can only be configured by superadmin. Please contact your system administrator.');
+
         $tenant = $this->tenantService->getCurrentTenant($request);
 
         if (!$tenant) {
