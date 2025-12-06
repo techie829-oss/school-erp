@@ -80,13 +80,21 @@ class StudentFeeCard extends Model
      */
     public function updateBalance()
     {
-        $this->paid_amount = $this->feeItems()->sum('paid_amount');
+        // Use the relationship if already loaded, otherwise query
+        if ($this->relationLoaded('feeItems')) {
+            $this->paid_amount = $this->feeItems->sum('paid_amount');
+        } else {
+            $this->paid_amount = $this->feeItems()->sum('paid_amount');
+        }
+
         $this->balance_amount = $this->total_amount - $this->discount_amount - $this->paid_amount;
 
         if ($this->balance_amount <= 0) {
             $this->status = 'paid';
         } elseif ($this->paid_amount > 0) {
             $this->status = 'partial';
+        } else {
+            $this->status = 'active';
         }
 
         $this->save();

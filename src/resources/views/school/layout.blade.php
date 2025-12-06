@@ -125,8 +125,34 @@
                         </div>
                     </div>
 
-                    <!-- CTA Buttons -->
+                    <!-- CTA Buttons and Language Switcher -->
                     <div class="hidden md:flex items-center space-x-3">
+                        <!-- Language Switcher -->
+                        @php
+                            $languages = $availableLanguages ?? config('content.pages.languages', ['en' => 'English']);
+                            $currentLang = $currentLanguage ?? session('website_language') ?? config('content.pages.default_language', 'en');
+                        @endphp
+                        <div class="relative group">
+                            <button type="button" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                                </svg>
+                                <span class="uppercase">{{ $currentLang }}</span>
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <div class="py-1">
+                                    @foreach($languages as $langCode => $langName)
+                                    <a href="{{ url('/language/' . $langCode) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors {{ $currentLang === $langCode ? 'bg-primary-50 text-primary-600 font-medium' : '' }}">
+                                        <span class="uppercase text-xs mr-2">{{ $langCode }}</span>{{ $langName }}
+                                    </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
                         @auth
                             <a href="{{ url('/admin/dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors">
                                 Dashboard
@@ -200,6 +226,23 @@
                     </a>
                 </div>
                 <div class="pt-4 pb-3 border-t border-gray-200 px-2 sm:px-3 space-y-3">
+                    <!-- Language Switcher (Mobile) -->
+                    @php
+                        $languages = $availableLanguages ?? config('content.pages.languages', ['en' => 'English']);
+                        $currentLang = $currentLanguage ?? session('website_language') ?? config('content.pages.default_language', 'en');
+                    @endphp
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-500 mb-2 px-3">Language</label>
+                        <div class="grid grid-cols-3 gap-2 px-3">
+                            @foreach($languages as $langCode => $langName)
+                            <a href="{{ url('/language/' . $langCode) }}" class="text-center px-3 py-2 text-sm font-medium rounded-lg border transition-colors {{ $currentLang === $langCode ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}">
+                                <span class="uppercase text-xs block">{{ $langCode }}</span>
+                                <span class="text-xs">{{ $langName }}</span>
+                            </a>
+                            @endforeach
+                        </div>
+                    </div>
+
                     @auth
                         <a href="{{ url('/admin/dashboard') }}" class="block w-full text-center px-4 py-3 text-base font-medium text-secondary-600 bg-secondary-100 hover:bg-secondary-200 border border-secondary-300 transition-colors rounded-lg">
                             Dashboard

@@ -30,11 +30,16 @@ class CheckFeatureEnabled
             abort(404, 'Tenant not found');
         }
 
-        // Get feature setting (default to true for backward compatibility)
+        // Get feature setting with appropriate defaults
+        // Opt-in features (library, transport, hostel, cms) default to false
+        // Core features (students, teachers, classes, etc.) default to true (backward compatibility)
+        $optInFeatures = ['library', 'transport', 'hostel', 'cms'];
+        $defaultEnabled = in_array($feature, $optInFeatures) ? false : true;
+
         $enabled = TenantSetting::getSetting(
             $tenant->id,
             "feature_{$feature}",
-            true // Default to enabled if not set
+            $defaultEnabled
         );
 
         if (!$enabled) {

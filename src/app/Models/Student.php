@@ -250,14 +250,25 @@ class Student extends Model
     }
 
     /**
-     * Generate admission number
+     * Generate admission number (tenant-scoped)
      */
     public static function generateAdmissionNumber($tenantId, $year = null)
     {
         $year = $year ?? now()->year;
-        $lastNumber = static::where('tenant_id', $tenantId)
+
+        // Get the highest number used for this tenant and year
+        $lastStudent = static::where('tenant_id', $tenantId)
             ->where('admission_number', 'like', "STU-{$year}-%")
-            ->count();
+            ->orderBy('admission_number', 'desc')
+            ->first();
+
+        if ($lastStudent) {
+            // Extract the number from the last admission number (e.g., "STU-2025-001" -> 1)
+            preg_match('/STU-\d+-(\d+)/', $lastStudent->admission_number, $matches);
+            $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        } else {
+            $lastNumber = 0;
+        }
 
         return sprintf('STU-%d-%03d', $year, $lastNumber + 1);
     }

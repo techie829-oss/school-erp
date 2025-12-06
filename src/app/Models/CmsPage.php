@@ -2,93 +2,60 @@
 
 namespace App\Models;
 
-use App\Models\Traits\ForTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CmsPage extends Model
 {
-    use HasFactory, ForTenant;
-
-    protected $table = 'cms_pages';
+    use HasFactory;
 
     protected $fillable = [
         'tenant_id',
-        'title',
         'slug',
-        'content',
-        'excerpt',
-        'template',
-        'status',
-        'published_at',
-        'author_id',
-        'meta_title',
+        'title',
         'meta_description',
         'meta_keywords',
-        'featured_image',
-        'parent_id',
-        'order',
+        'content',
+        'settings',
+        'is_published',
     ];
 
     protected $casts = [
-        'published_at' => 'datetime',
+        'content' => 'array',
+        'settings' => 'array',
+        'is_published' => 'boolean',
     ];
 
-    // Relationships
-    public function tenant()
+    /**
+     * Get the tenant that owns the page.
+     */
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 
-    public function author()
-    {
-        return $this->belongsTo(User::class, 'author_id');
-    }
-
-    public function parent()
-    {
-        return $this->belongsTo(CmsPage::class, 'parent_id');
-    }
-
-    public function children()
-    {
-        return $this->hasMany(CmsPage::class, 'parent_id')->orderBy('order');
-    }
-
-    // Scopes
-    public function scopeForTenant($query, $tenantId)
+    /**
+     * Scope a query to only include pages for a specific tenant.
+     */
+    public function scopeForTenant($query, string $tenantId)
     {
         return $query->where('tenant_id', $tenantId);
     }
 
+    /**
+     * Scope a query to only include published pages.
+     */
     public function scopePublished($query)
     {
-        return $query->where('status', 'published')
-                    ->where(function($q) {
-                        $q->whereNull('published_at')
-                          ->orWhere('published_at', '<=', now());
-                    });
+        return $query->where('is_published', true);
     }
 
-    public function scopeByTemplate($query, $template)
+    /**
+     * Get page by slug for tenant.
+     */
+    public static function getBySlug(string $tenantId, string $slug)
     {
-        return $query->where('template', $template);
-    }
-
-    // Mutators
-    public function setSlugAttribute($value)
-    {
-        $this->attributes['slug'] = $value ? Str::slug($value) : Str::slug($this->title);
-    }
-
-    // Accessors
-    public function getUrlAttribute()
-    {
-        if ($this->template === 'home') {
-            return url('/');
-        }
-        return url('/' . $this->slug);
+        return static::forTenant($tenantId)->where('slug', $slug)->first();
     }
 }
-

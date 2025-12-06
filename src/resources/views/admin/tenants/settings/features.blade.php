@@ -232,6 +232,19 @@
                             <p class="text-gray-500">Generate various reports and analytics</p>
                         </div>
                     </div>
+
+                    <!-- CMS Module -->
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="enable_cms" name="enable_cms" type="checkbox" value="1"
+                                {{ ($featureSettings['feature_cms'] ?? false) ? 'checked' : '' }}
+                                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="enable_cms" class="font-medium text-gray-700">Content Management System</label>
+                            <p class="text-gray-500">Manage website content, pages, and blog posts</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

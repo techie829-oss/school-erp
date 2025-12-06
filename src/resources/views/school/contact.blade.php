@@ -3,6 +3,12 @@
 @section('title', 'Contact')
 
 @section('content')
+@php
+    $tenantId = $tenant['id'] ?? null;
+    if (!$tenantId && isset($tenant) && is_object($tenant)) {
+        $tenantId = $tenant->id ?? null;
+    }
+@endphp
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-teal-50 via-white to-cyan-50 py-24 lg:py-32 overflow-hidden">
     <!-- Background Pattern -->
@@ -14,17 +20,23 @@
         <div class="text-center">
             <div class="mb-6">
                 <span class="inline-block px-4 py-2 bg-teal-100 text-teal-700 rounded-full text-sm font-semibold mb-4">
-                    We're Here to Help
+                    {{ cms_field('contact', 'hero_badge', 'We\'re Here to Help', $tenantId) }}
                 </span>
             </div>
             <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-                Contact <span class="text-primary-600 relative inline-block">
-                    Us
-                    <span class="absolute bottom-0 left-0 right-0 h-3 bg-primary-200 opacity-30 -z-10 transform -rotate-1"></span>
-                </span>
+                @php
+                    $heroHeading = cms_field('contact', 'hero_heading', 'Contact Us', $tenantId);
+                    // Split "Contact Us" to highlight "Us" if it contains "Contact"
+                    if (strpos($heroHeading, 'Contact') !== false) {
+                        $parts = explode('Contact', $heroHeading, 2);
+                        echo 'Contact <span class="text-primary-600 relative inline-block">' . trim($parts[1] ?? 'Us') . '<span class="absolute bottom-0 left-0 right-0 h-3 bg-primary-200 opacity-30 -z-10 transform -rotate-1"></span></span>';
+                    } else {
+                        echo $heroHeading;
+                    }
+                @endphp
             </h1>
             <p class="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-                Get in touch with us for any questions, inquiries, or to schedule a campus visit.
+                {{ cms_field('contact', 'hero_description', 'Get in touch with us for any questions, inquiries, or to schedule a campus visit.', $tenantId) }}
             </p>
         </div>
     </div>
@@ -41,9 +53,9 @@
             <!-- Contact Form -->
             <div>
                 <div class="mb-8">
-                    <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Send Us a Message</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get In Touch</h2>
-                    <p class="text-gray-600">Fill out the form below and we'll get back to you as soon as possible.</p>
+                    <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('contact', 'form_badge', 'Send Us a Message', $tenantId) }}</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ cms_field('contact', 'form_title', 'Get In Touch', $tenantId) }}</h2>
+                    <p class="text-gray-600">{{ cms_field('contact', 'form_description', 'Fill out the form below and we\'ll get back to you as soon as possible.', $tenantId) }}</p>
                 </div>
 
                 <form class="space-y-6" action="#" method="POST">
@@ -87,7 +99,7 @@
                     </div>
 
                     <button type="submit" class="w-full bg-primary-600 text-white font-semibold py-4 px-6 rounded-lg hover:bg-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                        Send Message
+                        {{ cms_field('contact', 'form_button_text', 'Send Message', $tenantId) }}
                     </button>
                 </form>
             </div>
@@ -95,9 +107,9 @@
             <!-- Contact Information -->
             <div>
                 <div class="mb-8">
-                    <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Contact Information</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Visit or Reach Us</h2>
-                    <p class="text-gray-600">We're here to answer your questions and help you learn more about our school.</p>
+                    <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('contact', 'contact_info_badge', 'Contact Information', $tenantId) }}</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ cms_field('contact', 'contact_info_title', 'Visit or Reach Us', $tenantId) }}</h2>
+                    <p class="text-gray-600">{{ cms_field('contact', 'contact_info_description', 'We\'re here to answer your questions and help you learn more about our school.', $tenantId) }}</p>
                 </div>
 
                 <div class="space-y-6 mb-8">
@@ -112,7 +124,7 @@
                         <div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2">Address</h3>
                             <p class="text-gray-700">
-                                {{ $cmsContactAddress ?? '123 School Street, Education City, State 12345' }}
+                                {{ cms_field('contact', 'address', '123 School Street, Education City, State 12345', $tenantId) }}
                             </p>
                         </div>
                     </div>
@@ -127,8 +139,11 @@
                         <div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2">Phone</h3>
                             <p class="text-gray-700">
-                                <a href="tel:{{ $cmsContactPhone ?? '+1234567890' }}" class="hover:text-primary-600 transition-colors">
-                                    {{ $cmsContactPhone ?? '+1 (234) 567-890' }}
+                                @php
+                                    $phone = cms_field('contact', 'phone', '+1 (234) 567-890', $tenantId);
+                                @endphp
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $phone) }}" class="hover:text-primary-600 transition-colors">
+                                    {{ $phone }}
                                 </a>
                             </p>
                         </div>
@@ -144,8 +159,11 @@
                         <div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2">Email</h3>
                             <p class="text-gray-700">
-                                <a href="mailto:{{ $cmsContactEmail ?? 'info@school.com' }}" class="hover:text-primary-600 transition-colors">
-                                    {{ $cmsContactEmail ?? 'info@school.com' }}
+                                @php
+                                    $email = cms_field('contact', 'email', 'info@school.com', $tenantId);
+                                @endphp
+                                <a href="mailto:{{ $email }}" class="hover:text-primary-600 transition-colors">
+                                    {{ $email }}
                                 </a>
                             </p>
                         </div>
@@ -158,20 +176,17 @@
                         <svg class="w-5 h-5 text-primary-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        Office Hours
+                        {{ cms_field('contact', 'office_hours_title', 'Office Hours', $tenantId) }}
                     </h3>
                     <div class="space-y-2 text-gray-700">
-                        <div class="flex justify-between">
-                            <span class="font-medium">Monday - Friday</span>
-                            <span>8:00 AM - 5:00 PM</span>
+                        <div>
+                            <span class="font-medium">{{ cms_field('contact', 'office_hours_weekdays', 'Monday - Friday: 8:00 AM - 5:00 PM', $tenantId) }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium">Saturday</span>
-                            <span>9:00 AM - 1:00 PM</span>
+                        <div>
+                            <span class="font-medium">{{ cms_field('contact', 'office_hours_saturday', 'Saturday: 9:00 AM - 1:00 PM', $tenantId) }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium">Sunday</span>
-                            <span>Closed</span>
+                        <div>
+                            <span class="font-medium">{{ cms_field('contact', 'office_hours_sunday', 'Sunday: Closed', $tenantId) }}</span>
                         </div>
                     </div>
                 </div>
@@ -184,12 +199,29 @@
 <section class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
-            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Find Us</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Location</h2>
-            <p class="text-xl text-gray-600">Visit our campus or get directions</p>
+            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('contact', 'map_badge', 'Find Us', $tenantId) }}</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('contact', 'map_title', 'Location', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600">{{ cms_field('contact', 'map_description', 'Visit our campus or get directions', $tenantId) }}</p>
         </div>
 
+        @php
+            $mapEmbedUrl = cms_field('contact', 'map_embed_url', '', $tenantId);
+        @endphp
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+            @if(!empty($mapEmbedUrl))
+            <div class="h-96 w-full">
+                <iframe
+                    src="{{ $mapEmbedUrl }}"
+                    width="100%"
+                    height="100%"
+                    style="border:0;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    class="w-full h-full">
+                </iframe>
+            </div>
+            @else
             <div class="h-96 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                 <div class="text-center">
                     <svg class="w-24 h-24 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,9 +229,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                     <p class="text-gray-600 font-medium">Map integration can be added here</p>
-                    <p class="text-gray-500 text-sm mt-2">{{ $cmsContactAddress ?? '123 School Street, Education City, State 12345' }}</p>
+                    <p class="text-gray-500 text-sm mt-2">{{ cms_field('contact', 'address', '123 School Street, Education City, State 12345', $tenantId) }}</p>
+                    <p class="text-gray-400 text-xs mt-4">Add a Google Maps embed URL in the CMS to display the map</p>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </section>
@@ -208,9 +242,9 @@
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
-            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Connect With Us</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Follow Our Journey</h2>
-            <p class="text-xl text-gray-600">Stay connected through our social media channels</p>
+            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('contact', 'social_badge', 'Connect With Us', $tenantId) }}</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('contact', 'social_title', 'Follow Our Journey', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600">{{ cms_field('contact', 'social_description', 'Stay connected through our social media channels', $tenantId) }}</p>
         </div>
 
         <div class="flex flex-wrap justify-center gap-4 mb-12">

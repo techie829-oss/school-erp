@@ -73,14 +73,15 @@ class Invoice extends Model
     }
 
     /**
-     * Generate invoice number
+     * Generate invoice number (globally unique)
      */
     public static function generateInvoiceNumber($tenantId)
     {
         $prefix = 'INV';
         $year = date('Y');
-        $lastInvoice = static::forTenant($tenantId)
-            ->where('invoice_number', 'like', $prefix . '-' . $year . '-%')
+
+        // Get the last invoice globally (not tenant-scoped) since the constraint is global
+        $lastInvoice = static::where('invoice_number', 'like', $prefix . '-' . $year . '-%')
             ->orderBy('id', 'desc')
             ->first();
 
@@ -91,7 +92,24 @@ class Invoice extends Model
             $newNumber = '0001';
         }
 
-        return $prefix . '-' . $year . '-' . $newNumber;
+        $invoiceNumber = $prefix . '-' . $year . '-' . $newNumber;
+
+        // Double-check it doesn't exist (race condition protection)
+        $maxRetries = 10;
+        $retryCount = 0;
+        while (static::where('invoice_number', $invoiceNumber)->exists() && $retryCount < $maxRetries) {
+            $lastNumber = (int) substr($invoiceNumber, -4);
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+            $invoiceNumber = $prefix . '-' . $year . '-' . $newNumber;
+            $retryCount++;
+        }
+
+        if ($retryCount >= $maxRetries) {
+            // Fallback: use timestamp-based number
+            $invoiceNumber = $prefix . '-' . $year . '-' . str_pad((int)substr(time(), -6), 6, '0', STR_PAD_LEFT);
+        }
+
+        return $invoiceNumber;
     }
 
     /**

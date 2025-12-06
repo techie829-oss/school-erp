@@ -13,6 +13,7 @@ use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ExamScheduleController extends Controller
 {
@@ -116,10 +117,22 @@ class ExamScheduleController extends Controller
         $tenant = $this->getTenant($request);
 
         $validator = Validator::make($request->all(), [
-            'exam_id' => 'required|exists:exams,id',
-            'subject_id' => 'required|exists:subjects,id',
-            'class_id' => 'required|exists:classes,id',
-            'section_id' => 'nullable|exists:sections,id',
+            'exam_id' => [
+                'required',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'subject_id' => [
+                'required',
+                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'exam_date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
@@ -128,7 +141,10 @@ class ExamScheduleController extends Controller
             'max_marks' => 'required|numeric|min:0',
             'passing_marks' => 'nullable|numeric|min:0|max:max_marks',
             'instructions' => 'nullable|string',
-            'supervisor_id' => 'nullable|exists:teachers,id',
+            'supervisor_id' => [
+                'nullable',
+                Rule::exists('teachers', 'id')->where('tenant_id', $tenant->id),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -205,9 +221,18 @@ class ExamScheduleController extends Controller
         $schedule = ExamSchedule::forTenant($tenant->id)->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'subject_id' => 'required|exists:subjects,id',
-            'class_id' => 'required|exists:classes,id',
-            'section_id' => 'nullable|exists:sections,id',
+            'subject_id' => [
+                'required',
+                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'exam_date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
@@ -216,7 +241,10 @@ class ExamScheduleController extends Controller
             'max_marks' => 'required|numeric|min:0',
             'passing_marks' => 'nullable|numeric|min:0|max:max_marks',
             'instructions' => 'nullable|string',
-            'supervisor_id' => 'nullable|exists:teachers,id',
+            'supervisor_id' => [
+                'nullable',
+                Rule::exists('teachers', 'id')->where('tenant_id', $tenant->id),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -315,11 +343,23 @@ class ExamScheduleController extends Controller
         $tenant = $this->getTenant($request);
 
         $validator = Validator::make($request->all(), [
-            'exam_id' => 'required|exists:exams,id',
+            'exam_id' => [
+                'required',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
             'schedules' => 'required|array|min:1',
-            'schedules.*.subject_id' => 'required|exists:subjects,id',
-            'schedules.*.class_id' => 'required|exists:classes,id',
-            'schedules.*.section_id' => 'nullable|exists:sections,id',
+            'schedules.*.subject_id' => [
+                'required',
+                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'schedules.*.class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'schedules.*.section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'schedules.*.exam_date' => 'required|date',
             'schedules.*.start_time' => 'required|date_format:H:i',
             'schedules.*.end_time' => 'required|date_format:H:i',

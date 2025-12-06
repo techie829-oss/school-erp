@@ -229,20 +229,38 @@ class FeeCollectionController extends Controller
      */
     public function processPayment(Request $request, $studentId)
     {
+        \Log::info('Payment processing started', [
+            'student_id' => $studentId,
+            'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
+            'all_data' => $request->all()
+        ]);
+
         $tenant = $this->tenantService->getCurrentTenant($request);
 
         if (!$tenant) {
+            \Log::error('Tenant not found in processPayment');
             abort(404, 'Tenant not found');
         }
+
+        \Log::info('Tenant found', ['tenant_id' => $tenant->id]);
+
         $student = Student::forTenant($tenant->id)
-            ->with(['studentFeeCard.feeItems'])
+            ->with(['studentFeeCard.feeItems.feeComponent'])
             ->findOrFail($studentId);
 
         if (!$student->studentFeeCard) {
+            \Log::error('Student has no fee card', ['student_id' => $studentId]);
             return redirect()->back()
                 ->with('error', 'No fee card assigned to this student!')
                 ->withInput();
         }
+
+        \Log::info('Student and fee card found', [
+            'student_id' => $studentId,
+            'fee_card_id' => $student->studentFeeCard->id,
+            'balance_amount' => $student->studentFeeCard->balance_amount
+        ]);
 
         $validator = Validator::make($request->all(), [
             'payment_method' => 'required|in:cash,cheque,bank_transfer,online,razorpay',
@@ -255,13 +273,26 @@ class FeeCollectionController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::warning('Payment validation failed', [
+                'errors' => $validator->errors()->toArray(),
+                'student_id' => $studentId
+            ]);
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
         }
 
+        \Log::info('Validation passed, starting transaction');
+
         DB::beginTransaction();
         try {
+            // Ensure student fee card and items are loaded before creating invoice
+            $student->load('studentFeeCard.feeItems.feeComponent');
+
+            if (!$student->studentFeeCard) {
+                throw new \Exception('Student does not have a fee card assigned.');
+            }
+
             // Create or get invoice
             $invoice = Invoice::forTenant($tenant->id)
                 ->where('student_id', $studentId)
@@ -269,10 +300,29 @@ class FeeCollectionController extends Controller
                 ->first();
 
             if (!$invoice) {
+                \Log::info('No existing invoice found, creating new invoice');
+                try {
                 $invoice = $this->createInvoice($student, $tenant);
+                    \Log::info('Invoice created successfully', ['invoice_id' => $invoice->id, 'invoice_number' => $invoice->invoice_number]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to create invoice: ' . $e->getMessage(), [
+                        'student_id' => $studentId,
+                        'tenant_id' => $tenant->id,
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw new \Exception('Failed to create invoice: ' . $e->getMessage());
+                }
+            } else {
+                \Log::info('Using existing invoice', ['invoice_id' => $invoice->id, 'invoice_number' => $invoice->invoice_number]);
+            }
+
+            if (!$invoice) {
+                \Log::error('Invoice is null after creation/retrieval');
+                throw new \Exception('Failed to create or retrieve invoice.');
             }
 
             // Create payment
+            \Log::info('Creating payment record');
             $payment = Payment::create([
                 'tenant_id' => $tenant->id,
                 'student_id' => $studentId,
@@ -288,6 +338,7 @@ class FeeCollectionController extends Controller
                 'notes' => $request->notes,
                 'collected_by' => auth()->id(),
             ]);
+            \Log::info('Payment created', ['payment_id' => $payment->id, 'payment_number' => $payment->payment_number]);
 
             // Update invoice
             $invoice->paid_amount += $request->amount;
@@ -298,22 +349,46 @@ class FeeCollectionController extends Controller
             }
             $invoice->save();
 
-            // Reload student fee card with items
+            // Reload student fee card with items to ensure we have fresh data
             $student->load('studentFeeCard.feeItems');
 
             // Update fee card and items (Allocate based on payment type if provided)
             $this->allocatePayment($student->studentFeeCard, $request->amount, $request->payment_type);
 
+            // Final refresh and balance update to ensure consistency
+            $student->studentFeeCard->refresh();
+            $student->studentFeeCard->load('feeItems');
+            $student->studentFeeCard->updateBalance();
+
             DB::commit();
+            \Log::info('Transaction committed successfully', ['payment_id' => $payment->id]);
 
             // Send payment confirmation notification
+            try {
             $notificationService = new \App\Services\NotificationService($tenant->id);
             $notificationService->sendPaymentConfirmation($payment);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send payment notification', ['error' => $e->getMessage()]);
+                // Don't fail the payment if notification fails
+            }
 
+            \Log::info('Payment processing completed successfully', ['payment_id' => $payment->id]);
             return redirect('/admin/fees/collection/' . $studentId)
                 ->with('success', 'Payment collected successfully! Payment Number: ' . $payment->payment_number);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Log the full error for debugging
+            \Log::error('Payment processing failed', [
+                'student_id' => $studentId,
+                'tenant_id' => $tenant->id ?? null,
+                'amount' => $request->amount ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
             return redirect()->back()
                 ->with('error', 'Failed to process payment: ' . $e->getMessage())
                 ->withInput();
@@ -331,10 +406,25 @@ class FeeCollectionController extends Controller
             throw new \Exception('Student does not have a fee card assigned.');
         }
 
+        // Ensure fee items and fee components are loaded
+        if (!$feeCard->relationLoaded('feeItems')) {
+            $feeCard->load('feeItems.feeComponent');
+        } else {
+            // If feeItems are loaded but not feeComponent, load it
+            foreach ($feeCard->feeItems as $item) {
+                if (!$item->relationLoaded('feeComponent')) {
+                    $item->load('feeComponent');
+                }
+            }
+        }
+
+        // Generate invoice number (the method now handles uniqueness internally)
+        $invoiceNumber = Invoice::generateInvoiceNumber($tenant->id);
+
         $invoice = Invoice::create([
             'tenant_id' => $tenant->id,
             'student_id' => $student->id,
-            'invoice_number' => Invoice::generateInvoiceNumber($tenant->id),
+            'invoice_number' => $invoiceNumber,
             'academic_year' => $feeCard->academic_year,
             'invoice_date' => now(),
             'due_date' => now()->addDays(30),
@@ -348,10 +438,15 @@ class FeeCollectionController extends Controller
 
         // Create invoice items from fee card items
         foreach ($feeCard->feeItems as $feeItem) {
+            if (!$feeItem->feeComponent) {
+                \Log::warning("Fee item {$feeItem->id} has no fee component. Skipping invoice item creation.");
+                continue;
+            }
+
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'fee_component_id' => $feeItem->fee_component_id,
-                'description' => $feeItem->feeComponent->name,
+                'description' => $feeItem->feeComponent->name ?? 'Fee Component',
                 'quantity' => 1,
                 'unit_price' => $feeItem->net_amount,
                 'discount' => $feeItem->discount_amount,
@@ -408,13 +503,13 @@ class FeeCollectionController extends Controller
 
                 $matchingItem->paid_amount += $paymentForItem;
                 $matchingItem->updateStatus();
-                $matchingItem->save();
 
                 $remainingAmount -= $paymentForItem;
 
                 // If payment_type is specified and we found a match,
                 // allocate ONLY to that component (no FIFO)
-                // Update fee card and return
+                // Refresh fee card to get latest data, then update balance
+                $feeCard->refresh();
                 $feeCard->updateBalance();
                 return;
             }
@@ -432,13 +527,13 @@ class FeeCollectionController extends Controller
 
                 $item->paid_amount += $paymentForItem;
                 $item->updateStatus();
-                $item->save();
 
                 $remainingAmount -= $paymentForItem;
             }
         }
 
-        // Update fee card totals
+        // Refresh fee card to get latest data from database, then update balance
+        $feeCard->refresh();
         $feeCard->updateBalance();
     }
 

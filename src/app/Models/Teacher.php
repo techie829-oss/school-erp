@@ -202,14 +202,28 @@ class Teacher extends Model
     /**
      * Generate employee ID
      */
+    /**
+     * Generate employee ID (tenant-scoped)
+     */
     public static function generateEmployeeId($tenantId, $year = null)
     {
         $year = $year ?? now()->year;
-        $count = static::where('tenant_id', $tenantId)
-            ->where('employee_id', 'like', "TCH-{$year}-%")
-            ->count();
 
-        return sprintf('TCH-%d-%03d', $year, $count + 1);
+        // Get the highest number used for this tenant and year
+        $lastTeacher = static::where('tenant_id', $tenantId)
+            ->where('employee_id', 'like', "TCH-{$year}-%")
+            ->orderBy('employee_id', 'desc')
+            ->first();
+
+        if ($lastTeacher) {
+            // Extract the number from the last employee ID (e.g., "TCH-2025-001" -> 1)
+            preg_match('/TCH-\d+-(\d+)/', $lastTeacher->employee_id, $matches);
+            $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        } else {
+            $lastNumber = 0;
+        }
+
+        return sprintf('TCH-%d-%03d', $year, $lastNumber + 1);
     }
 }
 

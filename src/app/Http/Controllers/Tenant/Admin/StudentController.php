@@ -10,6 +10,7 @@ use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
@@ -124,7 +125,12 @@ class StudentController extends Controller
             'nationality' => 'nullable|string|max:100',
             'religion' => 'nullable|string|max:100',
             'category' => 'required|in:general,obc,sc,st,other',
-            'email' => 'nullable|email|max:255|unique:students,email',
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('students', 'email')->where('tenant_id', $tenant->id),
+            ],
             'phone' => 'nullable|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'current_class_id' => 'required|exists:classes,id',
@@ -132,7 +138,11 @@ class StudentController extends Controller
             'roll_number' => 'nullable|string|max:50',
             'admission_date' => 'required|date',
             'academic_year' => 'required|string|max:20',
-            'admission_number' => 'required|string|unique:students,admission_number',
+            'admission_number' => [
+                'required',
+                'string',
+                Rule::unique('students', 'admission_number')->where('tenant_id', $tenant->id),
+            ],
 
             // Parent details
             'father_name' => 'nullable|string|max:255',
@@ -373,7 +383,12 @@ class StudentController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other',
-            'email' => 'nullable|email|max:255|unique:students,email,' . $student->id,
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('students', 'email')->where('tenant_id', $tenant->id)->ignore($student->id),
+            ],
             'phone' => 'nullable|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'current_class_id' => 'required|exists:classes,id',

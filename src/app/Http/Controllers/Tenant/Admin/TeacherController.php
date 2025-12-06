@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
 {
@@ -134,7 +135,11 @@ class TeacherController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'employee_id' => 'required|string|unique:teachers,employee_id',
+            'employee_id' => [
+                'required',
+                'string',
+                Rule::unique('teachers', 'employee_id')->where('tenant_id', $tenant->id),
+            ],
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'required|string|max:100',
@@ -144,7 +149,12 @@ class TeacherController extends Controller
             'nationality' => 'nullable|string|max:100',
             'religion' => 'nullable|string|max:50',
             'category' => 'nullable|in:general,obc,sc,st,other',
-            'email' => 'nullable|email|max:255|unique:teachers,email',
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('teachers', 'email')->where('tenant_id', $tenant->id),
+            ],
             'phone' => 'nullable|string|max:20',
             'alternate_phone' => 'nullable|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -259,7 +269,7 @@ class TeacherController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('tenant.admin.teachers.show', ['subdomain' => $tenant->id, 'teacherId' => $teacher->id])
+                ->to(url('/admin/teachers/' . $teacher->id))
                 ->with('success', 'Teacher created successfully!');
 
         } catch (\Exception $e) {
@@ -368,7 +378,12 @@ class TeacherController extends Controller
             'last_name' => 'required|string|max:100',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other',
-            'email' => 'nullable|email|max:255|unique:teachers,email,' . $teacher->id,
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('teachers', 'email')->where('tenant_id', $tenant->id)->ignore($teacher->id),
+            ],
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'employment_type' => 'required|in:permanent,contract,temporary,visiting',
             'date_of_joining' => 'required|date',
@@ -469,7 +484,7 @@ class TeacherController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('tenant.admin.teachers.show', ['subdomain' => $tenant->id, 'teacherId' => $teacher->id])
+                ->to(url('/admin/teachers/' . $teacher->id))
                 ->with('success', 'Teacher updated successfully!');
 
         } catch (\Exception $e) {
@@ -503,7 +518,7 @@ class TeacherController extends Controller
             $teacher->delete(); // Soft delete
 
             return redirect()
-                ->route('tenant.admin.teachers.index', ['subdomain' => $tenant->id])
+                ->to(url('/admin/teachers'))
                 ->with('success', 'Teacher deleted successfully!');
 
         } catch (\Exception $e) {

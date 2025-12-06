@@ -75,14 +75,15 @@ class Payment extends Model
     }
 
     /**
-     * Generate payment number
+     * Generate payment number (globally unique)
      */
     public static function generatePaymentNumber($tenantId)
     {
         $prefix = 'PAY';
         $year = date('Y');
-        $lastPayment = static::forTenant($tenantId)
-            ->where('payment_number', 'like', $prefix . '-' . $year . '-%')
+
+        // Get the last payment globally (not tenant-scoped) since the constraint is global
+        $lastPayment = static::where('payment_number', 'like', $prefix . '-' . $year . '-%')
             ->orderBy('id', 'desc')
             ->first();
 
@@ -93,6 +94,23 @@ class Payment extends Model
             $newNumber = '0001';
         }
 
-        return $prefix . '-' . $year . '-' . $newNumber;
+        $paymentNumber = $prefix . '-' . $year . '-' . $newNumber;
+
+        // Double-check it doesn't exist (race condition protection)
+        $maxRetries = 10;
+        $retryCount = 0;
+        while (static::where('payment_number', $paymentNumber)->exists() && $retryCount < $maxRetries) {
+            $lastNumber = (int) substr($paymentNumber, -4);
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+            $paymentNumber = $prefix . '-' . $year . '-' . $newNumber;
+            $retryCount++;
+        }
+
+        if ($retryCount >= $maxRetries) {
+            // Fallback: use timestamp-based number
+            $paymentNumber = $prefix . '-' . $year . '-' . str_pad((int)substr(time(), -6), 6, '0', STR_PAD_LEFT);
+        }
+
+        return $paymentNumber;
     }
 }

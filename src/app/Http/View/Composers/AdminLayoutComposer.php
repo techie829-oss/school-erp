@@ -43,6 +43,7 @@ class AdminLayoutComposer
                 'notice_board' => $featureSettings['feature_notice_board'] ?? true,
                 'communication' => $featureSettings['feature_communication'] ?? true,
                 'reports' => $featureSettings['feature_reports'] ?? true,
+                'cms' => $featureSettings['feature_cms'] ?? false,
             ];
         } else {
             // Default features if no tenant
@@ -63,6 +64,7 @@ class AdminLayoutComposer
                 'notice_board' => true,
                 'communication' => true,
                 'reports' => true,
+                'cms' => false,
             ];
         }
 

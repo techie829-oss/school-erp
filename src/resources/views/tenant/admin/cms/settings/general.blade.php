@@ -41,6 +41,31 @@
         @endif
 
         <div class="bg-white shadow rounded-lg p-6 space-y-6">
+            <!-- Header Settings Section -->
+            <div class="border-b pb-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Header Settings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="default_language" class="block text-sm font-medium text-gray-700 mb-2">Default Language</label>
+                        <select name="default_language" id="default_language" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            @php
+                                $languages = config('content.pages.languages', ['en' => 'English']);
+                                $currentLang = old('default_language', $settings->default_language ?? config('content.pages.default_language', 'en'));
+                            @endphp
+                            @foreach($languages as $langCode => $langName)
+                            <option value="{{ $langCode }}" {{ $currentLang === $langCode ? 'selected' : '' }}>
+                                {{ $langName }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Set the default language for your website content</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Settings Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">General Settings</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
                     <label for="site_name" class="block text-sm font-medium text-gray-700">Site Name</label>

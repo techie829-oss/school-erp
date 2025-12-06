@@ -14,6 +14,7 @@ class CmsSettings extends Model
 
     protected $fillable = [
         'tenant_id',
+        'default_language',
         'site_name',
         'site_tagline',
         'logo',

@@ -17,14 +17,17 @@
                     Learn More About Us
                 </span>
             </div>
+            @php
+                $tenantId = $tenant['id'] ?? null;
+                if (!$tenantId && isset($tenant) && is_object($tenant)) {
+                    $tenantId = $tenant->id ?? null;
+                }
+            @endphp
             <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-                About <span class="text-primary-600 relative inline-block">
-                    {{ $tenant['name'] ?? 'Our School' }}
-                    <span class="absolute bottom-0 left-0 right-0 h-3 bg-primary-200 opacity-30 -z-10 transform -rotate-1"></span>
-                </span>
+                {{ cms_field('about', 'hero_heading', 'About Our School', $tenantId) }}
             </h1>
             <p class="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-                {{ $tenant['description'] ?? 'Excellence in Education' }} - Learn about our mission, values, and commitment to student success.
+                {{ cms_field('about', 'hero_description', 'Learn about our mission, values, and commitment to student success.', $tenantId) }}
             </p>
         </div>
     </div>
@@ -40,48 +43,44 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
                 <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Our Story</span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Building Excellence Since Day One</h2>
-                <p class="text-lg text-gray-600 mb-6 leading-relaxed">
-                    Founded with a vision to provide exceptional education, <strong>{{ $tenant['name'] ?? 'Our School' }}</strong> has been at the forefront of academic excellence for over two decades. We believe in nurturing not just academic skills, but also character, creativity, and leadership qualities.
-                </p>
-                <p class="text-lg text-gray-600 mb-6 leading-relaxed">
-                    Our commitment to personalized learning and holistic development has made us a preferred choice for parents who want the best for their children's future.
-                </p>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{{ cms_field('about', 'story_title', 'Building Excellence Since Day One', $tenantId) }}</h2>
+                <div class="text-lg text-gray-600 mb-6 leading-relaxed">
+                    {!! nl2br(e(cms_field('about', 'story_content', 'Founded with a vision to provide exceptional education, Our School has been at the forefront of academic excellence for over two decades. We believe in nurturing not just academic skills, but also character, creativity, and leadership qualities. Our commitment to personalized learning and holistic development has made us a preferred choice for parents who want the best for their children\'s future.', $tenantId))) !!}
+                </div>
                 <div class="grid grid-cols-2 gap-6 mt-8">
                     <div class="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-xl text-center border border-primary-200">
-                        <div class="text-4xl font-bold text-primary-600 mb-2">{{ $tenant['student_count'] ?? '500+' }}</div>
-                        <div class="text-gray-600 font-medium">Active Students</div>
+                        <div class="text-4xl font-bold text-primary-600 mb-2">{{ cms_field('about', 'stat1_value', '1000+', $tenantId) }}</div>
+                        <div class="text-gray-600 font-medium">{{ cms_field('about', 'stat1_label', 'Happy Students', $tenantId) }}</div>
                     </div>
                     <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl text-center border border-green-200">
-                        <div class="text-4xl font-bold text-green-600 mb-2">25+</div>
-                        <div class="text-gray-600 font-medium">Years of Excellence</div>
+                        <div class="text-4xl font-bold text-green-600 mb-2">{{ cms_field('about', 'stat2_value', '50+', $tenantId) }}</div>
+                        <div class="text-gray-600 font-medium">{{ cms_field('about', 'stat2_label', 'Expert Teachers', $tenantId) }}</div>
                     </div>
                 </div>
             </div>
             <div class="bg-gradient-to-br from-primary-100 via-primary-50 to-primary-200 rounded-2xl p-8 lg:p-10 shadow-xl border border-primary-200">
-                <h3 class="text-3xl font-bold text-gray-900 mb-6">School Information</h3>
+                <h3 class="text-3xl font-bold text-gray-900 mb-6">{{ cms_field('about', 'info_title', 'Why Choose Us', $tenantId) }}</h3>
                 <div class="space-y-5">
                     <div class="flex items-start">
                         <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
                         <div>
-                            <strong class="text-gray-900 font-semibold block mb-1">Name</strong>
-                            <span class="text-gray-700">{{ $tenant['name'] ?? 'School Name' }}</span>
+                            <strong class="text-gray-900 font-semibold block mb-1">{{ cms_field('about', 'info_item1_label', 'Accredited Institution', $tenantId) }}</strong>
+                            <span class="text-gray-700">{{ cms_field('about', 'info_item1_value', 'Recognized by Education Board', $tenantId) }}</span>
                         </div>
                     </div>
                     <div class="flex items-start">
                         <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                             </svg>
                         </div>
                         <div>
-                            <strong class="text-gray-900 font-semibold block mb-1">Location</strong>
-                            <span class="text-gray-700">{{ $tenant['location'] ?? 'Location' }}</span>
+                            <strong class="text-gray-900 font-semibold block mb-1">{{ cms_field('about', 'info_item2_label', 'Modern Facilities', $tenantId) }}</strong>
+                            <span class="text-gray-700">{{ cms_field('about', 'info_item2_value', 'State-of-the-art Infrastructure', $tenantId) }}</span>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -91,19 +90,19 @@
                             </svg>
                         </div>
                         <div>
-                            <strong class="text-gray-900 font-semibold block mb-1">Type</strong>
-                            <span class="text-gray-700">{{ ucfirst($tenant['type'] ?? 'School') }}</span>
+                            <strong class="text-gray-900 font-semibold block mb-1">{{ cms_field('about', 'info_item3_label', 'Experienced Faculty', $tenantId) }}</strong>
+                            <span class="text-gray-700">{{ cms_field('about', 'info_item3_value', 'Qualified & Dedicated Teachers', $tenantId) }}</span>
                         </div>
                     </div>
                     <div class="flex items-start">
                         <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
                         </div>
                         <div>
-                            <strong class="text-gray-900 font-semibold block mb-1">Status</strong>
-                            <span class="text-gray-700">{{ ucfirst($tenant['status'] ?? 'active') }}</span>
+                            <strong class="text-gray-900 font-semibold block mb-1">{{ cms_field('about', 'info_item4_label', 'Holistic Development', $tenantId) }}</strong>
+                            <span class="text-gray-700">{{ cms_field('about', 'info_item4_value', 'Academic & Character Building', $tenantId) }}</span>
                         </div>
                     </div>
                 </div>
@@ -117,8 +116,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Our Foundation</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Our Mission & Values</h2>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Guiding principles that shape our educational approach and define who we are</p>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('about', 'mission_title', 'Our Mission & Values', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">{{ cms_field('about', 'mission_description', 'Guiding principles that shape our educational approach and define who we are', $tenantId) }}</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
@@ -128,8 +127,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Innovation</h3>
-                <p class="text-gray-600 leading-relaxed">Embracing new technologies and teaching methodologies to enhance learning outcomes and prepare students for the future.</p>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">{{ cms_field('about', 'value1_title', 'Innovation', $tenantId) }}</h3>
+                <p class="text-gray-600 leading-relaxed">{{ cms_field('about', 'value1_description', 'Embracing new technologies and teaching methodologies to enhance learning outcomes and prepare students for the future.', $tenantId) }}</p>
             </div>
 
             <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 text-center border border-gray-100">
@@ -138,8 +137,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Community</h3>
-                <p class="text-gray-600 leading-relaxed">Building strong partnerships between students, parents, teachers, and the community to create a supportive learning environment.</p>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">{{ cms_field('about', 'value2_title', 'Community', $tenantId) }}</h3>
+                <p class="text-gray-600 leading-relaxed">{{ cms_field('about', 'value2_description', 'Building strong partnerships between students, parents, teachers, and the community to create a supportive learning environment.', $tenantId) }}</p>
             </div>
 
             <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 text-center border border-gray-100">
@@ -148,8 +147,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Excellence</h3>
-                <p class="text-gray-600 leading-relaxed">Striving for the highest standards in academics, character, and personal development to ensure student success.</p>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">{{ cms_field('about', 'value3_title', 'Excellence', $tenantId) }}</h3>
+                <p class="text-gray-600 leading-relaxed">{{ cms_field('about', 'value3_description', 'Striving for the highest standards in academics, character, and personal development to ensure student success.', $tenantId) }}</p>
             </div>
         </div>
     </div>
@@ -162,18 +161,15 @@
             <div class="order-2 lg:order-1">
                 <div class="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-10 lg:p-12 text-white shadow-2xl">
                     <span class="inline-block px-4 py-1 bg-white bg-opacity-20 rounded-full text-sm font-semibold mb-6">Our Vision</span>
-                    <h2 class="text-3xl md:text-4xl font-bold mb-6">Shaping Tomorrow's Leaders</h2>
-                    <p class="text-lg text-primary-100 mb-6 leading-relaxed">
-                        To be recognized as a premier educational institution that empowers students to become confident, compassionate, and capable leaders who make a positive impact on society.
-                    </p>
-                    <p class="text-lg text-primary-100 leading-relaxed">
-                        We envision a school where every student discovers their unique potential and is equipped with the knowledge, skills, and values needed to thrive in an ever-changing world.
-                    </p>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6">{{ cms_field('about', 'vision_title', 'Shaping Tomorrow\'s Leaders', $tenantId) }}</h2>
+                    <div class="text-lg text-primary-100 leading-relaxed">
+                        {!! nl2br(e(cms_field('about', 'vision_content', 'To be recognized as a premier educational institution that empowers students to become confident, compassionate, and capable leaders who make a positive impact on society. We envision a school where every student discovers their unique potential and is equipped with the knowledge, skills, and values needed to thrive in an ever-changing world.', $tenantId))) !!}
+                    </div>
                 </div>
             </div>
             <div class="order-1 lg:order-2">
                 <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">What We Stand For</span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Our Core Principles</h2>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{{ cms_field('about', 'principles_title', 'Our Core Principles', $tenantId) }}</h2>
                 <div class="space-y-6">
                     <div class="flex items-start">
                         <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
@@ -182,8 +178,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Holistic Development</h3>
-                            <p class="text-gray-600">Nurturing academic, social, emotional, and physical growth in every student.</p>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ cms_field('about', 'principle1_title', 'Holistic Development', $tenantId) }}</h3>
+                            <p class="text-gray-600">{{ cms_field('about', 'principle1_description', 'Nurturing academic, social, emotional, and physical growth in every student.', $tenantId) }}</p>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -193,8 +189,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Individualized Learning</h3>
-                            <p class="text-gray-600">Recognizing and supporting each student's unique learning style and pace.</p>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ cms_field('about', 'principle2_title', 'Individualized Learning', $tenantId) }}</h3>
+                            <p class="text-gray-600">{{ cms_field('about', 'principle2_description', 'Recognizing and supporting each student\'s unique learning style and pace.', $tenantId) }}</p>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -204,8 +200,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">Character Building</h3>
-                            <p class="text-gray-600">Instilling integrity, respect, responsibility, and ethical values.</p>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ cms_field('about', 'principle3_title', 'Character Building', $tenantId) }}</h3>
+                            <p class="text-gray-600">{{ cms_field('about', 'principle3_description', 'Instilling integrity, respect, responsibility, and ethical values.', $tenantId) }}</p>
                         </div>
                     </div>
                 </div>

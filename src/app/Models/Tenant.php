@@ -95,7 +95,45 @@ class Tenant extends Model
      */
     public function isActive(): bool
     {
-        return $this->data['is_active'] ?? true;
+        $isActive = $this->data['is_active'] ?? true;
+
+        // Handle both boolean and string values (from database)
+        if (is_bool($isActive)) {
+            return $isActive;
+        }
+
+        // Handle string values like '1', 'true', 'yes', etc.
+        if (is_string($isActive)) {
+            return in_array(strtolower($isActive), ['1', 'true', 'yes', 'on'], true);
+        }
+
+        // Handle numeric values
+        if (is_numeric($isActive)) {
+            return (int)$isActive === 1;
+        }
+
+        // Default to true if not set
+        return true;
+    }
+
+    /**
+     * Check if tenant uses separate database.
+     * Currently all tenants use shared database.
+     */
+    public function usesSeparateDatabase(): bool
+    {
+        return ($this->data['database_strategy'] ?? 'shared') === 'separate';
+    }
+
+    /**
+     * Get the database connection name for this tenant.
+     */
+    public function getConnectionName(): string
+    {
+        if ($this->usesSeparateDatabase()) {
+            return 'tenant_' . $this->id;
+        }
+        return 'mysql';
     }
 
     /**

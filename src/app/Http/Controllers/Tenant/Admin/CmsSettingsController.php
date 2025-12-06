@@ -51,6 +51,7 @@ class CmsSettingsController extends Controller
         $tenant = $this->getTenant($request);
 
         $validator = Validator::make($request->all(), [
+            'default_language' => 'nullable|string|in:en,hi,kn',
             'site_name' => 'nullable|string|max:255',
             'site_tagline' => 'nullable|string|max:255',
             'logo' => 'nullable|image|max:2048',
@@ -84,6 +85,7 @@ class CmsSettingsController extends Controller
         }
 
         $settings->fill($request->only([
+            'default_language',
             'site_name',
             'site_tagline',
             'footer_text',

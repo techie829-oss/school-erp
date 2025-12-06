@@ -42,5 +42,10 @@ class AppServiceProvider extends ServiceProvider
         
         // Register CMS Settings View Composer for admin, CMS, and school layouts
         \View::composer(['tenant.layouts.admin', 'tenant.layouts.cms', 'school.layout'], \App\Http\View\Composers\CmsSettingsComposer::class);
+
+        // Load helper functions
+        if (file_exists($helperPath = __DIR__ . '/../Helpers/helpers.php')) {
+            require_once $helperPath;
+        }
     }
 }

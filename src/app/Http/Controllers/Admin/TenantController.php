@@ -66,6 +66,18 @@ class TenantController extends Controller
         // Update Herd configuration
         $this->updateHerdConfiguration($validated['subdomain']);
 
+        // Setup tenant: Create CMS pages, primary user, and seed data
+        try {
+            $this->setupNewTenant($tenant, $validated);
+        } catch (\Exception $e) {
+            \Log::error('Failed to setup tenant', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't fail tenant creation if setup fails, just log it
+        }
+
         return redirect()->route('admin.tenants.show', $tenant)
             ->with('success', 'Tenant created successfully!');
     }
@@ -379,6 +391,7 @@ class TenantController extends Controller
             'notice_board' => $request->boolean('enable_notice_board'),
             'communication' => $request->boolean('enable_communication'),
             'reports' => $request->boolean('enable_reports'),
+            'cms' => $request->boolean('enable_cms'),
         ];
 
         foreach ($features as $feature => $enabled) {
@@ -557,5 +570,192 @@ class TenantController extends Controller
 
         return redirect()->route('admin.tenants.settings.notifications', $tenant)
             ->with('success', 'Notification settings updated successfully!');
+    }
+
+    /**
+     * Setup new tenant with CMS pages, primary user, and essential data
+     */
+    private function setupNewTenant(Tenant $tenant, array $validated): void
+    {
+        \Log::info('Setting up new tenant', ['tenant_id' => $tenant->id]);
+
+        // 1. Create CMS pages
+        $this->seedCmsPages($tenant);
+
+        // 2. Create primary user (school_admin)
+        $this->createPrimaryUser($tenant, $validated);
+
+        // 3. Enable default features
+        $this->enableDefaultFeatures($tenant);
+
+        \Log::info('Tenant setup completed', ['tenant_id' => $tenant->id]);
+    }
+
+    /**
+     * Seed CMS pages for tenant
+     */
+    private function seedCmsPages(Tenant $tenant): void
+    {
+        // Use the same pages structure as CmsPagesSeeder
+        $pages = [
+            ['slug' => '', 'title' => 'Home', 'meta_description' => 'Welcome to ' . $tenant->name],
+            ['slug' => 'about', 'title' => 'About Us', 'meta_description' => 'Learn about ' . $tenant->name],
+            ['slug' => 'programs', 'title' => 'Programs', 'meta_description' => 'Our educational programs'],
+            ['slug' => 'facilities', 'title' => 'Facilities', 'meta_description' => 'School facilities'],
+            ['slug' => 'admission', 'title' => 'Admission', 'meta_description' => 'Admission information'],
+            ['slug' => 'contact', 'title' => 'Contact', 'meta_description' => 'Contact us'],
+        ];
+
+        foreach ($pages as $pageData) {
+            $existingPage = \App\Models\CmsPage::forTenant($tenant->id)
+                ->where('slug', $pageData['slug'])
+                ->first();
+
+            if (!$existingPage) {
+                $configSlug = $pageData['slug'] === '' ? 'home' : $pageData['slug'];
+                $fields = config("all.cms_fields.{$configSlug}", []);
+                $languages = config('content.pages.languages', ['en' => 'English', 'hi' => 'Hindi', 'kn' => 'Kannada']);
+
+                // Initialize fields structure with default values from config
+                $fieldValues = [];
+                foreach ($fields as $field) {
+                    $fieldName = $field['name'];
+                    foreach ($languages as $langCode => $langName) {
+                        $defaultValue = config("content.pages.pages.{$configSlug}.{$langCode}.{$fieldName}", '');
+
+                        // Replace tenant placeholders in default values
+                        if (is_string($defaultValue) && str_contains($defaultValue, '{tenant_')) {
+                            $tenantData = $tenant->data ?? [];
+                            $defaultValue = str_replace('{tenant_name}', $tenantData['name'] ?? 'Our School', $defaultValue);
+                            $defaultValue = str_replace('{tenant_description}', $tenantData['description'] ?? 'Excellence in Education', $defaultValue);
+                            $defaultValue = str_replace('{tenant_student_count}', $tenantData['student_count'] ?? '500+', $defaultValue);
+                        }
+
+                        $fieldValues["{$fieldName}_{$langCode}"] = $defaultValue;
+                    }
+                }
+
+                $content = ['fields' => $fieldValues];
+
+                // Initialize default components for home page
+                if ($pageData['slug'] === '') {
+                    $defaultComponents = config('content.pages.default_components', []);
+                    $content['components'] = [
+                        'features' => $defaultComponents['features'] ?? [],
+                        'programs' => $defaultComponents['programs'] ?? [],
+                        'testimonials' => $defaultComponents['testimonials'] ?? [],
+                        'quick_links' => $defaultComponents['quick_links'] ?? [],
+                    ];
+                }
+
+                // Initialize default components for programs page
+                if ($pageData['slug'] === 'programs') {
+                    if (!isset($content['components'])) {
+                        $content['components'] = [];
+                    }
+                    $content['components']['program_cards'] = config('content.pages.default_components.program_cards', []);
+                }
+
+                // Initialize default components for facilities page
+                if ($pageData['slug'] === 'facilities') {
+                    if (!isset($content['components'])) {
+                        $content['components'] = [];
+                    }
+                    $content['components']['facility_cards'] = config('content.pages.default_components.facility_cards', []);
+                    $content['components']['amenity_cards'] = config('content.pages.default_components.amenity_cards', []);
+                }
+
+                // Initialize default components for admission page
+                if ($pageData['slug'] === 'admission') {
+                    if (!isset($content['components'])) {
+                        $content['components'] = [];
+                    }
+                    $content['components']['process_steps'] = config('content.pages.default_components.process_steps', []);
+                    $content['components']['requirement_cards'] = config('content.pages.default_components.requirement_cards', []);
+                    $content['components']['date_cards'] = config('content.pages.default_components.date_cards', []);
+                    $content['components']['faq_items'] = config('content.pages.default_components.faq_items', []);
+                }
+
+                \App\Models\CmsPage::create([
+                    'tenant_id' => $tenant->id,
+                    'slug' => $pageData['slug'],
+                    'title' => $pageData['title'],
+                    'meta_description' => $pageData['meta_description'],
+                    'content' => $content,
+                    'is_published' => true,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Create primary user for tenant
+     */
+    private function createPrimaryUser(Tenant $tenant, array $validated): void
+    {
+        // Check if primary user already exists
+        $existingUser = User::where('tenant_id', $tenant->id)
+            ->where('user_type', 'school_admin')
+            ->first();
+
+        if ($existingUser) {
+            \Log::info('Primary user already exists for tenant', ['tenant_id' => $tenant->id, 'user_id' => $existingUser->id]);
+            return;
+        }
+
+        // Generate default password (can be changed later)
+        $defaultPassword = 'admin@123'; // You might want to generate a random password
+
+        $user = User::create([
+            'name' => $validated['name'] . ' Admin',
+            'email' => $validated['email'],
+            'password' => Hash::make($defaultPassword),
+            'tenant_id' => $tenant->id,
+            'user_type' => 'school_admin',
+            'is_active' => true,
+        ]);
+
+        \Log::info('Primary user created', [
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
+    }
+
+    /**
+     * Enable default features for tenant
+     */
+    private function enableDefaultFeatures(Tenant $tenant): void
+    {
+        $defaultFeatures = [
+            'students' => true,
+            'teachers' => true,
+            'classes' => true,
+            'attendance' => true,
+            'exams' => true,
+            'grades' => true,
+            'fees' => true,
+            'library' => true,
+            'transport' => true,
+            'hostel' => true,
+            'assignments' => true,
+            'timetable' => true,
+            'events' => true,
+            'notice_board' => true,
+            'communication' => true,
+            'reports' => true,
+            'cms' => true,
+        ];
+
+        foreach ($defaultFeatures as $feature => $enabled) {
+            TenantSetting::setSetting(
+                $tenant->id,
+                "feature_{$feature}",
+                $enabled,
+                'boolean',
+                'features',
+                "Enable/disable {$feature} module"
+            );
+        }
     }
 }

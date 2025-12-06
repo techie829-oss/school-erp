@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'validate.tenant.domain' => \App\Http\Middleware\ValidateTenantDomain::class,
             'enforce.admin.access' => \App\Http\Middleware\EnforceAdminAccessPolicy::class,
             'feature' => \App\Http\Middleware\CheckFeatureEnabled::class,
+            'cms.enabled' => \App\Http\Middleware\CheckCmsEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

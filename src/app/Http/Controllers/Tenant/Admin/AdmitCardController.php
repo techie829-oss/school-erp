@@ -13,6 +13,7 @@ use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -187,11 +188,20 @@ class AdmitCardController extends Controller
         }
 
         $request->validate([
-            'exam_id' => 'required|exists:exams,id',
-            'class_id' => 'required|exists:classes,id',
-            'section_id' => 'nullable|exists:sections,id',
+            'exam_id' => [
+                'required',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'student_ids' => 'required|array|min:1',
-            'student_ids.*' => 'exists:students,id',
+            'student_ids.*' => Rule::exists('students', 'id')->where('tenant_id', $tenant->id),
         ]);
 
         try {
@@ -426,7 +436,7 @@ class AdmitCardController extends Controller
 
         $request->validate([
             'admit_card_ids' => 'required|array|min:1',
-            'admit_card_ids.*' => 'exists:admit_cards,id',
+            'admit_card_ids.*' => Rule::exists('admit_cards', 'id')->where('tenant_id', $tenant->id),
         ]);
 
         try {
@@ -466,11 +476,20 @@ class AdmitCardController extends Controller
         }
 
         $request->validate([
-            'exam_id' => 'nullable|exists:exams,id',
-            'class_id' => 'nullable|exists:classes,id',
-            'section_id' => 'nullable|exists:sections,id',
+            'exam_id' => [
+                'nullable',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_id' => [
+                'nullable',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'admit_card_ids' => 'nullable|array',
-            'admit_card_ids.*' => 'exists:admit_cards,id',
+            'admit_card_ids.*' => Rule::exists('admit_cards', 'id')->where('tenant_id', $tenant->id),
             'cards_per_page' => 'required|in:2,4',
             'export_scope' => 'required|in:selected,filtered',
             'show_principal_stamp' => 'nullable|boolean',
@@ -558,11 +577,20 @@ class AdmitCardController extends Controller
         }
 
         $request->validate([
-            'exam_id' => 'nullable|exists:exams,id',
-            'class_id' => 'nullable|exists:classes,id',
-            'section_id' => 'nullable|exists:sections,id',
+            'exam_id' => [
+                'nullable',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_id' => [
+                'nullable',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'admit_card_ids' => 'nullable|array',
-            'admit_card_ids.*' => 'exists:admit_cards,id',
+            'admit_card_ids.*' => Rule::exists('admit_cards', 'id')->where('tenant_id', $tenant->id),
             'cards_per_page' => 'required|in:2,4',
             'export_scope' => 'required|in:selected,filtered',
             'show_exam_schedule' => 'nullable|boolean',
@@ -646,9 +674,18 @@ class AdmitCardController extends Controller
         }
 
         $request->validate([
-            'exam_id' => 'required|exists:exams,id',
-            'class_id' => 'required|exists:classes,id',
-            'section_id' => 'nullable|exists:sections,id',
+            'exam_id' => [
+                'required',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
             'generate_type' => 'nullable|in:all,missing',
         ]);
 

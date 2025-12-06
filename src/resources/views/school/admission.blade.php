@@ -3,6 +3,12 @@
 @section('title', 'Admission')
 
 @section('content')
+@php
+    $tenantId = $tenant['id'] ?? null;
+    if (!$tenantId && isset($tenant) && is_object($tenant)) {
+        $tenantId = $tenant->id ?? null;
+    }
+@endphp
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-24 lg:py-32 overflow-hidden">
     <!-- Background Pattern -->
@@ -14,17 +20,14 @@
         <div class="text-center">
             <div class="mb-6">
                 <span class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">
-                    Join Our Community
+                    {{ cms_field('admission', 'hero_badge', 'Join Our Community', $tenantId) }}
                 </span>
             </div>
             <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-                Admission <span class="text-primary-600 relative inline-block">
-                    Information
-                    <span class="absolute bottom-0 left-0 right-0 h-3 bg-primary-200 opacity-30 -z-10 transform -rotate-1"></span>
-                </span>
+                {{ cms_field('admission', 'hero_heading', 'Admission Information', $tenantId) }}
             </h1>
             <p class="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-                Learn about our admission process and requirements for joining our school community.
+                {{ cms_field('admission', 'hero_description', 'Learn about our admission process and requirements for joining our school community.', $tenantId) }}
             </p>
         </div>
     </div>
@@ -38,34 +41,50 @@
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">How to Apply</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Admission Process</h2>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Simple steps to join our school community</p>
+            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('admission', 'process_badge', 'How to Apply', $tenantId) }}</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('admission', 'process_title', 'Admission Process', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">{{ cms_field('admission', 'process_description', 'Simple steps to join our school community', $tenantId) }}</p>
         </div>
 
+        @php
+            $processSteps = cms_components('admission', 'process_steps', $tenantId);
+        @endphp
+        @if(isset($processSteps) && is_array($processSteps) && count($processSteps) > 0)
         <div class="relative">
             <!-- Timeline Line -->
             <div class="hidden lg:block absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-primary-200 via-primary-400 to-primary-200"></div>
 
             <div class="space-y-12 lg:space-y-0">
-                <!-- Step 1 -->
-                <div class="relative flex flex-col lg:flex-row items-center">
-                    <div class="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border border-blue-200">
+                @foreach($processSteps as $index => $step)
+                @php
+                    $colorClasses = \App\Helpers\ComponentHelper::getColorClasses($step['color'] ?? 'blue');
+                    $gradientMap = [
+                        'blue' => ['from' => 'from-blue-50', 'to' => 'to-blue-100', 'border' => 'border-blue-200', 'bg' => 'bg-blue-600'],
+                        'green' => ['from' => 'from-green-50', 'to' => 'to-green-100', 'border' => 'border-green-200', 'bg' => 'bg-green-600'],
+                        'purple' => ['from' => 'from-purple-50', 'to' => 'to-purple-100', 'border' => 'border-purple-200', 'bg' => 'bg-purple-600'],
+                        'orange' => ['from' => 'from-orange-50', 'to' => 'to-orange-100', 'border' => 'border-orange-200', 'bg' => 'bg-orange-600'],
+                        'teal' => ['from' => 'from-teal-50', 'to' => 'to-teal-100', 'border' => 'border-teal-200', 'bg' => 'bg-teal-600'],
+                    ];
+                    $gradient = $gradientMap[$step['color'] ?? 'blue'] ?? $gradientMap['blue'];
+                    $isEven = ($index + 1) % 2 == 0;
+                @endphp
+                <div class="relative flex flex-col {{ $isEven ? 'lg:flex-row-reverse' : 'lg:flex-row' }} items-center">
+                    <div class="lg:w-1/2 {{ $isEven ? 'lg:pl-12' : 'lg:pr-12' }} mb-8 lg:mb-0">
+                        <div class="bg-gradient-to-br {{ $gradient['from'] }} {{ $gradient['to'] }} rounded-2xl p-8 border {{ $gradient['border'] }}">
                             <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
-                                    <span class="text-white font-bold text-xl">1</span>
+                                <div class="w-12 h-12 {{ $gradient['bg'] }} rounded-xl flex items-center justify-center mr-4">
+                                    <span class="text-white font-bold text-xl">{{ $step['step_number'] ?? ($index + 1) }}</span>
                                 </div>
-                                <h3 class="text-2xl font-bold text-gray-900">Inquiry & Application</h3>
+                                <h3 class="text-2xl font-bold text-gray-900">{{ $step['title'] ?? '' }}</h3>
                             </div>
                             <p class="text-gray-700 leading-relaxed">
-                                Submit an online inquiry form or visit our campus to learn more about our programs. Complete the admission application form with all required details.
+                                {{ $step['description'] ?? '' }}
                             </p>
                         </div>
                     </div>
-                    <div class="lg:w-1/2 lg:pl-12 lg:text-left text-center">
+                    <div class="lg:w-1/2 {{ $isEven ? 'lg:pr-12 lg:text-right' : 'lg:pl-12 lg:text-left' }} text-center">
                         <div class="inline-block">
-                            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                            <div class="w-20 h-20 {{ $gradient['bg'] }} rounded-full flex items-center justify-center shadow-lg border-4 border-white">
                                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
@@ -73,112 +92,10 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Step 2 -->
-                <div class="relative flex flex-col lg:flex-row-reverse items-center">
-                    <div class="lg:w-1/2 lg:pl-12 mb-8 lg:mb-0">
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 border border-green-200">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mr-4">
-                                    <span class="text-white font-bold text-xl">2</span>
-                                </div>
-                                <h3 class="text-2xl font-bold text-gray-900">Document Submission</h3>
-                            </div>
-                            <p class="text-gray-700 leading-relaxed">
-                                Submit all required documents including birth certificate, previous school records, medical reports, and passport-sized photographs.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="lg:w-1/2 lg:pr-12 lg:text-right text-center">
-                        <div class="inline-block">
-                            <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="relative flex flex-col lg:flex-row items-center">
-                    <div class="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
-                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8 border border-purple-200">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mr-4">
-                                    <span class="text-white font-bold text-xl">3</span>
-                                </div>
-                                <h3 class="text-2xl font-bold text-gray-900">Assessment & Interview</h3>
-                            </div>
-                            <p class="text-gray-700 leading-relaxed">
-                                Students may be required to take an assessment test. Parents and students will have an interview session with the admission committee.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="lg:w-1/2 lg:pl-12 lg:text-left text-center">
-                        <div class="inline-block">
-                            <div class="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 4 -->
-                <div class="relative flex flex-col lg:flex-row-reverse items-center">
-                    <div class="lg:w-1/2 lg:pl-12 mb-8 lg:mb-0">
-                        <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 border border-orange-200">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center mr-4">
-                                    <span class="text-white font-bold text-xl">4</span>
-                                </div>
-                                <h3 class="text-2xl font-bold text-gray-900">Admission Decision</h3>
-                            </div>
-                            <p class="text-gray-700 leading-relaxed">
-                                After reviewing all applications, successful candidates will receive an admission offer letter with details about enrollment and fees.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="lg:w-1/2 lg:pr-12 lg:text-right text-center">
-                        <div class="inline-block">
-                            <div class="w-20 h-20 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 5 -->
-                <div class="relative flex flex-col lg:flex-row items-center">
-                    <div class="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
-                        <div class="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-8 border border-teal-200">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center mr-4">
-                                    <span class="text-white font-bold text-xl">5</span>
-                                </div>
-                                <h3 class="text-2xl font-bold text-gray-900">Enrollment & Orientation</h3>
-                            </div>
-                            <p class="text-gray-700 leading-relaxed">
-                                Complete the enrollment process by paying fees and submitting final documents. Attend the orientation program to get familiar with the school.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="lg:w-1/2 lg:pl-12 lg:text-left text-center">
-                        <div class="inline-block">
-                            <div class="w-20 h-20 bg-teal-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
+        @endif
     </div>
 </section>
 
@@ -186,99 +103,49 @@
 <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">What You Need</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Admission Requirements</h2>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Documents and information needed for admission</p>
+            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('admission', 'requirements_badge', 'What You Need', $tenantId) }}</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('admission', 'requirements_title', 'Admission Requirements', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">{{ cms_field('admission', 'requirements_description', 'Documents and information needed for admission', $tenantId) }}</p>
         </div>
 
+        @php
+            $requirementCards = cms_components('admission', 'requirement_cards', $tenantId);
+        @endphp
+        @if(isset($requirementCards) && is_array($requirementCards) && count($requirementCards) > 0)
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            @foreach($requirementCards as $card)
+            @php
+                $colorClasses = \App\Helpers\ComponentHelper::getColorClasses($card['color'] ?? 'blue');
+                $gradientMap = [
+                    'blue' => ['from' => 'from-blue-100', 'to' => 'to-blue-200', 'text' => 'text-blue-600'],
+                    'green' => ['from' => 'from-green-100', 'to' => 'to-green-200', 'text' => 'text-green-600'],
+                    'purple' => ['from' => 'from-purple-100', 'to' => 'to-purple-200', 'text' => 'text-purple-600'],
+                ];
+                $gradient = $gradientMap[$card['color'] ?? 'blue'] ?? $gradientMap['blue'];
+            @endphp
             <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-16 h-16 bg-gradient-to-br {{ $gradient['from'] }} {{ $gradient['to'] }} rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 {{ $gradient['text'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Academic Records</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">{{ $card['title'] ?? '' }}</h3>
+                @if(isset($card['items']) && is_array($card['items']) && count($card['items']) > 0)
                 <ul class="space-y-2 text-gray-700">
+                    @foreach($card['items'] as $item)
                     <li class="flex items-start">
-                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 {{ $gradient['text'] }} mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
-                        <span>Previous school transcripts</span>
+                        <span>{{ $item }}</span>
                     </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Report cards (last 2 years)</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Transfer certificate</span>
-                    </li>
+                    @endforeach
                 </ul>
+                @endif
             </div>
-
-            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                <div class="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Personal Documents</h3>
-                <ul class="space-y-2 text-gray-700">
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Birth certificate</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Passport-sized photos (4 copies)</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>ID proof (Aadhaar/Passport)</span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                <div class="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Medical Records</h3>
-                <ul class="space-y-2 text-gray-700">
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-purple-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Medical fitness certificate</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-purple-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Vaccination records</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-purple-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Blood group certificate</span>
-                    </li>
-                </ul>
-            </div>
+            @endforeach
         </div>
+        @endif
     </div>
 </section>
 
@@ -286,36 +153,34 @@
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Timeline</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Important Dates</h2>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Key dates for the admission process</p>
+            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('admission', 'dates_badge', 'Timeline', $tenantId) }}</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('admission', 'dates_title', 'Important Dates', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">{{ cms_field('admission', 'dates_description', 'Key dates for the admission process', $tenantId) }}</p>
         </div>
 
+        @php
+            $dateCards = cms_components('admission', 'date_cards', $tenantId);
+        @endphp
+        @if(isset($dateCards) && is_array($dateCards) && count($dateCards) > 0)
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                <div class="text-blue-600 font-bold text-sm mb-2">Application Opens</div>
-                <div class="text-2xl font-bold text-gray-900 mb-2">January 1</div>
-                <div class="text-gray-700 text-sm">Start submitting your applications</div>
+            @foreach($dateCards as $card)
+            @php
+                $gradientMap = [
+                    'blue' => ['from' => 'from-blue-50', 'to' => 'to-blue-100', 'border' => 'border-blue-200', 'text' => 'text-blue-600'],
+                    'green' => ['from' => 'from-green-50', 'to' => 'to-green-100', 'border' => 'border-green-200', 'text' => 'text-green-600'],
+                    'purple' => ['from' => 'from-purple-50', 'to' => 'to-purple-100', 'border' => 'border-purple-200', 'text' => 'text-purple-600'],
+                    'orange' => ['from' => 'from-orange-50', 'to' => 'to-orange-100', 'border' => 'border-orange-200', 'text' => 'text-orange-600'],
+                ];
+                $gradient = $gradientMap[$card['color'] ?? 'blue'] ?? $gradientMap['blue'];
+            @endphp
+            <div class="bg-gradient-to-br {{ $gradient['from'] }} {{ $gradient['to'] }} rounded-xl p-6 border {{ $gradient['border'] }}">
+                <div class="{{ $gradient['text'] }} font-bold text-sm mb-2">{{ $card['label'] ?? '' }}</div>
+                <div class="text-2xl font-bold text-gray-900 mb-2">{{ $card['date'] ?? '' }}</div>
+                <div class="text-gray-700 text-sm">{{ $card['description'] ?? '' }}</div>
             </div>
-
-            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                <div class="text-green-600 font-bold text-sm mb-2">Last Date</div>
-                <div class="text-2xl font-bold text-gray-900 mb-2">March 31</div>
-                <div class="text-gray-700 text-sm">Final deadline for applications</div>
-            </div>
-
-            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-                <div class="text-purple-600 font-bold text-sm mb-2">Assessments</div>
-                <div class="text-2xl font-bold text-gray-900 mb-2">April 15</div>
-                <div class="text-gray-700 text-sm">Assessment tests scheduled</div>
-            </div>
-
-            <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
-                <div class="text-orange-600 font-bold text-sm mb-2">Results</div>
-                <div class="text-2xl font-bold text-gray-900 mb-2">May 1</div>
-                <div class="text-gray-700 text-sm">Admission results announced</div>
-            </div>
+            @endforeach
         </div>
+        @endif
     </div>
 </section>
 
@@ -323,60 +188,31 @@
 <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">Got Questions?</span>
-            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p class="text-xl text-gray-600">Common questions about our admission process</p>
+            <span class="inline-block px-4 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mb-4">{{ cms_field('admission', 'faq_badge', 'Got Questions?', $tenantId) }}</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{{ cms_field('admission', 'faq_title', 'Frequently Asked Questions', $tenantId) }}</h2>
+            <p class="text-xl text-gray-600">{{ cms_field('admission', 'faq_description', 'Common questions about our admission process', $tenantId) }}</p>
         </div>
 
+        @php
+            $faqItems = cms_components('admission', 'faq_items', $tenantId);
+        @endphp
+        @if(isset($faqItems) && is_array($faqItems) && count($faqItems) > 0)
         <div class="space-y-4">
+            @foreach($faqItems as $faq)
             <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                 <button class="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none" onclick="toggleFAQ(this)">
-                    <span class="text-lg font-semibold text-gray-900">What is the age requirement for admission?</span>
+                    <span class="text-lg font-semibold text-gray-900">{{ $faq['question'] ?? '' }}</span>
                     <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </button>
                 <div class="hidden px-6 pb-5 text-gray-700">
-                    Age requirements vary by grade level. Generally, students should be age-appropriate for their grade. Please contact our admission office for specific age requirements for each grade.
+                    {{ $faq['answer'] ?? '' }}
                 </div>
             </div>
-
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                <button class="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none" onclick="toggleFAQ(this)">
-                    <span class="text-lg font-semibold text-gray-900">Is there an entrance exam?</span>
-                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                <div class="hidden px-6 pb-5 text-gray-700">
-                    Yes, students may be required to take an assessment test depending on the grade level. The test evaluates basic academic skills and helps us understand the student's learning needs.
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                <button class="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none" onclick="toggleFAQ(this)">
-                    <span class="text-lg font-semibold text-gray-900">What are the fee structures?</span>
-                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                <div class="hidden px-6 pb-5 text-gray-700">
-                    Fee structures vary by grade level and program. Detailed fee information is provided during the admission process. We also offer scholarships and financial aid for eligible students.
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                <button class="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none" onclick="toggleFAQ(this)">
-                    <span class="text-lg font-semibold text-gray-900">Can I visit the campus before applying?</span>
-                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                <div class="hidden px-6 pb-5 text-gray-700">
-                    Absolutely! We encourage prospective families to visit our campus. You can schedule a campus tour by contacting our admission office. We also organize open house events throughout the year.
-                </div>
-            </div>
+            @endforeach
         </div>
+        @endif
     </div>
 </section>
 
@@ -388,17 +224,17 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">Ready to Begin Your Journey?</h2>
-        <p class="text-xl md:text-2xl text-primary-100 mb-10 max-w-2xl mx-auto">Start your admission process today and join our vibrant learning community</p>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">{{ cms_field('admission', 'cta_title', 'Ready to Begin Your Journey?', $tenantId) }}</h2>
+        <p class="text-xl md:text-2xl text-primary-100 mb-10 max-w-2xl mx-auto">{{ cms_field('admission', 'cta_description', 'Start your admission process today and join our vibrant learning community', $tenantId) }}</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="{{ url('/contact') }}" class="group inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
-                Contact Admission Office
+                {{ cms_field('admission', 'cta_button_text', 'Contact Admission Office', $tenantId) }}
                 <svg class="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                 </svg>
             </a>
             <a href="{{ url('/') }}" class="inline-flex items-center px-8 py-4 bg-transparent text-white font-semibold rounded-lg hover:bg-primary-700 transition-all duration-300 border-2 border-white shadow-lg hover:shadow-xl">
-                Learn More About Us
+                {{ cms_field('admission', 'cta_button_text_2', 'Learn More About Us', $tenantId) }}
             </a>
         </div>
     </div>

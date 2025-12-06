@@ -91,7 +91,7 @@ class FeePlanController extends Controller
 
         $validator = Validator::make($request->all(), [
             'academic_year' => 'required|string|max:20',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => 'required|exists:classes,id',
             'term' => 'required|in:annual,semester_1,semester_2,quarterly_1,quarterly_2,quarterly_3,quarterly_4',
             'effective_from' => 'required|date',
             'effective_to' => 'nullable|date|after:effective_from',
@@ -203,7 +203,7 @@ class FeePlanController extends Controller
 
         $validator = Validator::make($request->all(), [
             'academic_year' => 'required|string|max:20',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => 'required|exists:classes,id',
             'term' => 'required|in:annual,semester_1,semester_2,quarterly_1,quarterly_2,quarterly_3,quarterly_4',
             'effective_from' => 'required|date',
             'effective_to' => 'nullable|date|after:effective_from',
