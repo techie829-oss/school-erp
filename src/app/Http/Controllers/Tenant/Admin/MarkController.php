@@ -150,7 +150,7 @@ class MarkController extends Controller
         $validator = Validator::make($request->all(), [
             'student_id' => 'required|exists:students,id',
             'class_id' => 'required|exists:classes,id',
-            'section_id' => 'required|exists:sections,id',
+            'section_id' => 'nullable|exists:sections,id',
             'subject_id' => 'required|exists:subjects,id',
             'exam_id' => 'nullable|exists:exams,id',
             'mark_type' => 'required|in:assignment,quiz,project,test,exam,homework,classwork',
@@ -273,7 +273,7 @@ class MarkController extends Controller
 
         $validator = Validator::make($request->all(), [
             'class_id' => 'required|exists:classes,id',
-            'section_id' => 'required|exists:sections,id',
+            'section_id' => 'nullable|exists:sections,id',
             'subject_id' => 'required|exists:subjects,id',
             'exam_id' => 'nullable|exists:exams,id',
             'mark_type' => 'required|in:assignment,quiz,project,test,exam,homework,classwork',
@@ -340,7 +340,7 @@ class MarkController extends Controller
 
                 // Calculate grade
                 $mark->calculateGrade($tenant->id);
-                
+
                 // Check for existing mark with same criteria (optional: update instead of create)
                 $existing = Mark::forTenant($tenant->id)
                     ->where('student_id', $studentId)

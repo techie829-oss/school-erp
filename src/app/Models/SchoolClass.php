@@ -18,12 +18,16 @@ class SchoolClass extends Model
         'class_numeric',
         'class_type',
         'description',
+        'capacity',
+        'room_number',
+        'class_teacher_id',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'class_numeric' => 'integer',
+        'capacity' => 'integer',
     ];
 
     /**
@@ -79,6 +83,14 @@ class SchoolClass extends Model
     public function activeSections()
     {
         return $this->sections()->where('is_active', true);
+    }
+
+    /**
+     * Get the class teacher
+     */
+    public function classTeacher()
+    {
+        return $this->belongsTo(User::class, 'class_teacher_id');
     }
 
     /**

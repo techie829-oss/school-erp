@@ -58,7 +58,7 @@
                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
-                            <div class="ml-3">
+                            <div class="ml-3 flex-1 min-w-0">
                                 <h3 class="text-sm font-medium text-blue-800">Razorpay Configuration</h3>
                                 <div class="mt-2 text-sm text-blue-700">
                                     <p>Get your API keys from Razorpay Dashboard: <a href="https://dashboard.razorpay.com/" target="_blank" class="underline">dashboard.razorpay.com</a></p>
@@ -68,7 +68,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <!-- Razorpay Key ID -->
                         <div>
                             <label for="razorpay_key_id" class="block text-sm font-medium text-gray-700">
@@ -153,7 +153,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Accepted Payment Methods
                     </label>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         @php
                             $paymentMethods = old('payment_methods', $paymentSettings['payment_methods'] ?? ['cash', 'cheque', 'card', 'upi']);
                             // Handle if payment_methods is stored as JSON string
@@ -320,7 +320,7 @@
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                 </svg>
             </div>
-            <div class="ml-3">
+            <div class="ml-3 flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-blue-800">Payment Settings Information</h3>
                 <div class="mt-2 text-sm text-blue-700">
                     <p>Configure payment gateway and collection settings. API keys are stored securely and encrypted.</p>
@@ -332,7 +332,7 @@
 
     <!-- Submit Button -->
     <div class="flex justify-end">
-        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
             Save Payment Settings
         </button>
     </div>

@@ -38,11 +38,11 @@
             </label>
 
             @if(isset($tenantData['logo']) && $tenantData['logo'])
-                <div class="mt-2 flex items-center space-x-4">
-                    <img src="{{ Storage::url($tenantData['logo']) }}" alt="Logo" class="h-20 w-20 object-contain rounded-lg border border-gray-200">
+                <div class="mt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <img src="{{ Storage::url($tenantData['logo']) }}" alt="Logo" class="h-20 w-20 object-contain rounded-lg border border-gray-200 flex-shrink-0">
                     <div>
                         <p class="text-sm text-gray-500">Current logo</p>
-                        <form action="{{ url('/admin/settings/logo') }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete the logo?')">
+                        <form action="{{ url('/admin/settings/logo') }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete the logo?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="mt-1 text-sm text-red-600 hover:text-red-800">
@@ -102,7 +102,7 @@
 
     <!-- Submit Button -->
     <div class="flex justify-end">
-        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
             Save General Settings
         </button>
     </div>

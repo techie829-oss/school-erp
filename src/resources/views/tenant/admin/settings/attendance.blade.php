@@ -6,7 +6,7 @@
         <div>
             <h3 class="text-lg font-medium text-gray-900 mb-4">School Timings</h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <!-- School Start Time -->
                 <div>
                     <label for="school_start_time" class="block text-sm font-medium text-gray-700">
@@ -70,7 +70,7 @@
         <div class="pt-6 border-t border-gray-200">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Attendance Policies</h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <!-- Minimum Working Hours -->
                 <div>
                     <label for="minimum_working_hours" class="block text-sm font-medium text-gray-700">
@@ -106,7 +106,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Weekend Days
                     </label>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         @php
                             $weekendDays = old('weekend_days', $attendanceSettings->weekend_days ?? ['sunday']);
                             // Handle if weekend_days is stored as JSON string
@@ -171,7 +171,7 @@
                 </div>
 
                 <!-- Allow Edit After Days -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                         <label for="allow_edit_after_days" class="block text-sm font-medium text-gray-700">
                             Allow Edit After (days)
@@ -197,7 +197,7 @@
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                 </svg>
             </div>
-            <div class="ml-3">
+            <div class="ml-3 flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-blue-800">Attendance Settings Information</h3>
                 <div class="mt-2 text-sm text-blue-700">
                     <p>These settings control attendance policies, default timings, and notifications. Changes will apply to all future attendance records.</p>
@@ -208,7 +208,7 @@
 
     <!-- Submit Button -->
     <div class="flex justify-end">
-        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
             Save Attendance Settings
         </button>
     </div>

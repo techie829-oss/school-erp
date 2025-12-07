@@ -44,7 +44,7 @@
         @csrf
         @method('PUT')
 
-        <div class="bg-white shadow rounded-lg p-6 space-y-4">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
                 <label for="department_name" class="block text-sm font-medium text-gray-700">
                     Department Name <span class="text-red-500">*</span>
@@ -86,11 +86,11 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex justify-end space-x-3 mt-6">
-            <a href="{{ url('/admin/departments') }}" class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+            <a href="{{ url('/admin/departments') }}" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Cancel
             </a>
-            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+            <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                 Update Department
             </button>
         </div>

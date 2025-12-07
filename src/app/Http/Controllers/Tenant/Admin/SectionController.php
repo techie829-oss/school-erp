@@ -108,7 +108,7 @@ class SectionController extends Controller
             'tenant_id' => $tenant->id,
             'class_id' => $validated['class_id'],
             'section_name' => $validated['section_name'],
-            'capacity' => $validated['capacity'],
+            'capacity' => $validated['capacity'] ?? null, // Optional - can be null
             'room_number' => $validated['room_number'],
             'class_teacher_id' => $validated['class_teacher_id'],
             'is_active' => $validated['is_active'] ?? true,
@@ -210,7 +210,7 @@ class SectionController extends Controller
         $section->update([
             'class_id' => $validated['class_id'],
             'section_name' => $validated['section_name'],
-            'capacity' => $validated['capacity'],
+            'capacity' => $validated['capacity'] ?? null, // Optional - can be null
             'room_number' => $validated['room_number'],
             'class_teacher_id' => $validated['class_teacher_id'],
             'is_active' => $validated['is_active'] ?? $section->is_active,

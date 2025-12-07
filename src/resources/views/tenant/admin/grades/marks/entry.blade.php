@@ -36,13 +36,14 @@
                 </div>
 
                 <div>
-                    <label for="section_id" class="block text-sm font-medium text-gray-700">Section <span class="text-red-500">*</span></label>
-                    <select name="section_id" id="section_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                        <option value="">Select Section</option>
+                    <label for="section_id" class="block text-sm font-medium text-gray-700">Section <span class="text-gray-500 text-xs">(Optional)</span></label>
+                    <select name="section_id" id="section_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="">All Students (No Section)</option>
                         @foreach($sections as $section)
                             <option value="{{ $section->id }}" {{ request('section_id', $sectionId) == $section->id ? 'selected' : '' }}>{{ $section->section_name }}</option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-xs text-gray-500">Leave empty to show all students in the class</p>
                 </div>
 
                 <div>
@@ -194,7 +195,7 @@
 document.getElementById('class_id')?.addEventListener('change', function() {
     const classId = this.value;
     const sectionSelect = document.getElementById('section_id');
-    
+
     if (classId) {
         // Reload page with class_id to get sections
         const url = new URL(window.location.href);

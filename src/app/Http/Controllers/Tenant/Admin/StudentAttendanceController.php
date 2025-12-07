@@ -252,24 +252,30 @@ class StudentAttendanceController extends Controller
                 ->get();
         }
 
-        if ($classId && $sectionId) {
-            // Get students in this section
-            $students = Student::forTenant($tenant->id)
+        if ($classId) {
+            // Get students in this class (and section if provided)
+            $studentsQuery = Student::forTenant($tenant->id)
                 ->whereHas('currentEnrollment', function($q) use ($classId, $sectionId) {
-                    $q->where('class_id', $classId)
-                      ->where('section_id', $sectionId);
+                    $q->where('class_id', $classId);
+                    if ($sectionId) {
+                        $q->where('section_id', $sectionId);
+                    }
                 })
                 ->with('currentEnrollment')
-                ->orderBy('full_name')
-                ->get();
+                ->orderBy('full_name');
+
+            $students = $studentsQuery->get();
 
             // Get existing attendance for this date
-            $existingAttendance = StudentAttendance::forDate($date)
+            $attendanceQuery = StudentAttendance::forDate($date)
                 ->forClass($classId)
-                ->forSection($sectionId)
-                ->whereIn('student_id', $students->pluck('id'))
-                ->get()
-                ->keyBy('student_id');
+                ->whereIn('student_id', $students->pluck('id'));
+
+            if ($sectionId) {
+                $attendanceQuery->forSection($sectionId);
+            }
+
+            $existingAttendance = $attendanceQuery->get()->keyBy('student_id');
         }
 
         return view('tenant.admin.attendance.students.mark', compact(
@@ -298,7 +304,7 @@ class StudentAttendanceController extends Controller
         $validator = Validator::make($request->all(), [
             'date' => 'required|date',
             'class_id' => 'required|exists:classes,id',
-            'section_id' => 'required|exists:sections,id',
+            'section_id' => 'nullable|exists:sections,id',
             'attendance' => 'required|array',
             'attendance.*.student_id' => 'required|exists:students,id',
             'attendance.*.status' => 'required|in:present,absent,late,half_day,on_leave,holiday',
@@ -457,27 +463,35 @@ class StudentAttendanceController extends Controller
             }
         }
 
-        if ($classId && $sectionId) {
-            $students = Student::forTenant($tenant->id)
+        if ($classId) {
+            // Get students in this class (and section if provided)
+            $studentsQuery = Student::forTenant($tenant->id)
                 ->whereHas('currentEnrollment', function($q) use ($classId, $sectionId) {
-                    $q->where('class_id', $classId)
-                      ->where('section_id', $sectionId);
+                    $q->where('class_id', $classId);
+                    if ($sectionId) {
+                        $q->where('section_id', $sectionId);
+                    }
                 })
                 ->with('currentEnrollment')
-                ->orderBy('full_name')
-                ->get();
+                ->orderBy('full_name');
+
+            $students = $studentsQuery->get();
 
             // Get existing period-wise attendance for this date/period/subject
-            $existingAttendance = StudentAttendance::forDate($date)
+            $attendanceQuery = StudentAttendance::forDate($date)
                 ->forClass($classId)
-                ->forSection($sectionId)
                 ->where('period_number', $periodNumber)
-                ->when($subjectId, function($q) use ($subjectId) {
-                    $q->where('subject_id', $subjectId);
-                })
-                ->whereIn('student_id', $students->pluck('id'))
-                ->get()
-                ->keyBy('student_id');
+                ->whereIn('student_id', $students->pluck('id'));
+
+            if ($sectionId) {
+                $attendanceQuery->forSection($sectionId);
+            }
+
+            if ($subjectId) {
+                $attendanceQuery->where('subject_id', $subjectId);
+            }
+
+            $existingAttendance = $attendanceQuery->get()->keyBy('student_id');
         }
 
         return view('tenant.admin.attendance.students.mark-period', compact(
@@ -510,7 +524,7 @@ class StudentAttendanceController extends Controller
         $validator = Validator::make($request->all(), [
             'date' => 'required|date',
             'class_id' => 'required|exists:classes,id',
-            'section_id' => 'required|exists:sections,id',
+            'section_id' => 'nullable|exists:sections,id',
             'period_number' => 'required|integer|min:1|max:10',
             'subject_id' => 'nullable|exists:subjects,id',
             'teacher_id' => 'nullable|exists:teachers,id',

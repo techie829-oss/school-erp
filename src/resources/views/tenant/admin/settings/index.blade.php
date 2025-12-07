@@ -72,41 +72,41 @@
     <!-- Settings Tabs -->
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <!-- Tab Navigation -->
-        <div class="border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-                <button onclick="showTab('general')" id="tab-general" class="tab-button border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+        <div class="border-b border-gray-200 overflow-x-auto">
+            <nav class="-mb-px flex space-x-4 sm:space-x-8 px-4 sm:px-6" aria-label="Tabs">
+                <button onclick="showTab('general')" id="tab-general" class="tab-button border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     General Settings
                 </button>
-                <button onclick="showTab('academic')" id="tab-academic" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTab('academic')" id="tab-academic" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Academic Settings
                 </button>
-                <button onclick="showTab('attendance')" id="tab-attendance" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTab('attendance')" id="tab-attendance" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Attendance Settings
                 </button>
-                <button onclick="showTab('payment')" id="tab-payment" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTab('payment')" id="tab-payment" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Payment Settings
                 </button>
             </nav>
         </div>
 
         <!-- General Settings Tab -->
-        <div id="content-general" class="tab-content p-6">
+        <div id="content-general" class="tab-content p-4 sm:p-6">
             @include('tenant.admin.settings.general')
         </div>
 
 
         <!-- Academic Settings Tab -->
-        <div id="content-academic" class="tab-content hidden p-6">
+        <div id="content-academic" class="tab-content hidden p-4 sm:p-6">
             @include('tenant.admin.settings.academic')
         </div>
 
         <!-- Attendance Settings Tab -->
-        <div id="content-attendance" class="tab-content hidden p-6">
+        <div id="content-attendance" class="tab-content hidden p-4 sm:p-6">
             @include('tenant.admin.settings.attendance')
         </div>
 
         <!-- Payment Settings Tab -->
-        <div id="content-payment" class="tab-content hidden p-6">
+        <div id="content-payment" class="tab-content hidden p-4 sm:p-6">
             @include('tenant.admin.settings.payment')
         </div>
 

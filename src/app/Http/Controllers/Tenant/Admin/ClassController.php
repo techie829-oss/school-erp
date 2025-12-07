@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
+use App\Models\User;
 use App\Services\TenantContextService;
 use Illuminate\Http\Request;
 
@@ -53,7 +54,13 @@ class ClassController extends Controller
             abort(404, 'Tenant not found');
         }
 
-        return view('tenant.admin.classes.create', compact('tenant'));
+        $teachers = User::forTenant($tenant->id)
+            ->where('user_type', 'teacher')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('tenant.admin.classes.create', compact('tenant', 'teachers'));
     }
 
     /**
@@ -69,18 +76,22 @@ class ClassController extends Controller
 
         $validated = $request->validate([
             'class_name' => 'required|string|max:255',
-            'class_numeric' => 'required|integer|min:1|max:20',
+            'class_numeric' => 'required|integer|min:0|max:20',
             'class_type' => 'required|in:school,college,both',
             'is_active' => 'boolean',
         ]);
 
         // Check if class numeric already exists for this tenant
-        $exists = SchoolClass::forTenant($tenant->id)
-            ->where('class_numeric', $validated['class_numeric'])
-            ->exists();
+        // Allow multiple classes with class_numeric = 0 (for pre-primary classes like NC, KG)
+        // But enforce uniqueness for class_numeric 1-20
+        if ($validated['class_numeric'] != 0) {
+            $exists = SchoolClass::forTenant($tenant->id)
+                ->where('class_numeric', $validated['class_numeric'])
+                ->exists();
 
-        if ($exists) {
-            return back()->withErrors(['class_numeric' => 'This class number already exists.'])->withInput();
+            if ($exists) {
+                return back()->withErrors(['class_numeric' => 'This class number already exists.'])->withInput();
+            }
         }
 
         SchoolClass::create([
@@ -88,6 +99,9 @@ class ClassController extends Controller
             'class_name' => $validated['class_name'],
             'class_numeric' => $validated['class_numeric'],
             'class_type' => $validated['class_type'],
+            'capacity' => $validated['capacity'] ?? null,
+            'room_number' => $validated['room_number'] ?? null,
+            'class_teacher_id' => $validated['class_teacher_id'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
@@ -131,9 +145,19 @@ class ClassController extends Controller
             abort(404, 'Tenant not found');
         }
 
-        $class = SchoolClass::forTenant($tenant->id)->findOrFail($id);
+        $class = SchoolClass::forTenant($tenant->id)
+            ->with('sections')
+            ->findOrFail($id);
 
-        return view('tenant.admin.classes.edit', compact('class', 'tenant'));
+        $teachers = User::forTenant($tenant->id)
+            ->where('user_type', 'teacher')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $hasSections = $class->sections->count() > 0;
+
+        return view('tenant.admin.classes.edit', compact('class', 'tenant', 'teachers', 'hasSections'));
     }
 
     /**
@@ -151,25 +175,35 @@ class ClassController extends Controller
 
         $validated = $request->validate([
             'class_name' => 'required|string|max:255',
-            'class_numeric' => 'required|integer|min:1|max:20',
+            'class_numeric' => 'required|integer|min:0|max:20',
             'class_type' => 'required|in:school,college,both',
+            'capacity' => 'nullable|integer|min:1|max:200',
+            'room_number' => 'nullable|string|max:50',
+            'class_teacher_id' => 'nullable|exists:users,id',
             'is_active' => 'boolean',
         ]);
 
         // Check if class numeric already exists for another class
-        $exists = SchoolClass::forTenant($tenant->id)
-            ->where('class_numeric', $validated['class_numeric'])
-            ->where('id', '!=', $id)
-            ->exists();
+        // Allow multiple classes with class_numeric = 0 (for pre-primary classes like NC, KG)
+        // But enforce uniqueness for class_numeric 1-20
+        if ($validated['class_numeric'] != 0) {
+            $exists = SchoolClass::forTenant($tenant->id)
+                ->where('class_numeric', $validated['class_numeric'])
+                ->where('id', '!=', $id)
+                ->exists();
 
-        if ($exists) {
-            return back()->withErrors(['class_numeric' => 'This class number already exists.'])->withInput();
+            if ($exists) {
+                return back()->withErrors(['class_numeric' => 'This class number already exists.'])->withInput();
+            }
         }
 
         $class->update([
             'class_name' => $validated['class_name'],
             'class_numeric' => $validated['class_numeric'],
             'class_type' => $validated['class_type'],
+            'capacity' => $validated['capacity'] ?? null,
+            'room_number' => $validated['room_number'] ?? null,
+            'class_teacher_id' => $validated['class_teacher_id'] ?? null,
             'is_active' => $validated['is_active'] ?? $class->is_active,
         ]);
 

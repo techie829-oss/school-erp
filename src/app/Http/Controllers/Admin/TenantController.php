@@ -249,18 +249,17 @@ class TenantController extends Controller
     {
         $user = User::where('tenant_id', $tenant->id)->findOrFail($userId);
 
+        // Admin can reset password without current password
         $validated = $request->validate([
-            'current_password' => 'required',
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        if (!Hash::check($validated['current_password'], $user->password)) {
-            return back()->withErrors(['current_password' => 'Current password is incorrect']);
-        }
-
-            $user->update([
+        // Use Hash::make() to be consistent with user creation (usersStore method)
+        // The User model has 'password' => 'hashed' cast, but using Hash::make() directly
+        // ensures consistency and avoids any potential cast issues
+        $user->update([
             'password' => Hash::make($validated['password'])
-            ]);
+        ]);
 
         return redirect()->route('admin.tenants.users.show', [$tenant, $userId])
             ->with('success', 'Password updated successfully!');

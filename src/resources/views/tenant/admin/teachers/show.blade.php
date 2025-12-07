@@ -39,35 +39,40 @@
         <div class="flex-1 min-w-0">
             <div class="flex items-center">
                 @if($teacher->photo)
-                    <img src="{{ $teacher->photo_url }}" alt="{{ $teacher->full_name }}" class="h-16 w-16 rounded-full object-cover border-2 border-gray-200">
+                    <img src="{{ $teacher->photo_url }}" alt="{{ $teacher->full_name }}" class="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-gray-200 flex-shrink-0">
                 @else
-                    <div class="h-16 w-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center border-2 border-gray-200">
-                        <span class="text-white font-medium text-xl">
+                    <div class="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center border-2 border-gray-200 flex-shrink-0">
+                        <span class="text-white font-medium text-lg sm:text-xl">
                             {{ substr($teacher->first_name, 0, 1) }}{{ substr($teacher->last_name, 0, 1) }}
                         </span>
                     </div>
                 @endif
-                <div class="ml-4">
-                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                <div class="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold leading-7 text-gray-900 truncate">
                         {{ $teacher->full_name }}
                     </h2>
-                    <p class="mt-1 text-sm text-gray-500">
-                        {{ $teacher->employee_id }} • {{ $teacher->designation ?? 'Teacher' }}
+                    <p class="mt-1 text-xs sm:text-sm text-gray-500 break-words">
+                        <span class="font-medium">{{ $teacher->employee_id }}</span>
+                        @if($teacher->designation)
+                            <span class="mx-1">•</span>
+                            <span>{{ $teacher->designation }}</span>
+                        @endif
                         @if($teacher->department)
-                            • {{ $teacher->department->department_name }}
+                            <span class="mx-1">•</span>
+                            <span>{{ $teacher->department->department_name }}</span>
                         @endif
                     </p>
                 </div>
             </div>
         </div>
-        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-            <a href="{{ url('/admin/teachers/' . $teacher->id . '/edit') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+        <div class="mt-4 flex flex-wrap gap-3 md:mt-0 md:ml-4">
+            <a href="{{ url('/admin/teachers/' . $teacher->id . '/edit') }}" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
                 Edit
             </a>
-            <a href="{{ url('/admin/teachers') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <a href="{{ url('/admin/teachers') }}" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Back to List
             </a>
         </div>
@@ -116,71 +121,72 @@
         $statusColor = $statusColors[$teacher->status] ?? 'bg-gray-50 border-gray-200 text-gray-800';
     @endphp
     <div class="rounded-lg border-2 {{ $statusColor }} p-4">
-        <div class="flex items-center justify-between">
-            <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex-1">
                 <h3 class="text-sm font-medium">
-                    Status: {{ ucfirst(str_replace('_', ' ', $teacher->status)) }}
-                    • Employment: {{ ucfirst($teacher->employment_type) }}
+                    <span>Status: {{ ucfirst(str_replace('_', ' ', $teacher->status)) }}</span>
+                    <span class="mx-1">•</span>
+                    <span>Employment: {{ ucfirst($teacher->employment_type) }}</span>
                 </h3>
                 @if($teacher->status_remarks)
                     <p class="mt-1 text-sm opacity-75">{{ $teacher->status_remarks }}</p>
                 @endif
             </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $teacher->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 {{ $teacher->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                 {{ $teacher->is_active ? 'Active' : 'Inactive' }}
             </span>
         </div>
     </div>
 
     <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg shadow p-4">
-            <dt class="text-sm font-medium text-gray-500 truncate">Age</dt>
-            <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ $teacher->age ?? 0 }} years</dd>
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-5">
+            <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Age</dt>
+            <dd class="mt-1 text-xl sm:text-2xl font-semibold text-gray-900">{{ $teacher->age ?? 0 }} years</dd>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <dt class="text-sm font-medium text-gray-500 truncate">Years of Service</dt>
-            <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ $teacher->years_of_service ?? 0 }} years</dd>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-5">
+            <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Years of Service</dt>
+            <dd class="mt-1 text-xl sm:text-2xl font-semibold text-gray-900">{{ $teacher->years_of_service ?? 0 }} years</dd>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <dt class="text-sm font-medium text-gray-500 truncate">Subjects</dt>
-            <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ $teacher->subjects->count() }}</dd>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-5">
+            <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Subjects</dt>
+            <dd class="mt-1 text-xl sm:text-2xl font-semibold text-gray-900">{{ $teacher->subjects->count() }}</dd>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <dt class="text-sm font-medium text-gray-500 truncate">Documents</dt>
-            <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ $teacher->documents->count() }}</dd>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-5">
+            <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Documents</dt>
+            <dd class="mt-1 text-xl sm:text-2xl font-semibold text-gray-900">{{ $teacher->documents->count() }}</dd>
         </div>
     </div>
 
     <!-- Tabs -->
     <div class="bg-white shadow rounded-lg">
         <!-- Tab Navigation -->
-        <div class="border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-                <button onclick="showTeacherTab('overview')" id="teacher-tab-overview" class="teacher-tab-button border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+        <div class="border-b border-gray-200 overflow-x-auto">
+            <nav class="-mb-px flex space-x-4 sm:space-x-8 px-4 sm:px-6" aria-label="Tabs">
+                <button onclick="showTeacherTab('overview')" id="teacher-tab-overview" class="teacher-tab-button border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Overview
                 </button>
-                <button onclick="showTeacherTab('employment')" id="teacher-tab-employment" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTeacherTab('employment')" id="teacher-tab-employment" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Employment
                 </button>
-                <button onclick="showTeacherTab('qualifications')" id="teacher-tab-qualifications" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTeacherTab('qualifications')" id="teacher-tab-qualifications" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Qualifications ({{ $teacher->qualifications->count() }})
                 </button>
-                <button onclick="showTeacherTab('subjects')" id="teacher-tab-subjects" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTeacherTab('subjects')" id="teacher-tab-subjects" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Subjects ({{ $teacher->subjects->count() }})
                 </button>
-                <button onclick="showTeacherTab('classes')" id="teacher-tab-classes" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTeacherTab('classes')" id="teacher-tab-classes" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Classes ({{ $teacher->classesTaught->count() }})
                 </button>
-                <button onclick="showTeacherTab('documents')" id="teacher-tab-documents" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <button onclick="showTeacherTab('documents')" id="teacher-tab-documents" class="teacher-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm">
                     Documents ({{ $teacher->documents->count() }})
                 </button>
             </nav>
         </div>
 
         <!-- Tab Content: Overview -->
-        <div id="teacher-content-overview" class="teacher-tab-content p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="teacher-content-overview" class="teacher-tab-content p-4 sm:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <!-- Personal Details -->
                 <div>
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Personal Details</h4>
@@ -258,7 +264,7 @@
                 <!-- Address -->
                 <div class="md:col-span-2">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Address Information</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div>
                             <h5 class="text-xs font-medium text-gray-700 mb-2">Current Address</h5>
                             <p class="text-sm text-gray-900">
@@ -287,8 +293,8 @@
         </div>
 
         <!-- Tab Content: Employment -->
-        <div id="teacher-content-employment" class="teacher-tab-content p-6 hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="teacher-content-employment" class="teacher-tab-content p-4 sm:p-6 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Employment Information</h4>
                     <dl class="space-y-2">
@@ -373,7 +379,7 @@
         </div>
 
         <!-- Tab Content: Qualifications -->
-        <div id="teacher-content-qualifications" class="teacher-tab-content p-6 hidden">
+        <div id="teacher-content-qualifications" class="teacher-tab-content p-4 sm:p-6 hidden">
             <div class="mb-6">
                 <h4 class="text-sm font-medium text-gray-900 mb-4">Qualifications & Certifications</h4>
                 @if($teacher->qualifications->count() > 0)
@@ -424,7 +430,7 @@
                 <h4 class="text-sm font-medium text-gray-900 mb-4">Add New Qualification</h4>
                 <form action="{{ url('/admin/teachers/' . $teacher->id . '/qualifications') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Type</label>
                             <select name="qualification_type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
@@ -469,7 +475,7 @@
                         </div>
                     </div>
                     <div class="mt-4">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                             Add Qualification
                         </button>
                     </div>
@@ -478,10 +484,10 @@
         </div>
 
         <!-- Tab Content: Subjects -->
-        <div id="teacher-content-subjects" class="teacher-tab-content p-6 hidden">
+        <div id="teacher-content-subjects" class="teacher-tab-content p-4 sm:p-6 hidden">
             <h4 class="text-sm font-medium text-gray-900 mb-4">Assigned Subjects</h4>
             @if($teacher->subjects->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($teacher->subjects as $subject)
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                         <h5 class="text-sm font-medium text-gray-900">{{ $subject->subject_name }}</h5>
@@ -498,18 +504,18 @@
         </div>
 
         <!-- Tab Content: Classes -->
-        <div id="teacher-content-classes" class="teacher-tab-content p-6 hidden">
+        <div id="teacher-content-classes" class="teacher-tab-content p-4 sm:p-6 hidden">
             <h4 class="text-sm font-medium text-gray-900 mb-4">Class Teacher Assignments</h4>
             @if($teacher->classesTaught->count() > 0)
                 <div class="space-y-3">
                     @foreach($teacher->classesTaught as $section)
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 flex justify-between items-center">
-                        <div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                        <div class="flex-1">
                             <h5 class="text-sm font-medium text-gray-900">{{ $section->schoolClass->class_name }} - {{ $section->section_name }}</h5>
                             <p class="text-xs text-gray-500 mt-1">Room: {{ $section->room_number ?? 'Not assigned' }}</p>
                             <p class="text-xs text-gray-500">Capacity: {{ $section->capacity ?? 'N/A' }}</p>
                         </div>
-                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex-shrink-0">
                             Class Teacher
                         </span>
                     </div>
@@ -521,31 +527,31 @@
         </div>
 
         <!-- Tab Content: Documents -->
-        <div id="teacher-content-documents" class="teacher-tab-content p-6 hidden">
+        <div id="teacher-content-documents" class="teacher-tab-content p-4 sm:p-6 hidden">
             <div class="mb-6">
                 <h4 class="text-sm font-medium text-gray-900 mb-4">Uploaded Documents</h4>
                 @if($teacher->documents->count() > 0)
                     <div class="space-y-3">
                         @foreach($teacher->documents as $document)
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 flex justify-between items-center">
-                            <div class="flex items-center space-x-3">
-                                <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                <svg class="h-8 w-8 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                 </svg>
-                                <div>
-                                    <h5 class="text-sm font-medium text-gray-900">{{ $document->document_name }}</h5>
+                                <div class="min-w-0 flex-1">
+                                    <h5 class="text-sm font-medium text-gray-900 truncate">{{ $document->document_name }}</h5>
                                     <p class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', $document->document_type)) }}</p>
                                     <p class="text-xs text-gray-400">{{ $document->file_size_human }} • Uploaded {{ $document->uploaded_at->format('d M, Y') }}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <a href="{{ $document->file_url }}" target="_blank" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                <a href="{{ $document->file_url }}" target="_blank" class="text-primary-600 hover:text-primary-700 text-sm font-medium whitespace-nowrap">
                                     View
                                 </a>
-                                <form action="{{ url('/admin/documents/' . $document->id) }}" method="POST" onsubmit="return confirm('Delete this document?')">
+                                <form action="{{ url('/admin/documents/' . $document->id) }}" method="POST" onsubmit="return confirm('Delete this document?');" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium">
+                                    <button type="submit" class="text-red-600 hover:text-red-700 text-sm font-medium whitespace-nowrap">
                                         Delete
                                     </button>
                                 </form>
@@ -563,7 +569,7 @@
                 <h4 class="text-sm font-medium text-gray-900 mb-4">Upload New Document</h4>
                 <form action="{{ url('/admin/teachers/' . $teacher->id . '/documents') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Document Name *</label>
                             <input type="text" name="document_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
@@ -587,7 +593,7 @@
                         </div>
                     </div>
                     <div class="mt-4">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                             Upload Document
                         </button>
                     </div>

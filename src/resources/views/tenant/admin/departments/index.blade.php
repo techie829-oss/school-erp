@@ -56,61 +56,96 @@
     @endif
 
     <!-- Departments List -->
-    <div class="bg-white shadow overflow-hidden sm:rounded-md">
-        @if($departments->count() > 0)
-            <ul class="divide-y divide-gray-200">
-                @foreach($departments as $department)
-                <li>
-                    <div class="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <h3 class="text-sm font-medium text-primary-600">{{ $department->department_name }}</h3>
-                                <div class="mt-2 flex items-center text-sm text-gray-500">
-                                    @if($department->department_code)
-                                        <span class="mr-4">Code: {{ $department->department_code }}</span>
-                                    @endif
-                                    <span class="mr-4">Teachers: {{ $department->teachers_count }}</span>
-                                    @if($department->headTeacher)
-                                        <span>Head: {{ $department->headTeacher->full_name }}</span>
-                                    @endif
-                                </div>
-                                @if($department->description)
-                                    <p class="mt-1 text-sm text-gray-600">{{ Str::limit($department->description, 100) }}</p>
-                                @endif
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $department->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="divide-y divide-gray-200">
+            @forelse($departments as $department)
+            <div class="p-4 hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <!-- Left Section: Department Info -->
+                    <div class="flex items-start space-x-4 flex-1 min-w-0">
+                        <!-- Department Icon -->
+                        <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+
+                        <!-- Department Details -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-base font-semibold text-gray-900">{{ $department->department_name }}</h3>
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ $department->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $department->is_active ? 'Active' : 'Inactive' }}
                                 </span>
-                                <a href="{{ url('/admin/departments/' . $department->id . '/edit') }}" class="text-primary-600 hover:text-primary-900 text-sm font-medium">Edit</a>
-                                <form action="{{ url('/admin/departments/' . $department->id) }}" method="POST" onsubmit="return confirm('Delete this department?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
-                                </form>
                             </div>
+
+                            <!-- Additional Info -->
+                            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+                                @if($department->department_code)
+                                <div class="flex items-center">
+                                    <span class="text-gray-500">Code:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $department->department_code }}</span>
+                                </div>
+                                @endif
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                    <span class="text-gray-500">Teachers:</span>
+                                    <span class="ml-1 font-medium text-primary-600">{{ $department->teachers_count }}</span>
+                                </div>
+                                @if($department->headTeacher)
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    <span class="text-gray-500">Head:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $department->headTeacher->full_name }}</span>
+                                </div>
+                                @endif
+                            </div>
+
+                            @if($department->description)
+                            <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ Str::limit($department->description, 100) }}</p>
+                            @endif
                         </div>
                     </div>
-                </li>
-                @endforeach
-            </ul>
-        @else
-            <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No departments</h3>
-                <p class="mt-1 text-sm text-gray-500">Get started by creating a new department.</p>
-                <div class="mt-6">
-                    <a href="{{ url('/admin/departments/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Add Department
-                    </a>
+
+                    <!-- Right Section: Actions -->
+                    <div class="flex-shrink-0 flex items-center justify-end space-x-3 md:ml-4">
+                        <a href="{{ url('/admin/departments/' . $department->id . '/edit') }}" class="text-primary-600 hover:text-primary-900 text-sm font-medium whitespace-nowrap">
+                            Edit
+                        </a>
+                        <form action="{{ url('/admin/departments/' . $department->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this department?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium whitespace-nowrap">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        @endif
+            @empty
+            <div class="p-12">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No departments found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating your first department</p>
+                    <div class="mt-6">
+                        <a href="{{ url('/admin/departments/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Department
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endforelse
+        </div>
     </div>
 
     <!-- Pagination -->

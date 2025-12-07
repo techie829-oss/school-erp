@@ -105,16 +105,17 @@
                 </div>
 
                 <div>
-                    <label for="section_id" class="block text-sm font-medium text-gray-700">Section *</label>
-                    <select name="section_id" id="section_id" {{ !$classId ? 'disabled' : '' }} required onchange="this.form.submit()"
+                    <label for="section_id" class="block text-sm font-medium text-gray-700">Section <span class="text-gray-500 text-xs">(Optional)</span></label>
+                    <select name="section_id" id="section_id" {{ !$classId ? 'disabled' : '' }} onchange="this.form.submit()"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                        <option value="">Select Section</option>
+                        <option value="">All Students (No Section)</option>
                         @foreach($sections as $section)
                             <option value="{{ $section->id }}" {{ $sectionId == $section->id ? 'selected' : '' }}>
                                 {{ $section->section_name }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-xs text-gray-500">Leave empty to show all students in the class</p>
                 </div>
 
                 <div>

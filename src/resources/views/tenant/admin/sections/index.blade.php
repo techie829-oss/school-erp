@@ -126,104 +126,109 @@
         </form>
     </div>
 
-    <!-- Sections Table -->
+    <!-- Sections List -->
     <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Teacher</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($sections as $section)
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                    <span class="text-purple-600 font-semibold">{{ $section->section_name }}</span>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">Section {{ $section->section_name }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $section->schoolClass->class_name }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $section->room_number ?: '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $section->classTeacher?->name ?: 'Not Assigned' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $section->capacity ?: 'N/A' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div class="flex items-center">
-                                <svg class="h-4 w-4 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                </svg>
-                                {{ $section->enrollments()->where('is_current', true)->count() }}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $section->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $section->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end space-x-3">
-                                <a href="{{ url('/admin/sections/' . $section->id) }}" class="text-primary-600 hover:text-primary-900">View</a>
-                                <a href="{{ url('/admin/sections/' . $section->id . '/edit') }}" class="text-gray-600 hover:text-gray-900">Edit</a>
-                                <form action="{{ url('/admin/sections/' . $section->id) }}" method="POST" class="inline"
-                                    onsubmit="return confirm('Are you sure you want to delete this section?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8" class="px-6 py-12">
-                            <div class="text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z"/>
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">No sections found</h3>
-                                <p class="mt-1 text-sm text-gray-500">Get started by creating your first section</p>
-                                <div class="mt-6">
-                                    <a href="{{ url('/admin/sections/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
-                                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                        Add New Section
-                                    </a>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div class="divide-y divide-gray-200">
+            @forelse($sections as $section)
+            <div class="p-4 hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <!-- Left Section: Section Info -->
+                    <div class="flex items-center space-x-4 flex-1 min-w-0">
+                        <!-- Section Icon -->
+                        <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">{{ strtoupper(substr($section->section_name, 0, 1)) }}</span>
+                        </div>
 
-        <!-- Pagination -->
-        @if($sections->hasPages())
-        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            {{ $sections->links() }}
+                        <!-- Section Details -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-base font-semibold text-gray-900">{{ $section->section_name }}</h3>
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ $section->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $section->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-0.5">{{ $section->schoolClass->class_name }}</p>
+
+                            <!-- Additional Info (Mobile: Stack, Desktop: Inline) -->
+                            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    </svg>
+                                    <span class="text-gray-500">Room:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $section->room_number ?: 'Not assigned' }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    <span class="text-gray-500">Teacher:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $section->classTeacher?->name ?: 'Not assigned' }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    <span class="text-gray-500">Capacity:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $section->capacity ?: 'N/A' }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                    <span class="text-gray-500">Students:</span>
+                                    <span class="ml-1 font-medium text-primary-600">{{ $section->enrollments()->where('is_current', true)->count() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Section: Actions -->
+                    <div class="flex-shrink-0 flex items-center justify-end space-x-3 md:ml-4">
+                        <a href="{{ url('/admin/sections/' . $section->id) }}" class="text-primary-600 hover:text-primary-900 text-sm font-medium">
+                            View
+                        </a>
+                        <a href="{{ url('/admin/sections/' . $section->id . '/edit') }}" class="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                            Edit
+                        </a>
+                        <form action="{{ url('/admin/sections/' . $section->id) }}" method="POST" class="inline"
+                            onsubmit="return confirm('Are you sure you want to delete this section?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @empty
+            <div class="p-12">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z"/>
+                    </svg>
+                    <h3 class="mt-4 text-sm font-medium text-gray-900">No sections found</h3>
+                    <p class="mt-2 text-sm text-gray-500">Get started by creating your first section</p>
+                    <div class="mt-6">
+                        <a href="{{ url('/admin/sections/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add New Section
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endforelse
         </div>
-        @endif
     </div>
+
+    <!-- Pagination -->
+    @if($sections->hasPages())
+    <div class="mt-6 bg-white px-4 py-3 border border-gray-200 rounded-lg shadow sm:px-6">
+        {{ $sections->links() }}
+    </div>
+    @endif
 </div>
 @endsection
