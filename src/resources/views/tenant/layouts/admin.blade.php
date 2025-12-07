@@ -260,6 +260,14 @@
                                 Dashboard
                             </a>
 
+                            {{-- USERS --}}
+                            <a href="{{ url('/admin/users') }}"
+                                class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/users*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                <x-heroicon-o-user-group
+                                    class="mr-3 h-5 w-5 {{ request()->is('*/admin/users*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                Users
+                            </a>
+
                             {{-- NOTICE BOARD --}}
                             @if ($featureSettings['notice_board'] ?? true)
                                 <a href="{{ url('/admin/notices') }}"

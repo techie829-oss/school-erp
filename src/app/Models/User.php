@@ -53,6 +53,14 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /**
+     * Get the teacher profile associated with this user
+     */
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
 
 
     /**

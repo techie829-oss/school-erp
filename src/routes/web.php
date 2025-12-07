@@ -237,12 +237,12 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
 
     // Public tenant pages (require CMS to be enabled)
     Route::middleware('cms.enabled')->group(function () {
-        Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
-        Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');
-        Route::get('/programs', [SchoolController::class, 'programs'])->name('tenant.programs');
-        Route::get('/facilities', [SchoolController::class, 'facilities'])->name('tenant.facilities');
-        Route::get('/admission', [SchoolController::class, 'admission'])->name('tenant.admission');
-        Route::get('/contact', [SchoolController::class, 'contact'])->name('tenant.contact');
+    Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
+    Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');
+    Route::get('/programs', [SchoolController::class, 'programs'])->name('tenant.programs');
+    Route::get('/facilities', [SchoolController::class, 'facilities'])->name('tenant.facilities');
+    Route::get('/admission', [SchoolController::class, 'admission'])->name('tenant.admission');
+    Route::get('/contact', [SchoolController::class, 'contact'])->name('tenant.contact');
     });
 
     // Auth routes for tenants (ONLY on tenant domains)
@@ -369,6 +369,16 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::patch('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'update'])->name('sections.update.patch')->where('sectionId', '[0-9]+');
             Route::delete('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'destroy'])->name('sections.destroy')->where('sectionId', '[0-9]+');
         });
+
+        // User Management
+        Route::get('users', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'index'])->name('users.index');
+        Route::get('users/create', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'create'])->name('users.create');
+        Route::post('users', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'store'])->name('users.store');
+        Route::get('users/{userId}', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'show'])->name('users.show')->where('userId', '[0-9]+');
+        Route::get('users/{userId}/edit', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'edit'])->name('users.edit')->where('userId', '[0-9]+');
+        Route::put('users/{userId}', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'update'])->name('users.update')->where('userId', '[0-9]+');
+        Route::patch('users/{userId}', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'update'])->name('users.update.patch')->where('userId', '[0-9]+');
+        Route::delete('users/{userId}', [\App\Http\Controllers\Tenant\Admin\UserController::class, 'destroy'])->name('users.destroy')->where('userId', '[0-9]+');
 
         // Teacher Management
         Route::middleware('feature:teachers')->group(function () {

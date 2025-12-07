@@ -81,9 +81,9 @@
         @csrf
 
         <!-- Employee Information -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Employee Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="employee_id" class="block text-sm font-medium text-gray-700">
                         Employee ID <span class="text-red-500">*</span>
@@ -104,7 +104,7 @@
         </div>
 
         <!-- Personal Information -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -198,9 +198,9 @@
         </div>
 
         <!-- Contact Information -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                     <input type="email" name="email" id="email" value="{{ old('email') }}"
@@ -213,15 +213,15 @@
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
 
-                <div class="md:col-span-2">
+                <div class="sm:col-span-2">
                     <label for="alternate_phone" class="block text-sm font-medium text-gray-700">Alternate Phone</label>
                     <input type="tel" name="alternate_phone" id="alternate_phone" value="{{ old('alternate_phone') }}"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
 
-                <div class="md:col-span-2">
+                <div class="sm:col-span-2">
                     <h4 class="text-sm font-medium text-gray-900 mb-3 mt-4">Emergency Contact</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700">Name</label>
                             <input type="text" name="emergency_contact_name" id="emergency_contact_name" value="{{ old('emergency_contact_name') }}"
@@ -245,12 +245,12 @@
         </div>
 
         <!-- Address Information -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
 
             <h4 class="text-sm font-medium text-gray-700 mb-3">Current Address</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="md:col-span-2">
+                <div class="sm:col-span-2">
                     <label for="current_address" class="block text-sm font-medium text-gray-700">Street Address</label>
                     <textarea name="current_address" id="current_address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">{{ old('current_address') }}</textarea>
                 </div>
@@ -284,8 +284,8 @@
 
             <div id="permanent_address_fields">
                 <h4 class="text-sm font-medium text-gray-700 mb-3">Permanent Address</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
                         <label for="permanent_address" class="block text-sm font-medium text-gray-700">Street Address</label>
                         <textarea name="permanent_address" id="permanent_address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">{{ old('permanent_address') }}</textarea>
                     </div>
@@ -312,9 +312,9 @@
         </div>
 
         <!-- Employment Details -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Employment Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="department_id" class="block text-sm font-medium text-gray-700">Department</label>
                     <select name="department_id" id="department_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
@@ -363,7 +363,7 @@
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
 
-                <div class="md:col-span-2">
+                <div class="sm:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Subjects</label>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                         @foreach($subjects as $subject)
@@ -382,9 +382,9 @@
         </div>
 
         <!-- Financial Details -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Financial Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="bank_name" class="block text-sm font-medium text-gray-700">Bank Name</label>
                     <input type="text" name="bank_name" id="bank_name" value="{{ old('bank_name') }}"
@@ -417,18 +417,111 @@
             </div>
         </div>
 
+        <!-- User Account Section -->
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">User Account</h3>
+
+            <div class="space-y-4">
+                <!-- Account Option -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Account Options</label>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="radio" name="user_account_option" id="user_account_none" value="none" {{ old('user_account_option', 'none') == 'none' ? 'checked' : '' }}
+                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                            </div>
+                            <div class="ml-3">
+                                <label for="user_account_none" class="font-medium text-gray-700">No User Account</label>
+                                <p class="text-sm text-gray-500">Teacher will not have login access</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="radio" name="user_account_option" id="user_account_create" value="create" {{ old('user_account_option') == 'create' ? 'checked' : '' }}
+                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <label for="user_account_create" class="font-medium text-gray-700">Create New User Account</label>
+                                <p class="text-sm text-gray-500">Create a new login account for this teacher</p>
+
+                                <!-- Create Account Fields -->
+                                <div id="create_account_fields" class="mt-3 space-y-3" style="display: {{ old('user_account_option') == 'create' ? 'block' : 'none' }};">
+                                    <div>
+                                        <label for="user_email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+                                        <input type="email" name="user_email" id="user_email" value="{{ old('user_email') }}"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('user_email') border-red-300 @enderror">
+                                        <p class="mt-1 text-xs text-gray-500">Will be used for login</p>
+                                        @error('user_email')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label for="user_password" class="block text-sm font-medium text-gray-700">Password <span class="text-red-500">*</span></label>
+                                            <input type="password" name="user_password" id="user_password"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('user_password') border-red-300 @enderror">
+                                            @error('user_password')
+                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
+                                            <label for="user_password_confirmation" class="block text-sm font-medium text-gray-700">Confirm Password <span class="text-red-500">*</span></label>
+                                            <input type="password" name="user_password_confirmation" id="user_password_confirmation"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if($availableUsers->count() > 0)
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="radio" name="user_account_option" id="user_account_link" value="link" {{ old('user_account_option') == 'link' ? 'checked' : '' }}
+                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <label for="user_account_link" class="font-medium text-gray-700">Link to Existing User Account</label>
+                                <p class="text-sm text-gray-500">Link this teacher to an existing user account</p>
+
+                                <!-- Link Account Field -->
+                                <div id="link_account_fields" class="mt-3" style="display: {{ old('user_account_option') == 'link' ? 'block' : 'none' }};">
+                                    <label for="existing_user_id" class="block text-sm font-medium text-gray-700">Select User <span class="text-red-500">*</span></label>
+                                    <select name="existing_user_id" id="existing_user_id"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('existing_user_id') border-red-300 @enderror">
+                                        <option value="">Select a user...</option>
+                                        @foreach($availableUsers as $user)
+                                            <option value="{{ $user->id }}" {{ old('existing_user_id') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->name }} ({{ $user->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('existing_user_id')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Notes -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Notes</h3>
             <textarea name="notes" id="notes" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">{{ old('notes') }}</textarea>
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex justify-end space-x-3">
-            <a href="{{ url('/admin/teachers') }}" class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+        <div class="flex flex-col sm:flex-row justify-end gap-3">
+            <a href="{{ url('/admin/teachers') }}" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                 Cancel
             </a>
-            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                 Add Teacher
             </button>
         </div>
@@ -449,6 +542,46 @@
     // Initialize on page load
     if (document.getElementById('same_as_current').checked) {
         document.getElementById('permanent_address_fields').style.display = 'none';
+    }
+
+    // Toggle user account fields
+    document.querySelectorAll('input[name="user_account_option"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const createFields = document.getElementById('create_account_fields');
+            const linkFields = document.getElementById('link_account_fields');
+
+            if (this.value === 'create') {
+                createFields.style.display = 'block';
+                linkFields.style.display = 'none';
+                // Make create fields required
+                document.getElementById('user_email').required = true;
+                document.getElementById('user_password').required = true;
+                document.getElementById('user_password_confirmation').required = true;
+                document.getElementById('existing_user_id').required = false;
+            } else if (this.value === 'link') {
+                createFields.style.display = 'none';
+                linkFields.style.display = 'block';
+                // Make link field required
+                document.getElementById('existing_user_id').required = true;
+                document.getElementById('user_email').required = false;
+                document.getElementById('user_password').required = false;
+                document.getElementById('user_password_confirmation').required = false;
+            } else {
+                createFields.style.display = 'none';
+                linkFields.style.display = 'none';
+                // Remove required
+                document.getElementById('user_email').required = false;
+                document.getElementById('user_password').required = false;
+                document.getElementById('user_password_confirmation').required = false;
+                document.getElementById('existing_user_id').required = false;
+            }
+        });
+    });
+
+    // Initialize user account fields on page load
+    const selectedOption = document.querySelector('input[name="user_account_option"]:checked');
+    if (selectedOption) {
+        selectedOption.dispatchEvent(new Event('change'));
     }
 </script>
 @endsection

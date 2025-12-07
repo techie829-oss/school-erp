@@ -9,12 +9,15 @@ use App\Models\Subject;
 use App\Models\SchoolClass;
 use App\Models\TeacherQualification;
 use App\Models\TeacherDocument;
+use App\Models\User;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class TeacherController extends Controller
 {
@@ -114,12 +117,19 @@ class TeacherController extends Controller
         // Generate employee ID
         $employeeId = Teacher::generateEmployeeId($tenant->id);
 
+        // Get existing users without teacher accounts for linking
+        $availableUsers = User::forTenant($tenant->id)
+            ->where('user_type', 'teacher')
+            ->whereDoesntHave('teacher')
+            ->get();
+
         return view('tenant.admin.teachers.create', compact(
             'departments',
             'subjects',
             'classes',
             'employeeId',
-            'tenant'
+            'tenant',
+            'availableUsers'
         ));
     }
 
@@ -178,6 +188,27 @@ class TeacherController extends Controller
             'current_city' => 'nullable|string|max:100',
             'current_state' => 'nullable|string|max:100',
             'current_pincode' => 'nullable|string|max:10',
+
+            // User Account
+            'user_account_option' => 'required|in:none,create,link',
+            'user_email' => [
+                'required_if:user_account_option,create',
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->where('tenant_id', $tenant->id),
+            ],
+            'user_password' => [
+                'required_if:user_account_option,create',
+                'nullable',
+                'confirmed',
+                Password::defaults(),
+            ],
+            'existing_user_id' => [
+                'required_if:user_account_option,link',
+                'nullable',
+                Rule::exists('users', 'id')->where('tenant_id', $tenant->id)->where('user_type', 'teacher'),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -218,9 +249,28 @@ class TeacherController extends Controller
                 ];
             }
 
+            // Handle user account creation/linking
+            $userId = null;
+            if ($request->user_account_option === 'create') {
+                // Create new user account
+                $user = User::create([
+                    'name' => trim($request->first_name . ' ' . ($request->middle_name ?? '') . ' ' . $request->last_name),
+                    'email' => $request->user_email,
+                    'password' => Hash::make($request->user_password),
+                    'tenant_id' => $tenant->id,
+                    'user_type' => 'teacher',
+                    'is_active' => true,
+                ]);
+                $userId = $user->id;
+            } elseif ($request->user_account_option === 'link') {
+                // Link to existing user account
+                $userId = $request->existing_user_id;
+            }
+
             // Create teacher
             $teacher = Teacher::create([
                 'tenant_id' => $tenant->id,
+                'user_id' => $userId,
                 'employee_id' => $request->employee_id,
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
@@ -345,12 +395,24 @@ class TeacherController extends Controller
         $subjects = Subject::forTenant($tenant->id)->active()->get();
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
 
+        // Get existing users without teacher accounts for linking
+        $availableUsers = User::forTenant($tenant->id)
+            ->where('user_type', 'teacher')
+            ->where(function($query) use ($teacher) {
+                $query->whereDoesntHave('teacher')
+                      ->orWhereHas('teacher', function($q) use ($teacher) {
+                          $q->where('id', $teacher->id);
+                      });
+            })
+            ->get();
+
         return view('tenant.admin.teachers.edit', compact(
             'teacher',
             'departments',
             'subjects',
             'classes',
-            'tenant'
+            'tenant',
+            'availableUsers'
         ));
     }
 
@@ -388,6 +450,30 @@ class TeacherController extends Controller
             'employment_type' => 'required|in:permanent,contract,temporary,visiting',
             'date_of_joining' => 'required|date',
             'salary_amount' => 'nullable|numeric|min:0',
+
+            // User Account
+            'user_account_option' => 'required|in:none,create,link,keep',
+            'user_email' => [
+                'required_if:user_account_option,create',
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->where('tenant_id', $tenant->id),
+            ],
+            'user_password' => [
+                'required_if:user_account_option,create',
+                'nullable',
+                'confirmed',
+                Password::defaults(),
+            ],
+            'existing_user_id' => [
+                'required_if:user_account_option,link',
+                'nullable',
+                Rule::exists('users', 'id')->where(function($query) use ($tenant) {
+                    $query->where('tenant_id', $tenant->id)
+                          ->where('user_type', 'teacher');
+                }),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -432,8 +518,31 @@ class TeacherController extends Controller
                 ];
             }
 
+            // Handle user account creation/linking/removal
+            $userId = $teacher->user_id; // Keep existing by default
+            if ($request->user_account_option === 'create') {
+                // Create new user account
+                $user = User::create([
+                    'name' => trim($request->first_name . ' ' . ($request->middle_name ?? '') . ' ' . $request->last_name),
+                    'email' => $request->user_email,
+                    'password' => Hash::make($request->user_password),
+                    'tenant_id' => $tenant->id,
+                    'user_type' => 'teacher',
+                    'is_active' => true,
+                ]);
+                $userId = $user->id;
+            } elseif ($request->user_account_option === 'link') {
+                // Link to existing user account
+                $userId = $request->existing_user_id;
+            } elseif ($request->user_account_option === 'none') {
+                // Remove user account link
+                $userId = null;
+            }
+            // If 'keep', $userId remains as $teacher->user_id
+
             // Update teacher
             $teacher->update([
+                'user_id' => $userId,
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
@@ -467,6 +576,7 @@ class TeacherController extends Controller
                 'photo' => $photoPath,
                 'notes' => $request->notes,
                 'status' => $request->status ?? $teacher->status,
+                'user_id' => $userId,
             ]);
 
             // Update subjects if provided
