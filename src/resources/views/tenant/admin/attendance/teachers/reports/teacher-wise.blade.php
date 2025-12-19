@@ -21,7 +21,7 @@
                         </h3>
                         <p class="text-sm text-indigo-100">
                             Employee ID: {{ $teacher->employee_id }} |
-                            Department: {{ $teacher->department->name ?? 'N/A' }}
+                            Department: {{ $teacher->department->department_name ?? 'N/A' }}
                         </p>
                     </div>
                 @endif

@@ -26,14 +26,16 @@ class AdminLayoutComposer
             $featureSettings = TenantSetting::getAllForTenant($tenant->id, 'features');
 
             // Set defaults to true if not set (backward compatibility)
+            // But check if setting exists in DB to determine if it was explicitly set
             $features = [
                 'students' => $featureSettings['feature_students'] ?? true,
                 'teachers' => $featureSettings['feature_teachers'] ?? true,
                 'classes' => $featureSettings['feature_classes'] ?? true,
-                'attendance' => $featureSettings['feature_attendance'] ?? true,
+                'attendance' => array_key_exists('feature_attendance', $featureSettings) ? $featureSettings['feature_attendance'] : true,
+                'holidays' => array_key_exists('feature_holidays', $featureSettings) ? $featureSettings['feature_holidays'] : true,
                 'exams' => $featureSettings['feature_exams'] ?? true,
                 'grades' => $featureSettings['feature_grades'] ?? true,
-                'fees' => $featureSettings['feature_fees'] ?? true,
+                'fees' => array_key_exists('feature_fees', $featureSettings) ? $featureSettings['feature_fees'] : true,
                 'library' => $featureSettings['feature_library'] ?? false,
                 'transport' => $featureSettings['feature_transport'] ?? false,
                 'hostel' => $featureSettings['feature_hostel'] ?? false,
@@ -52,6 +54,7 @@ class AdminLayoutComposer
                 'teachers' => true,
                 'classes' => true,
                 'attendance' => true,
+                'holidays' => true,
                 'exams' => true,
                 'grades' => true,
                 'fees' => true,

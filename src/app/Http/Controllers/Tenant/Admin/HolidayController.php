@@ -40,7 +40,7 @@ class HolidayController extends Controller
             ->with('schoolClass')
             ->get();
 
-        return view('tenant.admin.attendance.holidays.index', compact(
+        return view('tenant.admin.holidays.index', compact(
             'tenant',
             'holidays',
             'year',

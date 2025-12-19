@@ -68,7 +68,9 @@
                             <option value="daily" {{ request('report_type') == 'daily' ? 'selected' : '' }}>Daily Report</option>
                             <option value="monthly" {{ request('report_type') == 'monthly' ? 'selected' : '' }}>Monthly Summary</option>
                             <option value="teacher_wise" {{ request('report_type') == 'teacher_wise' ? 'selected' : '' }}>Teacher-wise History</option>
+                            @if($departments->count() > 0)
                             <option value="department_wise" {{ request('report_type') == 'department_wise' ? 'selected' : '' }}>Department-wise Summary</option>
+                            @endif
                             <option value="defaulters" {{ request('report_type') == 'defaulters' ? 'selected' : '' }}>Defaulter List</option>
                         </select>
                     </div>
@@ -90,17 +92,19 @@
                     </div>
 
                     <!-- Department Filter -->
+                    @if($departments->count() > 0)
                     <div>
-                        <label for="department_id" class="block text-sm font-medium text-gray-700">Department</label>
+                        <label for="department_id" class="block text-sm font-medium text-gray-700">Department (Optional)</label>
                         <select id="department_id" name="department_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                             <option value="">All Departments</option>
                             @foreach($departments as $dept)
                                 <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
-                                    {{ $dept->name }}
+                                    {{ $dept->department_name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
+                    @endif
 
                     <!-- Teacher Filter (for teacher-wise report) -->
                     <div>
@@ -119,11 +123,12 @@
 
                     <!-- Threshold (for defaulters) -->
                     <div>
-                        <label for="threshold" class="block text-sm font-medium text-gray-700">Attendance Threshold (%)</label>
+                        <label for="threshold" class="block text-sm font-medium text-gray-700">Attendance Threshold (%) <span class="text-gray-400">(Optional)</span></label>
                         <input type="number" name="threshold" id="threshold"
-                            value="{{ request('threshold', 90) }}" min="0" max="100" step="1"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                        <p class="mt-1 text-xs text-gray-500">For defaulter list</p>
+                            value="{{ request('threshold') }}" min="0" max="100" step="1"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                            placeholder="Default: 90%">
+                        <p class="mt-1 text-xs text-gray-500">For defaulter list. Leave empty to use default (90%)</p>
                     </div>
                 </div>
 

@@ -17,6 +17,7 @@ class SchoolClass extends Model
         'class_name',
         'class_numeric',
         'class_type',
+        'has_sections',
         'description',
         'capacity',
         'room_number',
@@ -26,6 +27,7 @@ class SchoolClass extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'has_sections' => 'boolean',
         'class_numeric' => 'integer',
         'capacity' => 'integer',
     ];
@@ -90,7 +92,7 @@ class SchoolClass extends Model
      */
     public function classTeacher()
     {
-        return $this->belongsTo(User::class, 'class_teacher_id');
+        return $this->belongsTo(Teacher::class, 'class_teacher_id');
     }
 
     /**
@@ -107,6 +109,27 @@ class SchoolClass extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('class_numeric')->orderBy('class_name');
+    }
+
+    /**
+     * Get subjects assigned to this class
+     */
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'class_subjects', 'class_id', 'subject_id')
+            ->withPivot('is_active')
+            ->withTimestamps()
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get all subjects (including inactive)
+     */
+    public function allSubjects()
+    {
+        return $this->belongsToMany(Subject::class, 'class_subjects', 'class_id', 'subject_id')
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 
     /**

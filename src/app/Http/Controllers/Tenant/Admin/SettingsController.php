@@ -124,6 +124,7 @@ class SettingsController extends Controller
             'teachers' => $request->boolean('enable_teachers'),
             'classes' => $request->boolean('enable_classes'),
             'attendance' => $request->boolean('enable_attendance'),
+            'holidays' => $request->boolean('enable_holidays'),
             'exams' => $request->boolean('enable_exams'),
             'grades' => $request->boolean('enable_grades'),
             'fees' => $request->boolean('enable_fees'),

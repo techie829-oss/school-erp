@@ -96,17 +96,38 @@ class ExamScheduleController extends Controller
 
         $examId = $request->get('exam_id');
 
+        // If no exam_id provided, show exam selection page
         if (!$examId) {
-            return redirect(url('/admin/examinations/exams'))
-                ->with('error', 'Please select an exam first.');
+            $exams = Exam::forTenant($tenant->id)
+                ->orderBy('exam_name')
+                ->get();
+
+            return view('tenant.admin.examinations.schedules.select-exam', compact('exams', 'tenant'));
         }
 
         $exam = Exam::forTenant($tenant->id)->findOrFail($examId);
-        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->with('sections')->get();
         $subjects = Subject::forTenant($tenant->id)->active()->get();
         $teachers = Teacher::forTenant($tenant->id)->active()->get();
 
-        return view('tenant.admin.examinations.schedules.create', compact('exam', 'classes', 'subjects', 'teachers', 'tenant'));
+        // Get class-subject mappings (common subjects for all sections)
+        // Get section-subject mappings (section-specific subjects)
+        $classSubjects = [];
+        $sectionSubjects = [];
+
+        foreach ($classes as $class) {
+            // Always get class subjects (common subjects)
+            $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
+
+            // For classes with sections, also get section-subject mappings
+            if ($class->has_sections) {
+                foreach ($class->sections as $section) {
+                    $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
+                }
+            }
+        }
+
+        return view('tenant.admin.examinations.schedules.create', compact('exam', 'classes', 'subjects', 'teachers', 'tenant', 'classSubjects', 'sectionSubjects'));
     }
 
     /**
@@ -405,6 +426,222 @@ class ExamScheduleController extends Controller
             DB::commit();
 
             return redirect(url('/admin/examinations/schedules'))->with('success', "Successfully created {$created} exam schedule(s)!");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create exam schedules: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Smart bulk create exam schedules (4-step wizard)
+     */
+    public function smartBulkCreate(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $examId = $request->get('exam_id');
+
+        if (!$examId) {
+            return redirect(url('/admin/examinations/exams'))
+                ->with('error', 'Please select an exam first.');
+        }
+
+        $exam = Exam::forTenant($tenant->id)->findOrFail($examId);
+
+        // Get all classes with sections and student counts
+        $classes = SchoolClass::forTenant($tenant->id)
+            ->active()
+            ->ordered()
+            ->with(['sections' => function($q) {
+                $q->where('is_active', true);
+            }])
+            ->withCount(['enrollments as student_count' => function($q) {
+                $q->where('is_current', true);
+            }])
+            ->get();
+
+        // Add student count to each section
+        foreach ($classes as $class) {
+            foreach ($class->sections as $section) {
+                $section->student_count = \App\Models\ClassEnrollment::forTenant($tenant->id)
+                    ->where('section_id', $section->id)
+                    ->where('is_current', true)
+                    ->count();
+            }
+        }
+
+        // Get all subjects
+        $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
+
+        // Get class-subject and section-subject mappings
+        $classSubjects = [];
+        $sectionSubjects = [];
+
+        foreach ($classes as $class) {
+            // Common subjects for class
+            $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
+
+            // Section-specific subjects
+            if ($class->has_sections) {
+                foreach ($class->sections as $section) {
+                    $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
+                }
+            }
+        }
+
+        // Get teachers for supervisor assignment
+        $teachers = Teacher::forTenant($tenant->id)
+            ->where('is_active', true)
+            ->where('status', 'active')
+            ->orderBy('full_name')
+            ->get();
+
+        return view('tenant.admin.examinations.schedules.smart-bulk-create', compact(
+            'exam',
+            'classes',
+            'subjects',
+            'teachers',
+            'tenant',
+            'classSubjects',
+            'sectionSubjects'
+        ));
+    }
+
+    /**
+     * Store smart bulk exam schedules
+     */
+    public function smartBulkStore(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $validator = Validator::make($request->all(), [
+            'exam_id' => [
+                'required',
+                Rule::exists('exams', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'class_ids' => 'required|array|min:1',
+            'class_ids.*' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'section_ids' => 'nullable|array',
+            'section_ids.*' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'subject_ids' => 'required|array|min:1',
+            'subject_ids.*' => [
+                'required',
+                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'default_date' => 'nullable|date',
+            'default_start_time' => 'nullable|date_format:H:i',
+            'default_end_time' => 'nullable|date_format:H:i',
+            'default_duration' => 'nullable|integer|min:1',
+            'default_max_marks' => 'nullable|numeric|min:0',
+            'default_passing_marks' => 'nullable|numeric|min:0',
+            'schedules' => 'required|array|min:1',
+            'schedules.*.class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'schedules.*.section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'schedules.*.subject_id' => [
+                'required',
+                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
+            ],
+            'schedules.*.exam_date' => 'required|date',
+            'schedules.*.start_time' => 'required|date_format:H:i',
+            'schedules.*.end_time' => 'required|date_format:H:i|after:schedules.*.start_time',
+            'schedules.*.max_marks' => 'required|numeric|min:0',
+            'schedules.*.passing_marks' => 'nullable|numeric|min:0',
+            'schedules.*.room_number' => 'nullable|string|max:50',
+            'schedules.*.supervisor_id' => [
+                'nullable',
+                Rule::exists('teachers', 'id')->where('tenant_id', $tenant->id),
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Please fix the validation errors.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $exam = Exam::forTenant($tenant->id)->findOrFail($request->exam_id);
+            $created = 0;
+            $conflicts = [];
+            $skipped = 0;
+
+            foreach ($request->schedules as $scheduleData) {
+                // Check for conflicts (same room, same time, same date)
+                $conflict = ExamSchedule::forTenant($tenant->id)
+                    ->where('exam_date', $scheduleData['exam_date'])
+                    ->where('start_time', $scheduleData['start_time'])
+                    ->where(function($q) use ($scheduleData) {
+                        $q->where('room_number', $scheduleData['room_number'])
+                          ->orWhere(function($q2) use ($scheduleData) {
+                              $q2->where('class_id', $scheduleData['class_id'])
+                                 ->where(function($q3) use ($scheduleData) {
+                                     if ($scheduleData['section_id']) {
+                                         $q3->where('section_id', $scheduleData['section_id']);
+                                     } else {
+                                         $q3->whereNull('section_id');
+                                     }
+                                 });
+                          });
+                    })
+                    ->exists();
+
+                if ($conflict) {
+                    $conflicts[] = $scheduleData;
+                    $skipped++;
+                    continue;
+                }
+
+                $start = \Carbon\Carbon::parse($scheduleData['start_time']);
+                $end = \Carbon\Carbon::parse($scheduleData['end_time']);
+                $duration = $start->diffInMinutes($end);
+
+                ExamSchedule::create([
+                    'tenant_id' => $tenant->id,
+                    'exam_id' => $request->exam_id,
+                    'subject_id' => $scheduleData['subject_id'],
+                    'class_id' => $scheduleData['class_id'],
+                    'section_id' => $scheduleData['section_id'] ?? null,
+                    'exam_date' => $scheduleData['exam_date'],
+                    'start_time' => $scheduleData['start_time'],
+                    'end_time' => $scheduleData['end_time'],
+                    'duration_minutes' => $duration,
+                    'room_number' => $scheduleData['room_number'] ?? null,
+                    'max_marks' => $scheduleData['max_marks'],
+                    'passing_marks' => $scheduleData['passing_marks'] ?? null,
+                    'instructions' => $scheduleData['instructions'] ?? null,
+                    'supervisor_id' => $scheduleData['supervisor_id'] ?? null,
+                ]);
+
+                $created++;
+            }
+
+            DB::commit();
+
+            $message = "Successfully created {$created} exam schedule(s)!";
+            if ($skipped > 0) {
+                $message .= " {$skipped} schedule(s) skipped due to conflicts.";
+            }
+
+            return redirect(url('/admin/examinations/exams/' . $exam->id))
+                ->with('success', $message)
+                ->with('conflicts', $conflicts);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()

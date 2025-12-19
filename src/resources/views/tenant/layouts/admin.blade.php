@@ -298,8 +298,7 @@
                         @php
                             $studentsActive =
                                 request()->is('*/admin/students*') ||
-                                request()->is('*/admin/attendance/students*') ||
-                                request()->is('*/admin/attendance/holidays*');
+                                request()->is('*/admin/attendance/students*');
                         @endphp
                         <div class="sidebar-section" data-section="students">
                             <button type="button"
@@ -337,14 +336,6 @@
                                         <x-heroicon-o-chart-bar
                                             class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/students/report*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                                         Reports
-                                    </a>
-
-                                    {{-- Holiday Management --}}
-                                    <a href="{{ url('/admin/attendance/holidays') }}"
-                                        class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/attendance/holidays*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                                        <x-heroicon-o-calendar-days
-                                            class="mr-3 h-4 w-4 {{ request()->is('*/admin/attendance/holidays*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                                        Holidays
                                     </a>
                                 @endif
                             </div>
@@ -395,6 +386,35 @@
                                         Reports
                                     </a>
                                 @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- HOLIDAYS SECTION --}}
+                    @if ($featureSettings['holidays'] ?? true)
+                        @php
+                            $holidaysActive = request()->is('*/admin/holidays*');
+                        @endphp
+                        <div class="sidebar-section" data-section="holidays">
+                            <button type="button"
+                                class="sidebar-section-header w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 rounded-md transition-colors"
+                                onclick="toggleSection('holidays')">
+                                <span>Calendar & Holidays</span>
+                                <svg class="section-icon h-4 w-4 text-gray-400 transition-transform duration-200"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="sidebar-section-content {{ $holidaysActive ? '' : 'hidden' }}"
+                                data-content="holidays">
+                                {{-- Holidays --}}
+                                <a href="{{ url('/admin/holidays') }}"
+                                    class="group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/holidays*') ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900' }}">
+                                    <x-heroicon-o-calendar-days
+                                        class="mr-3 h-5 w-5 {{ request()->is('*/admin/holidays*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                    Holidays
+                                </a>
                             </div>
                         </div>
                     @endif
@@ -825,7 +845,6 @@
                         @php
                             $academicsActive =
                                 request()->is('*/admin/classes*') ||
-                                request()->is('*/admin/sections*') ||
                                 request()->is('*/admin/subjects*') ||
                                 request()->is('*/admin/departments*') ||
                                 request()->is('*/admin/timetable*');
@@ -851,13 +870,6 @@
                                     Classes
                                 </a>
 
-                                {{-- Sections --}}
-                                <a href="{{ url('/admin/sections') }}"
-                                    class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/sections*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                                    <x-heroicon-o-squares-2x2
-                                        class="mr-3 h-4 w-4 {{ request()->is('*/admin/sections*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                                    Sections
-                                </a>
 
                                 {{-- Subjects --}}
                                 <a href="{{ url('/admin/subjects') }}"

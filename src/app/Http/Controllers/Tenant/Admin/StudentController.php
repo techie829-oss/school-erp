@@ -68,6 +68,8 @@ class StudentController extends Controller
         $students = $query->paginate(15)->withQueryString();
 
         // Get filter options
+        // Note: Sections are optional - not all classes use sections
+        // Some classes (e.g., 0-8) may not have sections, while others (e.g., 9-12) do
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $sections = Section::forTenant($tenant->id)->active()->get();
 
@@ -328,6 +330,27 @@ class StudentController extends Controller
             ];
         }
 
+        // Get exam results for this student
+        $examResults = \App\Models\ExamResult::forTenant($tenant->id)
+            ->where('student_id', $student->id)
+            ->with(['exam', 'subject', 'examSchedule', 'schoolClass', 'section'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('exam_id');
+
+        // Get admit cards and report cards
+        $admitCards = \App\Models\AdmitCard::forTenant($tenant->id)
+            ->where('student_id', $student->id)
+            ->with('exam')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $reportCards = \App\Models\ReportCard::forTenant($tenant->id)
+            ->where('student_id', $student->id)
+            ->with('exam')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('tenant.admin.students.show', compact(
             'student',
             'tenant',
@@ -336,7 +359,10 @@ class StudentController extends Controller
             'attendanceCalendar',
             'summary',
             'month',
-            'year'
+            'year',
+            'examResults',
+            'admitCards',
+            'reportCards'
         ));
     }
 

@@ -77,6 +77,19 @@
                         </div>
                     </div>
 
+                    <!-- Holidays Module -->
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="enable_holidays" name="enable_holidays" type="checkbox" value="1"
+                                {{ ($featureSettings['feature_holidays'] ?? true) ? 'checked' : '' }}
+                                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="enable_holidays" class="font-medium text-gray-700">Holiday Management</label>
+                            <p class="text-gray-500">Manage school holidays and calendar</p>
+                        </div>
+                    </div>
+
                     <!-- Exams Module -->
                     <div class="flex items-start">
                         <div class="flex items-center h-5">

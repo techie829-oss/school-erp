@@ -130,22 +130,29 @@
     <div class="bg-white shadow rounded-lg">
         <!-- Tab Navigation -->
         <div class="border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+            <nav class="-mb-px flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
                 <button onclick="showStudentTab('overview')" id="student-tab-overview" class="student-tab-button border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Overview
                 </button>
                 <button onclick="showStudentTab('academic')" id="student-tab-academic" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Academic History
                 </button>
+                <button onclick="showStudentTab('exam-results')" id="student-tab-exam-results" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Exam Results ({{ $examResults->count() }})
+                </button>
                 <button onclick="showStudentTab('documents')" id="student-tab-documents" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Documents ({{ $student->documents->count() }})
                 </button>
+                @if(isset($featureSettings['attendance']) && $featureSettings['attendance'] === true)
                 <button onclick="showStudentTab('attendance')" id="student-tab-attendance" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Attendance
                 </button>
+                @endif
+                @if(isset($featureSettings['fees']) && $featureSettings['fees'] === true)
                 <button onclick="showStudentTab('fees')" id="student-tab-fees" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Fee Card
                 </button>
+                @endif
                 <button onclick="showStudentTab('actions')" id="student-tab-actions" class="student-tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Actions
                 </button>
@@ -331,6 +338,154 @@
             @endif
         </div>
 
+        <!-- Tab Content: Exam Results -->
+        <div id="student-content-exam-results" class="student-tab-content hidden p-6">
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-900 mb-4">Exam Results</h4>
+
+                @if($examResults->count() > 0)
+                <div class="space-y-6">
+                    @foreach($examResults as $examId => $results)
+                    @php
+                        $exam = $results->first()->exam;
+                        $totalMarks = $results->sum('marks_obtained');
+                        $maxMarks = $results->sum('max_marks');
+                        $overallPercentage = $maxMarks > 0 ? round(($totalMarks / $maxMarks) * 100, 2) : 0;
+                        $subjectsPassed = $results->where('status', 'pass')->count();
+                        $subjectsFailed = $results->where('status', 'fail')->count();
+                        $subjectsAbsent = $results->where('status', 'absent')->orWhere('is_absent', true)->count();
+                    @endphp
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h5 class="text-base font-semibold text-gray-900">{{ $exam->exam_name }}</h5>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ ucfirst(str_replace('_', ' ', $exam->exam_type)) }}
+                                    @if($exam->academic_year)
+                                        • {{ $exam->academic_year }}
+                                    @endif
+                                    @if($exam->start_date && $exam->end_date)
+                                        • {{ \Carbon\Carbon::parse($exam->start_date)->format('M d') }} - {{ \Carbon\Carbon::parse($exam->end_date)->format('M d, Y') }}
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-primary-600">{{ $overallPercentage }}%</div>
+                                <div class="text-xs text-gray-500">Overall</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 mb-4">
+                            <div class="text-center">
+                                <div class="text-lg font-semibold text-green-600">{{ $subjectsPassed }}</div>
+                                <div class="text-xs text-gray-500">Passed</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-semibold text-red-600">{{ $subjectsFailed }}</div>
+                                <div class="text-xs text-gray-500">Failed</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-semibold text-gray-600">{{ $subjectsAbsent }}</div>
+                                <div class="text-xs text-gray-500">Absent</div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-white">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Marks</th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Max</th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">%</th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Grade</th>
+                                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($results as $result)
+                                    <tr>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {{ $result->subject->subject_name ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">
+                                            {{ $result->is_absent ? '-' : number_format($result->marks_obtained, 2) }}
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-500">
+                                            {{ $result->max_marks }}
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">
+                                            {{ $result->is_absent ? '-' : number_format($result->percentage, 2) }}%
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900">
+                                            {{ $result->grade ?? '-' }}
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-center">
+                                            @if($result->is_absent)
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Absent</span>
+                                            @elseif($result->status == 'pass')
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Pass</span>
+                                            @else
+                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Fail</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td class="px-4 py-2 text-sm font-semibold text-gray-900">Total</td>
+                                        <td class="px-4 py-2 text-sm font-semibold text-center text-gray-900">{{ number_format($totalMarks, 2) }}</td>
+                                        <td class="px-4 py-2 text-sm font-semibold text-center text-gray-900">{{ $maxMarks }}</td>
+                                        <td class="px-4 py-2 text-sm font-semibold text-center text-primary-600">{{ $overallPercentage }}%</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex space-x-4">
+                                @php
+                                    $admitCard = $admitCards->where('exam_id', $exam->id)->first();
+                                    $reportCard = $reportCards->where('exam_id', $exam->id)->first();
+                                @endphp
+                                @if($admitCard)
+                                <a href="{{ url('/admin/examinations/admit-cards/' . $admitCard->id . '/print') }}" target="_blank" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    View Admit Card
+                                </a>
+                                @endif
+                                @if($reportCard)
+                                <a href="{{ url('/admin/examinations/report-cards/' . $reportCard->id . '/print') }}" target="_blank" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    View Report Card
+                                </a>
+                                @endif
+                            </div>
+                            <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="text-sm text-gray-600 hover:text-gray-900">
+                                View Exam Details →
+                            </a>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No exam results</h3>
+                    <p class="mt-1 text-sm text-gray-500">This student hasn't taken any exams yet.</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
         <!-- Tab Content: Documents -->
         <div id="student-content-documents" class="student-tab-content hidden p-6">
             <div class="mb-6">
@@ -411,6 +566,7 @@
         </div>
 
         <!-- Tab Content: Attendance Calendar -->
+        @if(isset($featureSettings['attendance']) && $featureSettings['attendance'] === true)
         <div id="student-content-attendance" class="student-tab-content hidden p-6">
             <div class="flex items-center justify-between mb-4">
                 <div>
@@ -540,8 +696,10 @@
                 Note: Only days with attendance marked are counted. Unmarked days are shown as “—”.
             </p>
         </div>
+        @endif
 
         <!-- Tab Content: Fee Card -->
+        @if(isset($featureSettings['fees']) && $featureSettings['fees'] === true)
         <div id="student-content-fees" class="student-tab-content hidden p-6">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 mb-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-2">Student Fee Management</h4>
@@ -612,6 +770,7 @@
                 </div>
             @endif
         </div>
+        @endif
 
         <!-- Tab Content: Actions -->
         <div id="student-content-actions" class="student-tab-content hidden p-6">

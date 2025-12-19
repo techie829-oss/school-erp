@@ -12,7 +12,6 @@ use App\Models\Teacher;
 use App\Models\TeacherSubject;
 use App\Models\AttendanceSummary;
 use App\Models\AttendanceSettings;
-use App\Models\Holiday;
 use App\Services\TenantService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -100,20 +99,14 @@ class StudentAttendanceController extends Controller
         $startOfMonth = $currentMonth->copy()->startOfMonth();
         $endOfMonth = $currentMonth->copy()->endOfMonth();
 
-        // Fetch holidays for this month for highlighting
-        $holidayMap = Holiday::forTenant($tenant->id)
-            ->whereBetween('date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
-            ->with('scopes')
-            ->get()
-            ->keyBy(fn ($h) => $h->date->format('Y-m-d'));
-
         // Aggregate attendance per day for this class/section
+        // Note: Sections are optional - if sectionId is provided, filter by it; if null, include students without sections
         $rawDaily = StudentAttendance::forTenant($tenant->id)
             ->whereBetween('attendance_date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
             ->when($classId, function ($q) use ($classId) {
                 $q->where('class_id', $classId);
             })
-            ->when($sectionId, function ($q) use ($sectionId) {
+            ->when($sectionId !== null, function ($q) use ($sectionId) {
                 $q->where('section_id', $sectionId);
             })
             ->selectRaw('attendance_date,
@@ -126,7 +119,11 @@ class StudentAttendanceController extends Controller
             ->groupBy('attendance_date')
             ->orderBy('attendance_date')
             ->get()
-            ->keyBy('attendance_date');
+            ->keyBy(function ($item) {
+                return $item->attendance_date instanceof \Carbon\Carbon
+                    ? $item->attendance_date->format('Y-m-d')
+                    : \Carbon\Carbon::parse($item->attendance_date)->format('Y-m-d');
+            });
 
         // Build calendar matrix: 6 weeks x 7 days (week starts on Sunday)
         $calendarDays = [];
@@ -147,39 +144,13 @@ class StudentAttendanceController extends Controller
                     // Empty cell
                 } else {
                     $dateObj = Carbon::create($year, $month, $dayCounter);
-                    $dateKey = $dateObj->toDateString();
+                    $dateKey = $dateObj->format('Y-m-d');
                     $stats = $rawDaily->get($dateKey);
 
                     $cell['date'] = $dateKey;
                     $cell['day'] = $dayCounter;
 
-                    $isHoliday = false;
-                    $holiday = null;
-
-                    if ($holidayMap->has($dateKey)) {
-                        $candidate = $holidayMap->get($dateKey);
-
-                        // If no specific scopes configured, applies to all classes/sections
-                        if ($candidate->scopes->isEmpty()) {
-                            $isHoliday = true;
-                            $holiday = $candidate;
-                        } else {
-                            // Class/section specific holiday
-                            if ($classId) {
-                                foreach ($candidate->scopes as $scope) {
-                                    if ($scope->class_id == $classId) {
-                                        if (!$scope->section_id || !$sectionId || $scope->section_id == $sectionId) {
-                                            $isHoliday = true;
-                                            $holiday = $candidate;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if ($stats || $isHoliday) {
+                    if ($stats) {
                         $total = (int) $stats->total;
                         $presentLike = (int) $stats->present + (int) $stats->late + (int) $stats->half_day;
                         $percentage = $total > 0 ? round(($presentLike / $total) * 100) : 0;
@@ -192,10 +163,6 @@ class StudentAttendanceController extends Controller
                             'half_day' => (int) ($stats->half_day ?? 0),
                             'on_leave' => (int) ($stats->on_leave ?? 0),
                             'percentage' => $percentage,
-                            'is_holiday' => $isHoliday,
-                            'holiday_title' => $holiday?->title,
-                            'holiday_type' => $holiday?->type,
-                            'holiday_full_day' => $holiday?->is_full_day ?? true,
                         ];
                     }
 
@@ -240,12 +207,14 @@ class StudentAttendanceController extends Controller
         $classId = $request->get('class_id');
         $sectionId = $request->get('section_id');
 
+        // Note: Sections are optional - not all classes use sections
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $sections = [];
         $students = collect();
         $existingAttendance = collect();
 
         if ($classId) {
+            // Only load sections if a class is selected (sections are class-specific)
             $sections = Section::forTenant($tenant->id)
                 ->where('class_id', $classId)
                 ->active()
@@ -307,7 +276,7 @@ class StudentAttendanceController extends Controller
             'section_id' => 'nullable|exists:sections,id',
             'attendance' => 'required|array',
             'attendance.*.student_id' => 'required|exists:students,id',
-            'attendance.*.status' => 'required|in:present,absent,late,half_day,on_leave,holiday',
+            'attendance.*.status' => 'required|in:present,absent,late,half_day,on_leave',
         ]);
 
         if ($validator->fails()) {
@@ -318,6 +287,13 @@ class StudentAttendanceController extends Controller
             DB::beginTransaction();
 
             foreach ($request->attendance as $record) {
+                // Get student's enrollment to get section_id if not provided
+                $student = Student::forTenant($tenant->id)->find($record['student_id']);
+                $enrollment = $student?->currentEnrollment;
+
+                // Use provided section_id, or fallback to student's enrollment section_id, or null
+                $sectionId = $request->section_id ?: ($enrollment->section_id ?? null);
+
                 StudentAttendance::updateOrCreate(
                     [
                         'tenant_id' => $tenant->id,
@@ -327,7 +303,7 @@ class StudentAttendanceController extends Controller
                     ],
                     [
                         'class_id' => $request->class_id,
-                        'section_id' => $request->section_id,
+                        'section_id' => $sectionId, // Can be null if student has no section
                         'status' => $record['status'],
                         'remarks' => $record['remarks'] ?? null,
                         'marked_by' => auth()->id(),
@@ -541,6 +517,13 @@ class StudentAttendanceController extends Controller
             DB::beginTransaction();
 
             foreach ($request->attendance as $record) {
+                // Get student's enrollment to get section_id if not provided
+                $student = Student::forTenant($tenant->id)->find($record['student_id']);
+                $enrollment = $student?->currentEnrollment;
+
+                // Use provided section_id, or fallback to student's enrollment section_id, or null
+                $sectionId = $request->section_id ?: ($enrollment->section_id ?? null);
+
                 StudentAttendance::updateOrCreate(
                     [
                         'tenant_id' => $tenant->id,
@@ -551,7 +534,7 @@ class StudentAttendanceController extends Controller
                     ],
                     [
                         'class_id' => $request->class_id,
-                        'section_id' => $request->section_id,
+                        'section_id' => $sectionId, // Can be null if student has no section
                         'status' => $record['status'],
                         'teacher_id' => $request->teacher_id,
                         'remarks' => $record['remarks'] ?? null,
@@ -598,6 +581,7 @@ class StudentAttendanceController extends Controller
             $query->where('class_id', $classId);
         }
 
+        // Handle section filter - if sectionId is provided, filter by it; if null, include students without sections
         if ($sectionId) {
             $query->where('section_id', $sectionId);
         }
@@ -606,14 +590,18 @@ class StudentAttendanceController extends Controller
         $present = (clone $query)->where('status', 'present')->count();
         $absent = (clone $query)->where('status', 'absent')->count();
         $late = (clone $query)->where('status', 'late')->count();
+        $halfDay = (clone $query)->where('status', 'half_day')->count();
 
-        $percentage = $total > 0 ? round((($present + $late) / $total) * 100, 2) : 0;
+        // Calculate percentage including late and half_day (half_day counts as 0.5)
+        $effectivePresent = $present + $late + ($halfDay * 0.5);
+        $percentage = $total > 0 ? round(($effectivePresent / $total) * 100, 2) : 0;
 
         return [
             'total' => $total,
             'present' => $present,
             'absent' => $absent,
             'late' => $late,
+            'half_day' => $halfDay,
             'percentage' => $percentage,
         ];
     }
@@ -630,6 +618,7 @@ class StudentAttendanceController extends Controller
             $query->where('class_id', $classId);
         }
 
+        // Handle section filter - if sectionId is provided, filter by it; if null, include students without sections
         if ($sectionId) {
             $query->where('section_id', $sectionId);
         }
@@ -641,6 +630,7 @@ class StudentAttendanceController extends Controller
             'present' => $records->where('status', 'present')->count(),
             'absent' => $records->where('status', 'absent')->count(),
             'late' => $records->where('status', 'late')->count(),
+            'half_day' => $records->where('status', 'half_day')->count(),
             'on_leave' => $records->where('status', 'on_leave')->count(),
         ];
     }
@@ -657,6 +647,8 @@ class StudentAttendanceController extends Controller
         }
 
         // Get filter options
+        // Note: Sections are optional - not all classes use sections
+        // Some classes (e.g., 0-8) may not have sections, while others (e.g., 9-12) do
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $sections = Section::forTenant($tenant->id)->active()->get();
         $students = Student::forTenant($tenant->id)->active()->get();
@@ -671,11 +663,11 @@ class StudentAttendanceController extends Controller
             $classId = $request->get('class_id');
             $sectionId = $request->get('section_id');
             $studentId = $request->get('student_id');
-            $threshold = $request->get('threshold', 75);
+            $threshold = $request->get('threshold') !== null && $request->get('threshold') !== '' ? (int)$request->get('threshold') : 75;
 
             switch ($reportType) {
                 case 'daily':
-                    $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $classId, $sectionId);
+                    $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $classId, $sectionId);
                     break;
                 case 'monthly':
                     $reportData = $this->generateMonthlyReport($tenant->id, $dateFrom, $dateTo, $classId, $sectionId);
@@ -719,12 +711,12 @@ class StudentAttendanceController extends Controller
         $classId = $request->get('class_id');
         $sectionId = $request->get('section_id');
         $studentId = $request->get('student_id');
-        $threshold = $request->get('threshold', 75);
+        $threshold = $request->get('threshold') !== null && $request->get('threshold') !== '' ? (int)$request->get('threshold') : 75;
 
         // Generate report data
         switch ($reportType) {
             case 'daily':
-                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $classId, $sectionId);
+                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $classId, $sectionId);
                 break;
             case 'monthly':
                 $reportData = $this->generateMonthlyReport($tenant->id, $dateFrom, $dateTo, $classId, $sectionId);
@@ -739,7 +731,7 @@ class StudentAttendanceController extends Controller
                 $reportData = $this->generateDefaultersReport($tenant->id, $dateFrom, $dateTo, $threshold, $classId, $sectionId);
                 break;
             default:
-                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $classId, $sectionId);
+                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $classId, $sectionId);
         }
 
         if ($format === 'excel') {
@@ -751,43 +743,65 @@ class StudentAttendanceController extends Controller
 
     /**
      * Generate daily report
+     * Note: Sections are optional - if sectionId is provided, filter by it; if null, include students without sections
      */
-    private function generateDailyReport($tenantId, $date, $classId = null, $sectionId = null)
+    private function generateDailyReport($tenantId, $dateFrom, $dateTo = null, $classId = null, $sectionId = null)
     {
         $query = StudentAttendance::forTenant($tenantId)
-            ->forDate($date)
             ->with(['student.currentEnrollment.schoolClass', 'student.currentEnrollment.section', 'schoolClass', 'section']);
+
+        // Handle date range or single date
+        if ($dateTo && $dateTo !== $dateFrom) {
+            $query->whereBetween('attendance_date', [$dateFrom, $dateTo]);
+        } else {
+            $query->forDate($dateFrom);
+        }
 
         if ($classId) {
             $query->where('class_id', $classId);
         }
-        if ($sectionId) {
+
+        // Handle section filter - if sectionId is provided, filter by it; if null, include students without sections
+        if ($sectionId !== null) {
             $query->where('section_id', $sectionId);
         }
 
         $records = $query->get();
 
+        $present = $records->where('status', 'present')->count();
+        $late = $records->where('status', 'late')->count();
+        $halfDay = $records->where('status', 'half_day')->count();
+        $total = $records->count();
+
+        // Calculate percentage including late and half_day (half_day counts as 0.5)
+        $effectivePresent = $present + $late + ($halfDay * 0.5);
+        $percentage = $total > 0 ? round(($effectivePresent / $total) * 100, 2) : 0;
+
+        $title = $dateTo && $dateTo !== $dateFrom
+            ? 'Daily Attendance Report - ' . Carbon::parse($dateFrom)->format('M d') . ' to ' . Carbon::parse($dateTo)->format('M d, Y')
+            : 'Daily Attendance Report - ' . Carbon::parse($dateFrom)->format('F d, Y');
+
         return [
             'type' => 'daily',
-            'title' => 'Daily Attendance Report - ' . Carbon::parse($date)->format('F d, Y'),
-            'date' => $date,
+            'title' => $title,
+            'date' => $dateFrom,
+            'date_to' => $dateTo,
             'records' => $records,
             'summary' => [
-                'total' => $records->count(),
-                'present' => $records->where('status', 'present')->count(),
+                'total' => $total,
+                'present' => $present,
                 'absent' => $records->where('status', 'absent')->count(),
-                'late' => $records->where('status', 'late')->count(),
-                'half_day' => $records->where('status', 'half_day')->count(),
+                'late' => $late,
+                'half_day' => $halfDay,
                 'on_leave' => $records->where('status', 'on_leave')->count(),
-                'percentage' => $records->count() > 0
-                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count()) / $records->count()) * 100
-                    : 0
+                'percentage' => $percentage
             ]
         ];
     }
 
     /**
      * Generate monthly report
+     * Note: Sections are optional - if sectionId is provided, filter by it; if null, include students without sections
      */
     private function generateMonthlyReport($tenantId, $dateFrom, $dateTo, $classId = null, $sectionId = null)
     {
@@ -798,7 +812,9 @@ class StudentAttendanceController extends Controller
                 $q->where('class_id', $classId);
             });
         }
-        if ($sectionId) {
+
+        // Handle section filter - if sectionId is provided, filter by it; if null, include students without sections
+        if ($sectionId !== null) {
             $query->whereHas('currentEnrollment', function ($q) use ($sectionId) {
                 $q->where('section_id', $sectionId);
             });
@@ -1001,6 +1017,7 @@ class StudentAttendanceController extends Controller
 
     /**
      * Generate defaulters report
+     * Note: Sections are optional - if sectionId is provided, filter by it; if null, include students without sections
      */
     private function generateDefaultersReport($tenantId, $dateFrom, $dateTo, $threshold, $classId = null, $sectionId = null)
     {
@@ -1011,7 +1028,9 @@ class StudentAttendanceController extends Controller
                 $q->where('class_id', $classId);
             });
         }
-        if ($sectionId) {
+
+        // Handle section filter - if sectionId is provided, filter by it; if null, include students without sections
+        if ($sectionId !== null) {
             $query->whereHas('currentEnrollment', function ($q) use ($sectionId) {
                 $q->where('section_id', $sectionId);
             });
@@ -1380,7 +1399,7 @@ class StudentAttendanceController extends Controller
                 ],
                 [
                     'class_id' => $enrollment->class_id,
-                    'section_id' => $enrollment->section_id,
+                    'section_id' => $enrollment->section_id ?? null, // Can be null if student has no section
                     'status' => $request->status,
                     'subject_id' => $request->subject_id ?? null,
                     'remarks' => $request->remarks ?? null,

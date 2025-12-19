@@ -94,6 +94,16 @@
                 </select>
             </div>
 
+            <!-- Has Sections -->
+            <div class="flex items-center">
+                <input type="checkbox" name="has_sections" id="has_sections" value="1" {{ old('has_sections', false) ? 'checked' : '' }}
+                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                <label for="has_sections" class="ml-2 block text-sm text-gray-700">
+                    This class has sections
+                </label>
+            </div>
+            <p class="text-xs text-gray-500 -mt-2 mb-2">Check this if you plan to create multiple sections for this class (e.g., Section A, B, C)</p>
+
             <!-- Info Box for Class Settings -->
             <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                 <div class="flex">
@@ -141,12 +151,25 @@
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                     <option value="">No Class Teacher</option>
                     @foreach($teachers ?? [] as $teacher)
+                        @php
+                            $assignedClasses = $teacherClassAssignments[$teacher->id] ?? [];
+                            $hasAssignments = !empty($assignedClasses);
+                        @endphp
                         <option value="{{ $teacher->id }}" {{ old('class_teacher_id') == $teacher->id ? 'selected' : '' }}>
-                            {{ $teacher->name }}
+                            {{ $teacher->full_name }}
+                            @if($teacher->employee_id)
+                                ({{ $teacher->employee_id }})
+                            @endif
+                            @if($teacher->department)
+                                - {{ $teacher->department->department_name }}
+                            @endif
+                            @if($hasAssignments)
+                                - Already: {{ implode(', ', $assignedClasses) }}
+                            @endif
                         </option>
                     @endforeach
                 </select>
-                <p class="mt-1 text-xs text-gray-500">Assign a teacher as class teacher for classes without sections</p>
+                <p class="mt-1 text-xs text-gray-500">All active teachers are shown. Teachers can be assigned even without user accounts (data managed internally). Teachers can be assigned to multiple classes (e.g., LG, KG working together). Current assignments are shown after teacher name.</p>
             </div>
 
             <!-- Status -->
@@ -158,6 +181,35 @@
                 </label>
             </div>
         </div>
+
+        <!-- JavaScript to toggle fields based on has_sections -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hasSectionsCheckbox = document.getElementById('has_sections');
+            const capacityField = document.getElementById('capacity').closest('div');
+            const roomNumberField = document.getElementById('room_number').closest('div');
+            const classTeacherField = document.getElementById('class_teacher_id').closest('div');
+            const infoBox = document.querySelector('.bg-blue-50');
+
+            function toggleFields() {
+                const hasSections = hasSectionsCheckbox.checked;
+                if (hasSections) {
+                    capacityField.style.display = 'none';
+                    roomNumberField.style.display = 'none';
+                    classTeacherField.style.display = 'none';
+                    if (infoBox) infoBox.style.display = 'none';
+                } else {
+                    capacityField.style.display = 'block';
+                    roomNumberField.style.display = 'block';
+                    classTeacherField.style.display = 'block';
+                    if (infoBox) infoBox.style.display = 'block';
+                }
+            }
+
+            hasSectionsCheckbox.addEventListener('change', toggleFields);
+            toggleFields(); // Initialize on page load
+        });
+        </script>
 
         <!-- Submit Buttons -->
         <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">

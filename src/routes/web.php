@@ -360,10 +360,12 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::delete('classes/{id}', [\App\Http\Controllers\Tenant\Admin\ClassController::class, 'destroy'])->name('classes.destroy')->where('id', '[0-9]+');
 
             // Section Management
-            Route::get('sections', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'index'])->name('sections.index');
+            // Sections are managed within classes - redirect index to classes
+            Route::get('sections', function() {
+                return redirect()->route('classes.index');
+            })->name('sections.index');
             Route::get('sections/create', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'create'])->name('sections.create');
             Route::post('sections', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'store'])->name('sections.store');
-            Route::get('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'show'])->name('sections.show')->where('sectionId', '[0-9]+');
             Route::get('sections/{sectionId}/edit', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'edit'])->name('sections.edit')->where('sectionId', '[0-9]+');
             Route::put('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'update'])->name('sections.update')->where('sectionId', '[0-9]+');
             Route::patch('sections/{sectionId}', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'update'])->name('sections.update.patch')->where('sectionId', '[0-9]+');
@@ -608,6 +610,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             // Exams
             Route::get('exams', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'index'])->name('exams.index');
             Route::get('exams/create', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'create'])->name('exams.create');
+            Route::get('exams/create-wizard', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'createWizard'])->name('exams.create-wizard');
+            Route::post('exams/wizard', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'storeWizard'])->name('exams.store-wizard');
             Route::post('exams', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'store'])->name('exams.store');
             Route::get('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'show'])->name('exams.show');
             Route::get('exams/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'edit'])->name('exams.edit');
@@ -620,6 +624,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::post('schedules', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'store'])->name('schedules.store');
             Route::get('schedules/bulk-create', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'bulkCreate'])->name('schedules.bulk-create');
             Route::post('schedules/bulk', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'bulkStore'])->name('schedules.bulk-store');
+            Route::get('schedules/smart-bulk-create', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'smartBulkCreate'])->name('schedules.smart-bulk-create');
+            Route::post('schedules/smart-bulk', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'smartBulkStore'])->name('schedules.smart-bulk-store');
             Route::get('schedules/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'edit'])->name('schedules.edit');
             Route::put('schedules/{id}', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'update'])->name('schedules.update');
             Route::delete('schedules/{id}', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
@@ -627,6 +633,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             // Exam Results
             Route::get('results', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'index'])->name('results.index');
             Route::get('results/entry', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'entry'])->name('results.entry');
+            Route::get('results/quick-entry', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'quickEntry'])->name('results.quick-entry');
             Route::post('results', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'store'])->name('results.store');
             Route::get('results/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'edit'])->name('results.edit');
             Route::put('results/{id}', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'update'])->name('results.update');
@@ -678,8 +685,8 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('/export', [\App\Http\Controllers\Tenant\Admin\TeacherAttendanceController::class, 'export'])->name('export');
         });
 
-        // Holiday Management
-        Route::prefix('attendance/holidays')->name('attendance.holidays.')->middleware('feature:attendance')->group(function () {
+        // Holiday Management (Separate Feature)
+        Route::prefix('holidays')->name('holidays.')->middleware('feature:holidays')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\Admin\HolidayController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Tenant\Admin\HolidayController::class, 'store'])->name('store');
             Route::delete('{id}', [\App\Http\Controllers\Tenant\Admin\HolidayController::class, 'destroy'])->name('destroy');

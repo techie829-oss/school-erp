@@ -387,5 +387,106 @@ class ExamResultController extends Controller
             return back()->with('error', 'Failed to delete result: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Quick results entry - 3-step wizard
+     */
+    public function quickEntry(Request $request)
+    {
+        $tenant = $this->getTenant($request);
+
+        $examId = $request->get('exam_id');
+        $scheduleId = $request->get('schedule_id');
+
+        // Get exams for filter
+        $exams = Exam::forTenant($tenant->id)
+            ->where('status', '!=', 'archived')
+            ->orderBy('exam_name')
+            ->get();
+
+        // If exam selected, get schedules
+        $schedules = collect();
+        $selectedExam = null;
+        $selectedSchedule = null;
+        $students = collect();
+        $existingResults = [];
+
+        if ($examId) {
+            $selectedExam = Exam::forTenant($tenant->id)->find($examId);
+
+            if ($selectedExam) {
+                $schedulesQuery = ExamSchedule::forTenant($tenant->id)
+                    ->where('exam_id', $examId)
+                    ->with(['subject', 'schoolClass', 'section'])
+                    ->orderBy('exam_date')
+                    ->orderBy('start_time');
+
+                // Filter by class
+                if ($request->has('class_id') && $request->class_id) {
+                    $schedulesQuery->where('class_id', $request->class_id);
+                }
+
+                // Filter by section
+                if ($request->has('section_id') && $request->section_id) {
+                    $schedulesQuery->where('section_id', $request->section_id);
+                }
+
+                // Filter by subject
+                if ($request->has('subject_id') && $request->subject_id) {
+                    $schedulesQuery->where('subject_id', $request->subject_id);
+                }
+
+                $schedules = $schedulesQuery->get();
+
+                // If schedule selected, get students and existing results
+                if ($scheduleId) {
+                    $selectedSchedule = ExamSchedule::forTenant($tenant->id)
+                        ->with(['subject', 'schoolClass', 'section'])
+                        ->find($scheduleId);
+
+                    if ($selectedSchedule) {
+                        // Get students for the class/section
+                        $studentsQuery = Student::forTenant($tenant->id)
+                            ->whereHas('currentEnrollment', function($q) use ($selectedSchedule) {
+                                $q->where('class_id', $selectedSchedule->class_id);
+                                if ($selectedSchedule->section_id) {
+                                    $q->where('section_id', $selectedSchedule->section_id);
+                                }
+                            })
+                            ->with('currentEnrollment')
+                            ->active();
+
+                        $students = $studentsQuery->orderBy('full_name')->get();
+
+                        // Get existing results
+                        $existingResults = ExamResult::forTenant($tenant->id)
+                            ->where('exam_schedule_id', $scheduleId)
+                            ->get()
+                            ->keyBy('student_id');
+                    }
+                }
+            }
+        }
+
+        // Get classes and subjects for filters
+        $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+        $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
+
+        // Get grade scales
+        $gradeScales = GradeScale::forTenant($tenant->id)->where('is_active', true)->ordered()->get();
+
+        return view('tenant.admin.examinations.results.quick-entry', compact(
+            'exams',
+            'schedules',
+            'selectedExam',
+            'selectedSchedule',
+            'students',
+            'existingResults',
+            'classes',
+            'subjects',
+            'gradeScales',
+            'tenant'
+        ));
+    }
 }
 

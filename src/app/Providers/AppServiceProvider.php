@@ -38,8 +38,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Register View Composer for admin layout
+        // This makes $featureSettings available globally to all views that extend 'tenant.layouts.admin'
+        // Since all tenant admin views extend this layout, they will have access to $featureSettings
         \View::composer('tenant.layouts.admin', \App\Http\View\Composers\AdminLayoutComposer::class);
-        
+
         // Register CMS Settings View Composer for admin, CMS, and school layouts
         \View::composer(['tenant.layouts.admin', 'tenant.layouts.cms', 'school.layout'], \App\Http\View\Composers\CmsSettingsComposer::class);
 

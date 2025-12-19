@@ -71,14 +71,16 @@
                 </select>
             </div>
             <div>
-                <label for="section_id" class="block text-sm font-medium text-gray-700">Section</label>
+                <label for="section_id" class="block text-sm font-medium text-gray-700">Section (Optional)</label>
                 <select name="section_id" id="section_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                     <option value="">All Sections</option>
-                    @foreach($sections as $section)
-                        <option value="{{ $section->id }}" data-class-id="{{ $section->class_id }}" {{ (string)$sectionId === (string)$section->id ? 'selected' : '' }}>
-                            {{ $section->schoolClass->class_name ?? '' }} - {{ $section->section_name }}
-                        </option>
-                    @endforeach
+                    @if($sections->count() > 0)
+                        @foreach($sections as $section)
+                            <option value="{{ $section->id }}" data-class-id="{{ $section->class_id }}" {{ (string)$sectionId === (string)$section->id ? 'selected' : '' }}>
+                                {{ $section->schoolClass->class_name ?? '' }} - {{ $section->section_name }}
+                            </option>
+                        @endforeach
+                    @endif
                 </select>
             </div>
             <div>
@@ -107,8 +109,11 @@
     <div class="bg-white shadow rounded-lg p-4 md:p-6">
         <div class="flex items-center justify-between mb-4">
             <div>
+                @php
+                    $displayMonth = $currentMonth ?? \Carbon\Carbon::create($year, $month, 1);
+                @endphp
                 <h3 class="text-lg font-semibold text-gray-900">
-                    {{ $currentMonth->format('F Y') }}
+                    {{ $displayMonth->format('F Y') }}
                 </h3>
                 <p class="text-sm text-gray-500">
                     {{ $classId ? 'Class selected' : 'All classes' }}
@@ -157,30 +162,17 @@
                                     $label = '—';
 
                                     if ($data) {
-                                        if (!empty($data['is_holiday'])) {
-                                            // Different colors for full vs half-day holidays
-                                            if (!empty($data['holiday_full_day'])) {
-                                                $bgClass = 'bg-blue-50';
-                                                $badgeClass = 'bg-blue-100 text-blue-800';
-                                                $label = 'Holiday';
-                                            } else {
-                                                $bgClass = 'bg-orange-50';
-                                                $badgeClass = 'bg-orange-100 text-orange-800';
-                                                $label = 'Half Day';
-                                            }
+                                        if ($data['percentage'] >= 90) {
+                                            $bgClass = 'bg-green-50';
+                                            $badgeClass = 'bg-green-100 text-green-800';
+                                        } elseif ($data['percentage'] >= 75) {
+                                            $bgClass = 'bg-yellow-50';
+                                            $badgeClass = 'bg-yellow-100 text-yellow-800';
                                         } else {
-                                            if ($data['percentage'] >= 90) {
-                                                $bgClass = 'bg-green-50';
-                                                $badgeClass = 'bg-green-100 text-green-800';
-                                            } elseif ($data['percentage'] >= 75) {
-                                                $bgClass = 'bg-yellow-50';
-                                                $badgeClass = 'bg-yellow-100 text-yellow-800';
-                                            } else {
-                                                $bgClass = 'bg-red-50';
-                                                $badgeClass = 'bg-red-100 text-red-800';
-                                            }
-                                            $label = $data['percentage'] . '%';
+                                            $bgClass = 'bg-red-50';
+                                            $badgeClass = 'bg-red-100 text-red-800';
                                         }
+                                        $label = $data['percentage'] . '%';
                                     }
                                 @endphp
                                 <td class="w-1/7 h-20 align-top border-t border-gray-200 text-center {{ $bgClass }}">
@@ -194,24 +186,17 @@
                                             </span>
                                             @if($data)
                                                 <div class="mt-1 text-[10px] text-gray-600">
-                                                    @if(!empty($data['is_holiday']) && $data['holiday_title'])
-                                                        {{ $data['holiday_title'] }}
-                                                        @if(!empty($data['holiday_type']))
-                                                            ·
-                                                            @if($data['holiday_type'] === 'school')
-                                                                Whole School
-                                                            @elseif($data['holiday_type'] === 'students_only')
-                                                                Students Only
-                                                            @elseif($data['holiday_type'] === 'staff_only')
-                                                                Staff Only
-                                                            @else
-                                                                {{ ucfirst(str_replace('_', ' ', $data['holiday_type'])) }}
-                                                            @endif
-                                                        @endif
-                                                    @else
-                                                        P: {{ $data['present'] }} / {{ $data['total'] }},
-                                                        A: {{ $data['absent'] }}
+                                                    P: {{ $data['present'] }}, A: {{ $data['absent'] }}
+                                                    @if($data['late'] > 0)
+                                                        , L: {{ $data['late'] }}
                                                     @endif
+                                                    @if($data['half_day'] > 0)
+                                                        , HD: {{ $data['half_day'] }}
+                                                    @endif
+                                                    @if($data['on_leave'] > 0)
+                                                        , OL: {{ $data['on_leave'] }}
+                                                    @endif
+                                                    / {{ $data['total'] }}
                                                 </div>
                                             @endif
                                         </div>

@@ -254,7 +254,7 @@
                 <tr>
                     <td>{{ $record->teacher->employee_id ?? 'N/A' }}</td>
                     <td>{{ $record->teacher->full_name ?? 'N/A' }}</td>
-                    <td>{{ $record->teacher->department->name ?? 'N/A' }}</td>
+                    <td>{{ $record->teacher->department->department_name ?? 'N/A' }}</td>
                     <td>
                         <span class="badge badge-{{ str_replace('_', '-', $record->status) }}">
                             {{ ucfirst(str_replace('_', ' ', $record->status)) }}

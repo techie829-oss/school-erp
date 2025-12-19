@@ -97,6 +97,7 @@
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
             </div>
 
+            @if($departments->count() > 0)
             <div>
                 <label for="department_id" class="block text-sm font-medium text-gray-700">Department (Optional)</label>
                 <select name="department_id" id="department_id" onchange="this.form.submit()"
@@ -109,6 +110,7 @@
                     @endforeach
                 </select>
             </div>
+            @endif
         </form>
     </div>
 

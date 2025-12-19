@@ -39,6 +39,48 @@ class Subject extends Model
     }
 
     /**
+     * Get classes this subject is assigned to
+     */
+    public function classes()
+    {
+        return $this->belongsToMany(SchoolClass::class, 'class_subjects', 'subject_id', 'class_id')
+            ->withPivot('is_active')
+            ->withTimestamps()
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get all classes (including inactive assignments)
+     */
+    public function allClasses()
+    {
+        return $this->belongsToMany(SchoolClass::class, 'class_subjects', 'subject_id', 'class_id')
+            ->withPivot('is_active')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get sections this subject is assigned to
+     */
+    public function sections()
+    {
+        return $this->belongsToMany(Section::class, 'section_subjects', 'subject_id', 'section_id')
+            ->withPivot('is_active')
+            ->withTimestamps()
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get all sections (including inactive assignments)
+     */
+    public function allSections()
+    {
+        return $this->belongsToMany(Section::class, 'section_subjects', 'subject_id', 'section_id')
+            ->withPivot('is_active')
+            ->withTimestamps();
+    }
+
+    /**
      * Scopes
      */
     public function scopeActive($query)

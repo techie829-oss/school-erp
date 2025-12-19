@@ -64,7 +64,7 @@
     <!-- Monthly Overview -->
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">This Month's Overview</h3>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <div class="text-center">
                 <dt class="text-sm text-gray-500">Total Records</dt>
                 <dd class="text-2xl font-semibold text-gray-900">{{ $monthlyData['total_records'] }}</dd>
@@ -78,12 +78,20 @@
                 <dd class="text-2xl font-semibold text-red-600">{{ $monthlyData['absent'] }}</dd>
             </div>
             <div class="text-center">
+                <dt class="text-sm text-gray-500">Late</dt>
+                <dd class="text-2xl font-semibold text-yellow-600">{{ $monthlyData['late'] ?? 0 }}</dd>
+            </div>
+            <div class="text-center">
+                <dt class="text-sm text-gray-500">Half Day</dt>
+                <dd class="text-2xl font-semibold text-blue-600">{{ $monthlyData['half_day'] ?? 0 }}</dd>
+            </div>
+            <div class="text-center">
                 <dt class="text-sm text-gray-500">On Leave</dt>
                 <dd class="text-2xl font-semibold text-purple-600">{{ $monthlyData['on_leave'] }}</dd>
             </div>
             <div class="text-center">
                 <dt class="text-sm text-gray-500">Avg Hours</dt>
-                <dd class="text-2xl font-semibold text-blue-600">{{ round($monthlyData['avg_hours'] ?? 0, 1) }}</dd>
+                <dd class="text-2xl font-semibold text-indigo-600">{{ round($monthlyData['avg_hours'] ?? 0, 1) }}</dd>
             </div>
         </div>
     </div>

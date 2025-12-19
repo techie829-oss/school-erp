@@ -124,6 +124,27 @@ class Section extends Model
     }
 
     /**
+     * Get subjects assigned to this section
+     */
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'section_subjects', 'section_id', 'subject_id')
+            ->withPivot('is_active')
+            ->withTimestamps()
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get all subjects (including inactive)
+     */
+    public function allSubjects()
+    {
+        return $this->belongsToMany(Subject::class, 'section_subjects', 'section_id', 'subject_id')
+            ->withPivot('is_active')
+            ->withTimestamps();
+    }
+
+    /**
      * Accessor for 'name' (alias for section_name)
      * Makes it easier to use in relationships: $section->name
      */

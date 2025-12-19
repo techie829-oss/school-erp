@@ -5,49 +5,22 @@ namespace App\Http\Controllers\Tenant\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Section;
 use App\Models\SchoolClass;
+use App\Models\Subject;
+use App\Models\Teacher;
 use App\Models\User;
 use App\Services\TenantContextService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SectionController extends Controller
 {
     /**
      * Display a listing of sections
+     * Sections are now managed within classes, so this redirects to classes
      */
     public function index(Request $request)
     {
-        $tenant = TenantContextService::getCurrentTenant();
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
-
-        $query = Section::forTenant($tenant->id)->with(['schoolClass', 'classTeacher']);
-
-        // Search
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('section_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('room_number', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        // Filter by class
-        if ($request->filled('class_id')) {
-            $query->where('class_id', $request->class_id);
-        }
-
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status == 'active');
-        }
-
-        $sections = $query->paginate(20);
-
-        // Get classes for filter
-        $classes = SchoolClass::forTenant($tenant->id)->ordered()->get();
-
-        return view('tenant.admin.sections.index', compact('sections', 'classes', 'tenant'));
+        return redirect()->route('classes.index');
     }
 
     /**
@@ -62,13 +35,43 @@ class SectionController extends Controller
         }
 
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
-        $teachers = User::forTenant($tenant->id)
-            ->where('user_type', 'teacher')
+        // Load all active teachers (not filtered by department, as teachers can work in multiple departments)
+        $teachers = Teacher::forTenant($tenant->id)
+            ->with('department')
             ->where('is_active', true)
-            ->orderBy('name')
+            ->where('status', 'active')
+            ->orderBy('full_name')
             ->get();
 
-        return view('tenant.admin.sections.create', compact('tenant', 'classes', 'teachers'));
+        // Get sections and classes where each teacher is already assigned as class teacher
+        $teacherAssignments = [];
+        foreach ($teachers as $teacher) {
+            $assignments = [];
+
+            // Get sections where teacher is class teacher
+            $assignedSections = Section::forTenant($tenant->id)
+                ->where('class_teacher_id', $teacher->id)
+                ->with('schoolClass')
+                ->get();
+
+            foreach ($assignedSections as $assignedSection) {
+                $assignments[] = $assignedSection->schoolClass->class_name . ' - ' . $assignedSection->section_name;
+            }
+
+            // Get classes where teacher is class teacher (using teacher id)
+            $assignedClasses = SchoolClass::forTenant($tenant->id)
+                ->where('class_teacher_id', $teacher->id)
+                ->pluck('class_name')
+                ->toArray();
+
+            foreach ($assignedClasses as $className) {
+                $assignments[] = $className;
+            }
+
+            $teacherAssignments[$teacher->id] = $assignments;
+        }
+
+        return view('tenant.admin.sections.create', compact('tenant', 'classes', 'teachers', 'teacherAssignments'));
     }
 
     /**
@@ -87,7 +90,7 @@ class SectionController extends Controller
             'section_name' => 'required|string|max:10',
             'capacity' => 'nullable|integer|min:1|max:200',
             'room_number' => 'nullable|string|max:50',
-            'class_teacher_id' => 'nullable|exists:users,id',
+            'class_teacher_id' => 'nullable|exists:teachers,id',
             'is_active' => 'boolean',
         ]);
 
@@ -114,39 +117,9 @@ class SectionController extends Controller
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
-        return redirect(url('/admin/sections'))->with('success', 'Section created successfully!');
-    }
-
-    /**
-     * Display the specified section
-     */
-    public function show(Request $request, $id)
-    {
-        $tenant = TenantContextService::getCurrentTenant();
-
-        if (!$tenant) {
-            abort(404, 'Tenant not found');
-        }
-
-        $section = Section::forTenant($tenant->id)
-            ->with(['schoolClass', 'classTeacher', 'enrollments.student'])
-            ->findOrFail($id);
-
-        // Get current students in this section
-        $students = $section->enrollments()
-            ->where('is_current', true)
-            ->with('student')
-            ->get()
-            ->pluck('student');
-
-        $stats = [
-            'total_students' => $students->count(),
-            'capacity' => $section->capacity,
-            'available_seats' => $section->capacity ? ($section->capacity - $students->count()) : null,
-            'utilization' => $section->capacity ? round(($students->count() / $section->capacity) * 100, 1) : null,
-        ];
-
-        return view('tenant.admin.sections.show', compact('section', 'students', 'stats', 'tenant'));
+        // Redirect back to the class show page
+        $class = SchoolClass::forTenant($tenant->id)->findOrFail($validated['class_id']);
+        return redirect(url('/admin/classes/' . $class->id))->with('success', 'Section created successfully!');
     }
 
     /**
@@ -162,13 +135,47 @@ class SectionController extends Controller
 
         $section = Section::forTenant($tenant->id)->findOrFail($id);
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
-        $teachers = User::forTenant($tenant->id)
-            ->where('user_type', 'teacher')
+        // Load all active teachers (not filtered by department, as teachers can work in multiple departments)
+        $teachers = Teacher::forTenant($tenant->id)
+            ->with('department')
             ->where('is_active', true)
-            ->orderBy('name')
+            ->where('status', 'active')
+            ->orderBy('full_name')
             ->get();
 
-        return view('tenant.admin.sections.edit', compact('section', 'classes', 'teachers', 'tenant'));
+        // Get sections and classes where each teacher is already assigned as class teacher
+        $teacherAssignments = [];
+        foreach ($teachers as $teacher) {
+            $assignments = [];
+
+            // Get sections where teacher is class teacher
+            $assignedSections = Section::forTenant($tenant->id)
+                ->where('class_teacher_id', $teacher->id)
+                ->where('id', '!=', $section->id) // Exclude current section
+                ->with('schoolClass')
+                ->get();
+
+            foreach ($assignedSections as $assignedSection) {
+                $assignments[] = $assignedSection->schoolClass->class_name . ' - ' . $assignedSection->section_name;
+            }
+
+            // Get classes where teacher is class teacher (using teacher id)
+            $assignedClasses = SchoolClass::forTenant($tenant->id)
+                ->where('class_teacher_id', $teacher->id)
+                ->pluck('class_name')
+                ->toArray();
+
+            foreach ($assignedClasses as $className) {
+                $assignments[] = $className;
+            }
+
+            $teacherAssignments[$teacher->id] = $assignments;
+        }
+
+        $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
+        $assignedSubjectIds = $section->allSubjects()->pluck('subjects.id')->toArray();
+
+        return view('tenant.admin.sections.edit', compact('section', 'classes', 'teachers', 'tenant', 'subjects', 'assignedSubjectIds', 'teacherAssignments'));
     }
 
     /**
@@ -189,7 +196,7 @@ class SectionController extends Controller
             'section_name' => 'required|string|max:10',
             'capacity' => 'nullable|integer|min:1|max:200',
             'room_number' => 'nullable|string|max:50',
-            'class_teacher_id' => 'nullable|exists:users,id',
+            'class_teacher_id' => 'nullable|exists:teachers,id',
             'is_active' => 'boolean',
         ]);
 
@@ -216,7 +223,38 @@ class SectionController extends Controller
             'is_active' => $validated['is_active'] ?? $section->is_active,
         ]);
 
-        return redirect(url('/admin/sections'))->with('success', 'Section updated successfully!');
+        // Update subjects if provided
+        if ($request->has('subjects')) {
+            $subjectIds = $request->input('subjects', []);
+
+            // Sync subjects with is_active = true for selected subjects
+            $syncData = [];
+            foreach ($subjectIds as $subjectId) {
+                $syncData[$subjectId] = ['is_active' => true, 'tenant_id' => $tenant->id];
+            }
+
+            // Get current assignments
+            $currentAssignments = DB::table('section_subjects')
+                ->where('section_id', $section->id)
+                ->pluck('subject_id')
+                ->toArray();
+
+            // For subjects that were removed, set is_active = false instead of deleting
+            $removedSubjects = array_diff($currentAssignments, $subjectIds);
+            foreach ($removedSubjects as $removedId) {
+                DB::table('section_subjects')
+                    ->where('section_id', $section->id)
+                    ->where('subject_id', $removedId)
+                    ->update(['is_active' => false]);
+            }
+
+            // Sync new/active subjects
+            $section->allSubjects()->sync($syncData, false);
+        }
+
+        // Redirect back to the class show page
+        $class = SchoolClass::forTenant($tenant->id)->findOrFail($validated['class_id']);
+        return redirect(url('/admin/classes/' . $class->id))->with('success', 'Section updated successfully!');
     }
 
     /**
@@ -239,8 +277,10 @@ class SectionController extends Controller
             return back()->with('error', 'Cannot delete section with active student enrollments. Please transfer students first.');
         }
 
+        $classId = $section->class_id;
         $section->delete();
 
-        return redirect(url('/admin/sections'))->with('success', 'Section deleted successfully!');
+        // Redirect back to the class show page
+        return redirect(url('/admin/classes/' . $classId))->with('success', 'Section deleted successfully!');
     }
 }

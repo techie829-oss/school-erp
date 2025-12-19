@@ -1,6 +1,6 @@
 @extends('tenant.layouts.admin')
 
-@section('title', 'Holiday Management')
+@section('title', 'Holidays')
 
 @section('content')
 <div class="space-y-6">
@@ -15,39 +15,29 @@
                     Dashboard
                 </a>
             </li>
-            <li>
-                <div class="flex items-center">
-                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                    </svg>
-                    <a href="{{ url('/admin/attendance/students') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">
-                        Student Attendance
-                    </a>
-                </div>
-            </li>
             <li aria-current="page">
                 <div class="flex items-center">
                     <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                     </svg>
-                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Holiday Management</span>
+                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Holidays</span>
                 </div>
             </li>
         </ol>
     </nav>
 
-    <!-- Header -->
+    <!-- Page Header -->
     <div class="md:flex md:items-center md:justify-between">
-        <div>
+        <div class="flex-1 min-w-0">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                Holiday Management
+                Holidays
             </h2>
             <p class="mt-1 text-sm text-gray-500">
-                Manage school holidays so they are excluded from attendance working days.
+                Manage school holidays and calendar events
             </p>
         </div>
         <div class="mt-4 md:mt-0">
-            <form method="GET" action="{{ url('/admin/attendance/holidays') }}" class="flex items-center space-x-2">
+            <form method="GET" action="{{ url('/admin/holidays') }}" class="flex items-center space-x-2">
                 <label for="year" class="text-sm text-gray-600">Year</label>
                 <input type="number" id="year" name="year" value="{{ $year }}" class="block w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
@@ -62,7 +52,7 @@
         <div class="lg:col-span-1">
             <div class="bg-white shadow rounded-lg p-5">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Add / Update Holiday</h3>
-                <form method="POST" action="{{ url('/admin/attendance/holidays') }}" class="space-y-4">
+                <form method="POST" action="{{ url('/admin/holidays') }}" class="space-y-4">
                     @csrf
                     <div>
                         <label for="holiday_date" class="block text-sm font-medium text-gray-700">Date *</label>
@@ -194,7 +184,7 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                        <form action="{{ url('/admin/attendance/holidays/' . $holiday->id) }}" method="POST" onsubmit="return confirm('Delete this holiday?');" class="inline">
+                                        <form action="{{ url('/admin/holidays/' . $holiday->id) }}" method="POST" onsubmit="return confirm('Delete this holiday?');" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-600 hover:text-red-900 text-xs">

@@ -2,6 +2,10 @@
 
 @section('title', 'Exams')
 
+@push('scripts')
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+@endpush
+
 @section('content')
 <div class="space-y-6">
     <!-- Breadcrumb -->
@@ -44,8 +48,14 @@
                 Manage examinations and assessments
             </p>
         </div>
-        <div class="mt-4 flex md:mt-0 md:ml-4">
-            <a href="{{ url('/admin/examinations/exams/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+        <div class="mt-4 flex space-x-3 md:mt-0 md:ml-4">
+            <a href="{{ url('/admin/examinations/exams/create-wizard') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Setup Wizard
+            </a>
+            <a href="{{ url('/admin/examinations/exams/create') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -84,9 +94,9 @@
     <!-- Filters -->
     <div class="bg-white shadow rounded-lg p-4">
         <form method="GET" action="{{ url('/admin/examinations/exams') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <!-- Search -->
-                <div class="md:col-span-2">
+                <div class="lg:col-span-2">
                     <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Search exams..."
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
@@ -118,6 +128,34 @@
                         <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
                     </select>
                 </div>
+
+                <!-- Class Filter -->
+                <div>
+                    <label for="class_id" class="block text-sm font-medium text-gray-700">Class</label>
+                    <select name="class_id" id="class_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="">All Classes</option>
+                        @foreach($classes as $class)
+                            <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
+                                {{ $class->class_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Academic Year Filter -->
+                <div>
+                    <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
+                    <select name="academic_year" id="academic_year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="">All Years</option>
+                        @foreach($academicYears as $year)
+                            <option value="{{ $year }}" {{ request('academic_year') == $year ? 'selected' : '' }}>
+                                {{ $year }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             <div class="flex justify-end space-x-3">
@@ -139,7 +177,7 @@
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Name</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -147,11 +185,20 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($exams as $exam)
+                    @php
+                        $stats = $exam->progress_stats ?? [];
+                        $hasSchedules = $stats['has_schedules'] ?? false;
+                        $hasResults = $stats['has_results'] ?? false;
+                        $resultsProgress = $stats['results_progress'] ?? 0;
+                    @endphp
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4">
                             <div class="text-sm font-medium text-gray-900">{{ $exam->exam_name }}</div>
                             @if($exam->description)
-                            <div class="text-sm text-gray-500">{{ Str::limit($exam->description, 50) }}</div>
+                            <div class="text-sm text-gray-500 mt-1">{{ Str::limit($exam->description, 50) }}</div>
+                            @endif
+                            @if($exam->academic_year)
+                            <div class="text-xs text-gray-400 mt-1">{{ $exam->academic_year }}</div>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -159,8 +206,26 @@
                                 {{ ucfirst(str_replace('_', ' ', $exam->exam_type)) }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $exam->schoolClass->class_name ?? 'All Classes' }}
+                        <td class="px-6 py-4">
+                            <div class="space-y-1">
+                                @if($hasSchedules)
+                                <div>
+                                    <div class="flex items-center justify-between text-xs mb-1">
+                                        <span class="text-gray-600">Results</span>
+                                        <span class="font-medium text-gray-900">{{ $resultsProgress }}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="bg-primary-600 h-1.5 rounded-full" style="width: {{ $resultsProgress }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ $stats['total_schedules'] ?? 0 }} schedules •
+                                    {{ $stats['students_with_results'] ?? 0 }}/{{ $stats['total_students'] ?? 0 }} students
+                                </div>
+                                @else
+                                <span class="text-xs text-gray-400">No schedules yet</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             @if($exam->start_date && $exam->end_date)
@@ -186,15 +251,47 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end space-x-3">
-                                <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="text-primary-600 hover:text-primary-900">View</a>
-                                <a href="{{ url('/admin/examinations/exams/' . $exam->id . '/edit') }}" class="text-gray-600 hover:text-gray-900">Edit</a>
-                                <form action="{{ url('/admin/examinations/exams/' . $exam->id) }}" method="POST" class="inline"
-                                    onsubmit="return confirm('Are you sure you want to delete this exam?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                </form>
+                            <div class="flex items-center justify-end">
+                                <div class="relative inline-block text-left" x-data="{ open: false }">
+                                    <button @click="open = !open" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                        Actions
+                                        <svg class="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" x-transition class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                                        <div class="py-1">
+                                            <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Details</a>
+                                            @if(!$hasSchedules)
+                                            <a href="{{ url('/admin/examinations/schedules/smart-bulk-create?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-primary-600 hover:bg-gray-100 font-medium">
+                                                ⚡ Create Schedules
+                                            </a>
+                                            @else
+                                            <a href="{{ url('/admin/examinations/schedules?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Schedules</a>
+                                            <a href="{{ url('/admin/examinations/schedules/smart-bulk-create?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Add More Schedules</a>
+                                            @endif
+                                            @if($hasSchedules && !$hasResults)
+                                            <a href="{{ url('/admin/examinations/results/quick-entry?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-green-600 hover:bg-gray-100 font-medium">
+                                                ⚡ Enter Results
+                                            </a>
+                                            @elseif($hasResults)
+                                            <a href="{{ url('/admin/examinations/results/quick-entry?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Enter/Edit Results</a>
+                                            <a href="{{ url('/admin/examinations/results?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Results</a>
+                                            @endif
+                                            @if($hasResults)
+                                            <a href="{{ url('/admin/examinations/admit-cards/generate?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Generate Admit Cards</a>
+                                            <a href="{{ url('/admin/examinations/report-cards/generate?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Generate Report Cards</a>
+                                            @endif
+                                            <a href="{{ url('/admin/examinations/exams/' . $exam->id . '/edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Exam</a>
+                                            <div class="border-t border-gray-100"></div>
+                                            <form action="{{ url('/admin/examinations/exams/' . $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this exam?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </td>
                     </tr>

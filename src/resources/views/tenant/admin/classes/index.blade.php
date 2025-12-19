@@ -49,6 +49,67 @@
         </div>
     </div>
 
+    <!-- Summary Statistics -->
+    @if(isset($stats))
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Classes</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ $stats['total_classes'] }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Active Classes</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ $stats['active_classes'] }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Sections</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ $stats['total_sections'] }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Students</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ $stats['total_students'] }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Success/Error Messages -->
     @if(session('success'))
     <div class="rounded-md bg-green-50 p-4">
@@ -149,25 +210,97 @@
                                 <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ $class->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $class->is_active ? 'Active' : 'Inactive' }}
                                 </span>
+                                @if($class->has_sections)
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800" title="This class has sections">
+                                    Has Sections
+                                </span>
+                                @endif
                             </div>
                             <p class="text-sm text-gray-500 mt-0.5">Class Number: {{ $class->class_numeric }}</p>
 
                             <!-- Additional Info -->
-                            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+                            <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-2 text-sm">
+                                <!-- Sections -->
                                 <div class="flex items-center">
                                     <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5z"/>
                                     </svg>
-                                    <span class="text-gray-500">Sections:</span>
-                                    <span class="ml-1 font-medium text-gray-900">{{ $class->sections_count ?? 0 }}</span>
+                                    <div>
+                                        <span class="text-gray-500 block text-xs">Sections</span>
+                                        <span class="font-medium text-gray-900">{{ $class->sections_count ?? 0 }}</span>
+                                        @if($class->has_sections && $class->active_sections_count > 0)
+                                            <span class="text-xs text-gray-500">({{ $class->active_sections_count }} active)</span>
+                                        @endif
+                                    </div>
                                 </div>
+
+                                <!-- Students -->
                                 <div class="flex items-center">
                                     <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                     </svg>
-                                    <span class="text-gray-500">Students:</span>
-                                    <span class="ml-1 font-medium text-primary-600">{{ $class->enrollments()->where('is_current', true)->count() }}</span>
+                                    <div>
+                                        <span class="text-gray-500 block text-xs">Students</span>
+                                        <span class="font-medium text-primary-600">{{ $class->total_students_count ?? 0 }}</span>
+                                    </div>
                                 </div>
+
+                                <!-- Common Subjects -->
+                                @if($class->has_sections)
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <div>
+                                        <span class="text-gray-500 block text-xs">Common Subjects</span>
+                                        <span class="font-medium text-gray-900">{{ $class->common_subjects_count ?? 0 }}</span>
+                                    </div>
+                                </div>
+                                @else
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <div>
+                                        <span class="text-gray-500 block text-xs">Subjects</span>
+                                        <span class="font-medium text-gray-900">{{ $class->common_subjects_count ?? 0 }}</span>
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- Class Teacher -->
+                                @if($class->classTeacher)
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    <div>
+                                        <span class="text-gray-500 block text-xs">Class Teacher</span>
+                                        <span class="font-medium text-gray-900 truncate max-w-[120px]" title="{{ $class->classTeacher->full_name }}">
+                                            {{ $class->classTeacher->full_name }}
+                                        </span>
+                                        @if($class->classTeacher->employee_id)
+                                            <span class="text-xs text-gray-500 block">({{ $class->classTeacher->employee_id }})</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
+
+                                <!-- Room/Capacity -->
+                                @if(!$class->has_sections)
+                                <div class="flex items-center">
+                                    <svg class="h-4 w-4 text-gray-400 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    </svg>
+                                    <div>
+                                        <span class="text-gray-500 block text-xs">Room</span>
+                                        <span class="font-medium text-gray-900">{{ $class->room_number ?: 'N/A' }}</span>
+                                        @if($class->capacity)
+                                            <span class="text-xs text-gray-500">(Cap: {{ $class->capacity }})</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>

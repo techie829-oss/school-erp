@@ -212,12 +212,92 @@
 </div>
 
 <script>
-document.getElementById('class_id').addEventListener('change', function() {
-    const classId = this.value;
-    const sectionSelect = document.getElementById('section_id');
+// Class-subject mappings (for classes without sections)
+const classSubjects = @json($classSubjects ?? []);
+// Section-subject mappings (for classes with sections)
+const sectionSubjects = @json($sectionSubjects ?? []);
+// Class has_sections mapping
+const classHasSections = @json($classes->pluck('has_sections', 'id')->toArray());
+const allSubjects = @json($subjects->mapWithKeys(function($subject) {
+    return [$subject->id => ['id' => $subject->id, 'name' => $subject->subject_name]];
+})->toArray());
+
+const classSelect = document.getElementById('class_id');
+const subjectSelect = document.getElementById('subject_id');
+const sectionSelect = document.getElementById('section_id');
+
+// Function to filter subjects based on selected class and section
+function filterSubjects(classId, sectionId) {
+    const selectedSubjectId = subjectSelect.value;
+
+    // Clear current options
+    subjectSelect.innerHTML = '<option value="">Select Subject</option>';
 
     if (!classId) {
+        // Show all subjects if no class selected
+        Object.values(allSubjects).forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            if (selectedSubjectId == subject.id) {
+                option.selected = true;
+            }
+            subjectSelect.appendChild(option);
+        });
+        return;
+    }
+
+    const hasSections = classHasSections[classId] || false;
+    let subjectIds = [];
+
+    if (hasSections) {
+        // If class has sections, combine common class subjects + section-specific subjects
+        const commonSubjects = classSubjects[classId] || [];
+        const sectionSpecificSubjects = sectionId ? (sectionSubjects[sectionId] || []) : [];
+
+        // Merge: common subjects + section-specific subjects (remove duplicates)
+        subjectIds = [...new Set([...commonSubjects, ...sectionSpecificSubjects])];
+    } else {
+        // If class has no sections, filter by class subjects only
+        subjectIds = classSubjects[classId] || [];
+    }
+
+    if (subjectIds.length === 0) {
+        // If no subjects assigned, show all subjects
+        Object.values(allSubjects).forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            if (selectedSubjectId == subject.id) {
+                option.selected = true;
+            }
+            subjectSelect.appendChild(option);
+        });
+    } else {
+        // Show only assigned subjects
+        subjectIds.forEach(subjectId => {
+            const subject = allSubjects[subjectId];
+            if (subject) {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.name;
+                if (selectedSubjectId == subject.id) {
+                    option.selected = true;
+                }
+                subjectSelect.appendChild(option);
+            }
+        });
+    }
+}
+
+// Handle class change
+classSelect.addEventListener('change', function() {
+    const classId = this.value;
+
+    // Load sections
+    if (!classId) {
         sectionSelect.innerHTML = '<option value="">All Sections</option>';
+        filterSubjects(null, null);
         return;
     }
 
@@ -231,11 +311,27 @@ document.getElementById('class_id').addEventListener('change', function() {
                 option.textContent = section.section_name;
                 sectionSelect.appendChild(option);
             });
+
+            // Filter subjects based on class (and section if selected)
+            filterSubjects(classId, sectionSelect.value);
         })
         .catch(error => {
             console.error('Error loading sections:', error);
+            filterSubjects(classId, null);
         });
 });
+
+// Handle section change
+sectionSelect.addEventListener('change', function() {
+    const classId = classSelect.value;
+    const sectionId = this.value;
+    filterSubjects(classId, sectionId);
+});
+
+// Initialize subjects on page load if class is pre-selected
+@if(old('class_id'))
+    filterSubjects({{ old('class_id') }}, {{ old('section_id') ?? 'null' }});
+@endif
 </script>
 @endsection
 

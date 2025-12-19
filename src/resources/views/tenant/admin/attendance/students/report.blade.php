@@ -72,9 +72,10 @@
                         </select>
                     </div>
 
-                    <!-- Section Filter -->
+                    <!-- Section Filter (Optional - only shown if sections exist) -->
+                    @if($sections->count() > 0)
                     <div>
-                        <label for="section_id" class="block text-sm font-medium text-gray-700">Section</label>
+                        <label for="section_id" class="block text-sm font-medium text-gray-700">Section (Optional)</label>
                         <select id="section_id" name="section_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                             <option value="">All Sections</option>
                             @foreach($sections as $section)
@@ -84,6 +85,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
 
                     <!-- Student Filter (for student-wise report) -->
                     <div>
@@ -102,11 +104,12 @@
 
                     <!-- Threshold (for defaulters) -->
                     <div>
-                        <label for="threshold" class="block text-sm font-medium text-gray-700">Attendance Threshold (%)</label>
+                        <label for="threshold" class="block text-sm font-medium text-gray-700">Attendance Threshold (%) <span class="text-gray-400">(Optional)</span></label>
                         <input type="number" name="threshold" id="threshold"
-                            value="{{ request('threshold', 75) }}" min="0" max="100" step="1"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                        <p class="mt-1 text-xs text-gray-500">For defaulter list</p>
+                            value="{{ request('threshold') }}" min="0" max="100" step="1"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                            placeholder="Default: 75%">
+                        <p class="mt-1 text-xs text-gray-500">For defaulter list. Leave empty to use default (75%)</p>
                     </div>
                 </div>
 

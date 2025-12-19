@@ -40,6 +40,8 @@ class TeacherAttendanceController extends Controller
         $departmentId = $request->get('department_id');
 
         // Get filter options
+        // Note: Departments are optional - schools can work with or without departments
+        // Some teachers may have departments (e.g., 9-12 grades) while others don't (e.g., 0-8 grades)
         $departments = Department::forTenant($tenant->id)->active()->get();
 
         // Get today's attendance stats
@@ -77,14 +79,18 @@ class TeacherAttendanceController extends Controller
         // Get attendance settings for default timings
         $settings = AttendanceSettings::getForTenant($tenant->id);
 
+        // Note: Departments are optional - some teachers may not have departments
         $departments = Department::forTenant($tenant->id)->active()->get();
 
         // Get all active teachers or filtered by department
+        // When departmentId is null (All Departments), includes teachers with and without departments
+        // When departmentId is set, only shows teachers from that specific department
         $query = Teacher::forTenant($tenant->id)->active()->with('department');
 
         if ($departmentId) {
             $query->where('department_id', $departmentId);
         }
+        // If no department filter, all teachers are shown (including those without departments)
 
         $teachers = $query->orderBy('full_name')->get();
 
@@ -205,7 +211,7 @@ class TeacherAttendanceController extends Controller
      */
     private function getTodayStats($tenantId, $departmentId = null)
     {
-        $query = TeacherAttendance::where('tenant_id', $tenantId)
+        $query = TeacherAttendance::forTenant($tenantId)
             ->forDate(now()->format('Y-m-d'));
 
         if ($departmentId) {
@@ -242,7 +248,7 @@ class TeacherAttendanceController extends Controller
      */
     private function getMonthlyData($tenantId, $month, $year, $departmentId = null)
     {
-        $query = TeacherAttendance::where('tenant_id', $tenantId)
+        $query = TeacherAttendance::forTenant($tenantId)
             ->forMonth($month, $year);
 
         if ($departmentId) {
@@ -258,6 +264,7 @@ class TeacherAttendanceController extends Controller
             'present' => $records->where('status', 'present')->count(),
             'absent' => $records->where('status', 'absent')->count(),
             'late' => $records->where('status', 'late')->count(),
+            'half_day' => $records->where('status', 'half_day')->count(),
             'on_leave' => $records->where('status', 'on_leave')->count(),
             'avg_hours' => $records->where('total_hours', '>', 0)->avg('total_hours'),
         ];
@@ -275,6 +282,8 @@ class TeacherAttendanceController extends Controller
         }
 
         // Get filter options
+        // Note: Departments are optional - schools can work with or without departments
+        // Some teachers may have departments (e.g., 9-12 grades) while others don't (e.g., 0-8 grades)
         $departments = Department::forTenant($tenant->id)->active()->get();
         $teachers = Teacher::forTenant($tenant->id)->active()->get();
 
@@ -287,11 +296,11 @@ class TeacherAttendanceController extends Controller
             $dateTo = $request->get('date_to', now()->format('Y-m-d'));
             $departmentId = $request->get('department_id');
             $teacherId = $request->get('teacher_id');
-            $threshold = $request->get('threshold', 90);
+            $threshold = $request->get('threshold') !== null && $request->get('threshold') !== '' ? (int)$request->get('threshold') : 90;
 
             switch ($reportType) {
                 case 'daily':
-                    $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $departmentId);
+                    $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
                     break;
                 case 'monthly':
                     $reportData = $this->generateMonthlyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
@@ -300,7 +309,13 @@ class TeacherAttendanceController extends Controller
                     $reportData = $this->generateTeacherWiseReport($tenant->id, $dateFrom, $dateTo, $teacherId, $departmentId);
                     break;
                 case 'department_wise':
-                    $reportData = $this->generateDepartmentWiseReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                    // Only allow department-wise report if departments exist
+                    if ($departments->count() > 0) {
+                        $reportData = $this->generateDepartmentWiseReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                    } else {
+                        // Fallback to daily report if no departments
+                        $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
+                    }
                     break;
                 case 'defaulters':
                     $reportData = $this->generateDefaultersReport($tenant->id, $dateFrom, $dateTo, $threshold, $departmentId);
@@ -333,12 +348,12 @@ class TeacherAttendanceController extends Controller
         $dateTo = $request->get('date_to', now()->format('Y-m-d'));
         $departmentId = $request->get('department_id');
         $teacherId = $request->get('teacher_id');
-        $threshold = $request->get('threshold', 90);
+        $threshold = $request->get('threshold') !== null && $request->get('threshold') !== '' ? (int)$request->get('threshold') : 90;
 
         // Generate report data
         switch ($reportType) {
             case 'daily':
-                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $departmentId);
+                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
                 break;
             case 'monthly':
                 $reportData = $this->generateMonthlyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
@@ -353,7 +368,7 @@ class TeacherAttendanceController extends Controller
                 $reportData = $this->generateDefaultersReport($tenant->id, $dateFrom, $dateTo, $threshold, $departmentId);
                 break;
             default:
-                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $departmentId);
+                $reportData = $this->generateDailyReport($tenant->id, $dateFrom, $dateTo, $departmentId);
         }
 
         if ($format === 'excel') {
@@ -366,10 +381,56 @@ class TeacherAttendanceController extends Controller
     /**
      * Generate daily report
      */
-    private function generateDailyReport($tenantId, $date, $departmentId = null)
+    private function generateDailyReport($tenantId, $dateFrom, $dateTo = null, $departmentId = null)
+    {
+        $dateTo = $dateTo ?? $dateFrom;
+
+        $query = TeacherAttendance::forTenant($tenantId)
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
+            ->with(['teacher.department']);
+
+        if ($departmentId) {
+            $query->whereHas('teacher', function($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        }
+
+        $records = $query->get();
+
+        $title = 'Daily Teacher Attendance Report';
+        if ($dateFrom === $dateTo) {
+            $title .= ' - ' . Carbon::parse($dateFrom)->format('F d, Y');
+        } else {
+            $title .= ' - ' . Carbon::parse($dateFrom)->format('M d') . ' to ' . Carbon::parse($dateTo)->format('M d, Y');
+        }
+
+        return [
+            'type' => 'daily',
+            'title' => $title,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'records' => $records,
+            'summary' => [
+                'total' => $records->count(),
+                'present' => $records->where('status', 'present')->count(),
+                'absent' => $records->where('status', 'absent')->count(),
+                'late' => $records->where('status', 'late')->count(),
+                'half_day' => $records->where('status', 'half_day')->count(),
+                'on_leave' => $records->where('status', 'on_leave')->count(),
+                'percentage' => $records->count() > 0
+                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count() + ($records->where('status', 'half_day')->count() * 0.5)) / $records->count()) * 100
+                    : 0
+            ]
+        ];
+    }
+
+    /**
+     * Generate monthly report
+     */
+    private function generateMonthlyReport($tenantId, $dateFrom, $dateTo, $departmentId = null)
     {
         $query = TeacherAttendance::forTenant($tenantId)
-            ->forDate($date)
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
             ->with(['teacher.department']);
 
         if ($departmentId) {
@@ -381,9 +442,10 @@ class TeacherAttendanceController extends Controller
         $records = $query->get();
 
         return [
-            'type' => 'daily',
-            'title' => 'Daily Teacher Attendance Report - ' . Carbon::parse($date)->format('F d, Y'),
-            'date' => $date,
+            'type' => 'monthly',
+            'title' => 'Monthly Teacher Attendance Report - ' . Carbon::parse($dateFrom)->format('M d') . ' to ' . Carbon::parse($dateTo)->format('M d, Y'),
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
             'records' => $records,
             'summary' => [
                 'total' => $records->count(),
@@ -393,44 +455,153 @@ class TeacherAttendanceController extends Controller
                 'half_day' => $records->where('status', 'half_day')->count(),
                 'on_leave' => $records->where('status', 'on_leave')->count(),
                 'percentage' => $records->count() > 0
-                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count()) / $records->count()) * 100
+                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count() + ($records->where('status', 'half_day')->count() * 0.5)) / $records->count()) * 100
                     : 0
             ]
         ];
     }
 
     /**
-     * Generate monthly report - simplified version
-     */
-    private function generateMonthlyReport($tenantId, $dateFrom, $dateTo, $departmentId = null)
-    {
-        return $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
-    }
-
-    /**
-     * Generate teacher-wise report - simplified version
+     * Generate teacher-wise report
      */
     private function generateTeacherWiseReport($tenantId, $dateFrom, $dateTo, $teacherId = null, $departmentId = null)
     {
-        return $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
+        $query = TeacherAttendance::forTenant($tenantId)
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
+            ->with(['teacher.department']);
+
+        if ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        }
+
+        if ($departmentId) {
+            $query->whereHas('teacher', function($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        }
+
+        $records = $query->get();
+
+        return [
+            'type' => 'teacher_wise',
+            'title' => 'Teacher-wise Attendance Report - ' . Carbon::parse($dateFrom)->format('M d') . ' to ' . Carbon::parse($dateTo)->format('M d, Y'),
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'records' => $records,
+            'summary' => [
+                'total' => $records->count(),
+                'present' => $records->where('status', 'present')->count(),
+                'absent' => $records->where('status', 'absent')->count(),
+                'late' => $records->where('status', 'late')->count(),
+                'half_day' => $records->where('status', 'half_day')->count(),
+                'on_leave' => $records->where('status', 'on_leave')->count(),
+                'percentage' => $records->count() > 0
+                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count() + ($records->where('status', 'half_day')->count() * 0.5)) / $records->count()) * 100
+                    : 0
+            ]
+        ];
     }
 
     /**
-     * Generate department-wise report - simplified version
+     * Generate department-wise report
      */
     private function generateDepartmentWiseReport($tenantId, $dateFrom, $dateTo, $departmentId = null)
     {
-        return $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
+        $query = TeacherAttendance::forTenant($tenantId)
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
+            ->with(['teacher.department']);
+
+        if ($departmentId) {
+            $query->whereHas('teacher', function($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        } else {
+            // If no department filter, only show teachers with departments
+            $query->whereHas('teacher', function($q) {
+                $q->whereNotNull('department_id');
+            });
+        }
+
+        $records = $query->get();
+
+        return [
+            'type' => 'department_wise',
+            'title' => 'Department-wise Attendance Report - ' . Carbon::parse($dateFrom)->format('M d') . ' to ' . Carbon::parse($dateTo)->format('M d, Y'),
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'records' => $records,
+            'summary' => [
+                'total' => $records->count(),
+                'present' => $records->where('status', 'present')->count(),
+                'absent' => $records->where('status', 'absent')->count(),
+                'late' => $records->where('status', 'late')->count(),
+                'half_day' => $records->where('status', 'half_day')->count(),
+                'on_leave' => $records->where('status', 'on_leave')->count(),
+                'percentage' => $records->count() > 0
+                    ? (($records->where('status', 'present')->count() + $records->where('status', 'late')->count() + ($records->where('status', 'half_day')->count() * 0.5)) / $records->count()) * 100
+                    : 0
+            ]
+        ];
     }
 
     /**
-     * Generate defaulters report - simplified version
+     * Generate defaulters report
      */
     private function generateDefaultersReport($tenantId, $dateFrom, $dateTo, $threshold, $departmentId = null)
     {
-        $reportData = $this->generateDailyReport($tenantId, $dateFrom, $departmentId);
-        $reportData['threshold'] = $threshold;
-        return $reportData;
+        $query = TeacherAttendance::forTenant($tenantId)
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
+            ->with(['teacher.department']);
+
+        if ($departmentId) {
+            $query->whereHas('teacher', function($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
+        }
+
+        $records = $query->get();
+
+        // Group by teacher and calculate attendance percentage
+        $teacherStats = [];
+        foreach ($records->groupBy('teacher_id') as $teacherId => $teacherRecords) {
+            $total = $teacherRecords->count();
+            $present = $teacherRecords->where('status', 'present')->count();
+            $late = $teacherRecords->where('status', 'late')->count();
+            $halfDay = $teacherRecords->where('status', 'half_day')->count();
+
+            $effectiveDays = $present + $late + ($halfDay * 0.5);
+            $percentage = $total > 0 ? ($effectiveDays / $total) * 100 : 0;
+
+            if ($percentage < $threshold) {
+                $teacherStats[] = [
+                    'teacher' => $teacherRecords->first()->teacher,
+                    'total' => $total,
+                    'present' => $present,
+                    'late' => $late,
+                    'half_day' => $halfDay,
+                    'absent' => $teacherRecords->where('status', 'absent')->count(),
+                    'on_leave' => $teacherRecords->where('status', 'on_leave')->count(),
+                    'percentage' => round($percentage, 2)
+                ];
+            }
+        }
+
+        return [
+            'type' => 'defaulters',
+            'title' => 'Defaulter List (Below ' . $threshold . '%) - ' . Carbon::parse($dateFrom)->format('M d') . ' to ' . Carbon::parse($dateTo)->format('M d, Y'),
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'threshold' => $threshold,
+            'teacher_stats' => $teacherStats,
+            'summary' => [
+                'total' => count($teacherStats),
+                'present' => collect($teacherStats)->sum('present'),
+                'absent' => collect($teacherStats)->sum('absent'),
+                'late' => collect($teacherStats)->sum('late'),
+                'half_day' => collect($teacherStats)->sum('half_day'),
+                'on_leave' => collect($teacherStats)->sum('on_leave'),
+            ]
+        ];
     }
 
     /**
