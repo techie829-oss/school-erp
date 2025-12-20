@@ -157,6 +157,159 @@
                     <option value="ongoing" {{ old('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
                 </select>
             </div>
+
+            <!-- Scheduling Preferences (Collapsible) -->
+            <div class="border-t border-gray-200 pt-6">
+                <button type="button"
+                        onclick="toggleSchedulingPreferences()"
+                        class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-900 hover:text-primary-600 focus:outline-none">
+                    <span>Scheduling Preferences (Optional)</span>
+                    <svg id="scheduling_toggle_icon" class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <div id="scheduling_preferences_content" class="mt-4 hidden space-y-6">
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-4">Scheduling Preferences</h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Maximum Exams Per Day -->
+                            <div>
+                                <label for="max_exams_per_day" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Maximum Exams Per Day
+                                </label>
+                                <input type="number"
+                                       id="max_exams_per_day"
+                                       name="max_exams_per_day"
+                                       value="{{ old('max_exams_per_day', 1) }}"
+                                       min="1"
+                                       max="5"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                <p class="mt-1 text-xs text-gray-500">Number of exams per day for each class (1-5)</p>
+                            </div>
+
+                            <!-- Skip Weekends -->
+                            <div>
+                                <label class="flex items-center mt-6">
+                                    <input type="checkbox"
+                                           id="skip_weekends"
+                                           name="skip_weekends"
+                                           value="1"
+                                           {{ old('skip_weekends', true) ? 'checked' : '' }}
+                                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Skip Weekends</span>
+                                </label>
+                                <p class="mt-1 text-xs text-gray-500">Automatically skip Saturday and Sunday when scheduling</p>
+                            </div>
+                        </div>
+
+                        <!-- Shift Selection Mode -->
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Shift Selection Mode</label>
+                            <div class="flex space-x-6">
+                                <label class="flex items-center">
+                                    <input type="radio"
+                                           name="shift_selection_mode"
+                                           value="class_wise"
+                                           id="shift_mode_class_wise"
+                                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                           {{ old('shift_selection_mode', 'class_wise') == 'class_wise' ? 'checked' : '' }}
+                                           onchange="toggleDefaultShiftVisibility()">
+                                    <span class="ml-2 text-sm text-gray-700">Class-wise</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio"
+                                           name="shift_selection_mode"
+                                           value="subject_wise"
+                                           id="shift_mode_subject_wise"
+                                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                           {{ old('shift_selection_mode') == 'subject_wise' ? 'checked' : '' }}
+                                           onchange="toggleDefaultShiftVisibility()">
+                                    <span class="ml-2 text-sm text-gray-700">Subject-wise</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio"
+                                           name="shift_selection_mode"
+                                           value="both"
+                                           id="shift_mode_both"
+                                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                           {{ old('shift_selection_mode') == 'both' ? 'checked' : '' }}
+                                           onchange="toggleDefaultShiftVisibility()">
+                                    <span class="ml-2 text-sm text-gray-700">Both</span>
+                                </label>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">
+                                <span id="shift_mode_hint">Class-wise: One shift per class (all subjects use same shift)</span>
+                            </p>
+                        </div>
+
+                        <!-- Default Shift (shown when class-wise or both) -->
+                        <div id="default_shift_container" class="mt-4">
+                            <label for="default_shift_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Default Shift (Optional)
+                            </label>
+                            <select id="default_shift_id"
+                                    name="default_shift_id"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                <option value="">No Shift (Custom Time)</option>
+                                @if(isset($shifts))
+                                    @foreach($shifts as $shift)
+                                        <option value="{{ $shift->id }}"
+                                                {{ old('default_shift_id') == $shift->id ? 'selected' : '' }}>
+                                            {{ $shift->shift_name }} ({{ $shift->start_time->format('H:i') }} - {{ $shift->end_time->format('H:i') }})
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Selecting a shift will auto-fill time and duration</p>
+                        </div>
+
+                        <!-- Default Values -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div>
+                                <label for="default_max_marks" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Default Max Marks
+                                </label>
+                                <input type="number"
+                                       id="default_max_marks"
+                                       name="default_max_marks"
+                                       value="{{ old('default_max_marks', 100) }}"
+                                       min="1"
+                                       step="1"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+
+                            <div>
+                                <label for="default_passing_marks" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Default Passing Marks (Optional)
+                                </label>
+                                <input type="number"
+                                       id="default_passing_marks"
+                                       name="default_passing_marks"
+                                       value="{{ old('default_passing_marks', 33) }}"
+                                       min="0"
+                                       step="1"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+
+                            <div>
+                                <label for="default_duration_minutes" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Default Duration (minutes)
+                                </label>
+                                <input type="number"
+                                       id="default_duration_minutes"
+                                       name="default_duration_minutes"
+                                       value="{{ old('default_duration_minutes', 90) }}"
+                                       min="30"
+                                       max="300"
+                                       step="15"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Submit Buttons -->
@@ -170,5 +323,44 @@
         </div>
     </form>
 </div>
+
+<script>
+function toggleSchedulingPreferences() {
+    const content = document.getElementById('scheduling_preferences_content');
+    const icon = document.getElementById('scheduling_toggle_icon');
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
+
+function toggleDefaultShiftVisibility() {
+    const classWise = document.getElementById('shift_mode_class_wise').checked;
+    const both = document.getElementById('shift_mode_both').checked;
+    const shiftContainer = document.getElementById('default_shift_container');
+    const hintElement = document.getElementById('shift_mode_hint');
+
+    if (classWise || both) {
+        shiftContainer.style.display = 'block';
+        if (classWise) {
+            hintElement.textContent = 'Class-wise: One shift per class (all subjects use same shift)';
+        } else {
+            hintElement.textContent = 'Both: Allow class-wise or subject-wise shift selection';
+        }
+    } else {
+        shiftContainer.style.display = 'none';
+        hintElement.textContent = 'Subject-wise: Different shifts can be assigned per subject';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleDefaultShiftVisibility();
+});
+</script>
 @endsection
 

@@ -85,8 +85,16 @@
 
             <div>
                 <label for="section_name" class="block text-sm font-medium text-gray-700">Section Name <span class="text-red-500">*</span></label>
-                <input type="text" name="section_name" id="section_name" value="{{ old('section_name') }}" required placeholder="e.g., A, B, C"
+                <input type="text" name="section_name" id="section_name" value="{{ old('section_name') }}" required placeholder="e.g., A, B, C" maxlength="25"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                <p class="mt-1 text-xs text-gray-500">Maximum 25 characters</p>
+            </div>
+
+            <div>
+                <label for="group_name" class="block text-sm font-medium text-gray-700">Group Name <span class="text-gray-500 text-xs font-normal">(Optional)</span></label>
+                <input type="text" name="group_name" id="group_name" value="{{ old('group_name') }}" placeholder="e.g., Science Group, Commerce Group"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                <p class="mt-1 text-xs text-gray-500">Optional group name to organize sections (e.g., Science Group, Commerce Group)</p>
             </div>
 
             <div>

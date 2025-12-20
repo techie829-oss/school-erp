@@ -87,7 +87,8 @@ class SectionController extends Controller
 
         $validated = $request->validate([
             'class_id' => 'required|exists:classes,id',
-            'section_name' => 'required|string|max:10',
+            'section_name' => 'required|string|max:25',
+            'group_name' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer|min:1|max:200',
             'room_number' => 'nullable|string|max:50',
             'class_teacher_id' => 'nullable|exists:teachers,id',
@@ -111,6 +112,7 @@ class SectionController extends Controller
             'tenant_id' => $tenant->id,
             'class_id' => $validated['class_id'],
             'section_name' => $validated['section_name'],
+            'group_name' => $validated['group_name'] ?? null,
             'capacity' => $validated['capacity'] ?? null, // Optional - can be null
             'room_number' => $validated['room_number'],
             'class_teacher_id' => $validated['class_teacher_id'],
@@ -175,7 +177,12 @@ class SectionController extends Controller
         $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
         $assignedSubjectIds = $section->allSubjects()->pluck('subjects.id')->toArray();
 
-        return view('tenant.admin.sections.edit', compact('section', 'classes', 'teachers', 'tenant', 'subjects', 'assignedSubjectIds', 'teacherAssignments'));
+        // Get subject assignment settings
+        $academicSettings = \App\Models\TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+        $allowSectionWiseAssignment = ($sectionSubjectMode === 'section_wise');
+
+        return view('tenant.admin.sections.edit', compact('section', 'classes', 'teachers', 'tenant', 'subjects', 'assignedSubjectIds', 'teacherAssignments', 'allowSectionWiseAssignment', 'sectionSubjectMode'));
     }
 
     /**
@@ -193,7 +200,8 @@ class SectionController extends Controller
 
         $validated = $request->validate([
             'class_id' => 'required|exists:classes,id',
-            'section_name' => 'required|string|max:10',
+            'section_name' => 'required|string|max:25',
+            'group_name' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer|min:1|max:200',
             'room_number' => 'nullable|string|max:50',
             'class_teacher_id' => 'nullable|exists:teachers,id',
@@ -217,40 +225,42 @@ class SectionController extends Controller
         $section->update([
             'class_id' => $validated['class_id'],
             'section_name' => $validated['section_name'],
+            'group_name' => $validated['group_name'] ?? null,
             'capacity' => $validated['capacity'] ?? null, // Optional - can be null
             'room_number' => $validated['room_number'],
             'class_teacher_id' => $validated['class_teacher_id'],
             'is_active' => $validated['is_active'] ?? $section->is_active,
         ]);
 
-        // Update subjects if provided
-        if ($request->has('subjects')) {
-            $subjectIds = $request->input('subjects', []);
+        // Update subjects - always process to handle unassignment
+        // When checkboxes are unchecked, they don't send values, so we need to handle both cases:
+        // 1. subjects parameter exists (some or all checked)
+        // 2. subjects parameter doesn't exist (all unchecked)
+        $subjectIds = $request->input('subjects', []);
 
-            // Sync subjects with is_active = true for selected subjects
-            $syncData = [];
-            foreach ($subjectIds as $subjectId) {
-                $syncData[$subjectId] = ['is_active' => true, 'tenant_id' => $tenant->id];
-            }
-
-            // Get current assignments
-            $currentAssignments = DB::table('section_subjects')
-                ->where('section_id', $section->id)
-                ->pluck('subject_id')
-                ->toArray();
-
-            // For subjects that were removed, set is_active = false instead of deleting
-            $removedSubjects = array_diff($currentAssignments, $subjectIds);
-            foreach ($removedSubjects as $removedId) {
-                DB::table('section_subjects')
-                    ->where('section_id', $section->id)
-                    ->where('subject_id', $removedId)
-                    ->update(['is_active' => false]);
-            }
-
-            // Sync new/active subjects
-            $section->allSubjects()->sync($syncData, false);
+        // Sync subjects with is_active = true for selected subjects
+        $syncData = [];
+        foreach ($subjectIds as $subjectId) {
+            $syncData[$subjectId] = ['is_active' => true, 'tenant_id' => $tenant->id];
         }
+
+        // Get current assignments
+        $currentAssignments = DB::table('section_subjects')
+            ->where('section_id', $section->id)
+            ->pluck('subject_id')
+            ->toArray();
+
+        // For subjects that were removed, set is_active = false instead of deleting
+        $removedSubjects = array_diff($currentAssignments, $subjectIds);
+        foreach ($removedSubjects as $removedId) {
+            DB::table('section_subjects')
+                ->where('section_id', $section->id)
+                ->where('subject_id', $removedId)
+                ->update(['is_active' => false]);
+        }
+
+        // Sync new/active subjects
+        $section->allSubjects()->sync($syncData, false);
 
         // Redirect back to the class show page
         $class = SchoolClass::forTenant($tenant->id)->findOrFail($validated['class_id']);

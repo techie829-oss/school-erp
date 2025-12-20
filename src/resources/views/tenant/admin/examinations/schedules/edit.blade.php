@@ -20,7 +20,23 @@
                     <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                     </svg>
-                    <a href="{{ url('/admin/examinations/schedules') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Schedules</a>
+                    <a href="{{ url('/admin/examinations/exams') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Exams</a>
+                </div>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <a href="{{ url('/admin/examinations/exams/' . $schedule->exam->id) }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">{{ $schedule->exam->exam_name }}</a>
+                </div>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <a href="{{ url('/admin/examinations/schedules?exam_id=' . $schedule->exam->id) }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Schedules</a>
                 </div>
             </li>
             <li aria-current="page">
@@ -114,6 +130,28 @@
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
             </div>
 
+            <!-- Shift -->
+            <div>
+                <label for="shift_id" class="block text-sm font-medium text-gray-700">
+                    Shift (Optional)
+                </label>
+                <select name="shift_id" id="shift_id"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    onchange="updateTimeFromShift()">
+                    <option value="">No Shift (Custom Time)</option>
+                    @foreach($shifts as $shift)
+                        <option value="{{ $shift->id }}"
+                                data-start-time="{{ $shift->start_time->format('H:i') }}"
+                                data-end-time="{{ $shift->end_time->format('H:i') }}"
+                                data-duration="{{ $shift->duration_minutes }}"
+                                {{ old('shift_id', $schedule->shift_id) == $shift->id ? 'selected' : '' }}>
+                            {{ $shift->shift_name }} ({{ $shift->start_time->format('H:i') }} - {{ $shift->end_time->format('H:i') }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Selecting a shift will auto-fill time and duration</p>
+            </div>
+
             <!-- Time Range -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -205,5 +243,22 @@
         </div>
     </form>
 </div>
+
+<script>
+function updateTimeFromShift() {
+    const shiftSelect = document.getElementById('shift_id');
+    if (!shiftSelect) return;
+
+    const selectedOption = shiftSelect.options[shiftSelect.selectedIndex];
+
+    if (selectedOption.value && selectedOption.dataset.startTime) {
+        document.getElementById('start_time').value = selectedOption.dataset.startTime;
+        document.getElementById('end_time').value = selectedOption.dataset.endTime;
+        if (selectedOption.dataset.duration) {
+            document.getElementById('duration_minutes').value = selectedOption.dataset.duration;
+        }
+    }
+}
+</script>
 @endsection
 

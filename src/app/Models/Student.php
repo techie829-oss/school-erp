@@ -153,6 +153,12 @@ class Student extends Model
         )->where('class_enrollments.is_current', true);
     }
 
+    // Student subjects (for student-wise assignment)
+    public function studentSubjects()
+    {
+        return $this->hasMany(StudentSubject::class);
+    }
+
     // Academic history (completed enrollments)
     public function academicHistory()
     {

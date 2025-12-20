@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamSchedule;
+use App\Models\ExamShift;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Section;
@@ -152,8 +153,9 @@ class ExamController extends Controller
         $tenant = $this->getTenant($request);
 
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
+        $shifts = ExamShift::forTenant($tenant->id)->active()->ordered()->get();
 
-        return view('tenant.admin.examinations.exams.create', compact('classes', 'tenant'));
+        return view('tenant.admin.examinations.exams.create', compact('classes', 'shifts', 'tenant'));
     }
 
     /**
@@ -195,6 +197,13 @@ class ExamController extends Controller
                 'description' => $request->description,
                 'status' => $request->status ?? 'draft',
                 'created_by' => auth()->id(),
+                'max_exams_per_day' => $request->max_exams_per_day,
+                'shift_selection_mode' => $request->shift_selection_mode,
+                'default_shift_id' => $request->default_shift_id,
+                'skip_weekends' => $request->has('skip_weekends') ? (bool)$request->skip_weekends : true,
+                'default_max_marks' => $request->default_max_marks,
+                'default_passing_marks' => $request->default_passing_marks,
+                'default_duration_minutes' => $request->default_duration_minutes,
             ]);
 
             DB::commit();
@@ -221,18 +230,64 @@ class ExamController extends Controller
                 'examSchedules.subject',
                 'examSchedules.schoolClass',
                 'examSchedules.section',
-                'examSchedules.supervisor'
+                'examSchedules.supervisor',
+                'examSchedules.shift'
             ])
             ->findOrFail($id);
 
-        // Get all schedules for this exam
-        $schedules = $exam->examSchedules()->with(['subject', 'schoolClass', 'section'])->get();
+        // Get all schedules for this exam with filtering and sorting
+        $scheduleQuery = $exam->examSchedules()
+            ->with(['subject', 'schoolClass', 'section', 'supervisor', 'shift']);
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $scheduleQuery->where('exam_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to) {
+            $scheduleQuery->where('exam_date', '<=', $request->date_to);
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'exam_date');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        if ($sortBy === 'exam_date') {
+            $scheduleQuery->orderBy('exam_date', $sortOrder)
+                         ->orderBy('start_time', $sortOrder);
+        } elseif ($sortBy === 'subject') {
+            $scheduleQuery->join('subjects', 'exam_schedules.subject_id', '=', 'subjects.id')
+                         ->orderBy('subjects.subject_name', $sortOrder)
+                         ->orderBy('exam_date', 'asc')
+                         ->orderBy('start_time', 'asc')
+                         ->select('exam_schedules.*');
+        } else {
+            $scheduleQuery->orderBy('exam_date', $sortOrder)
+                         ->orderBy('start_time', $sortOrder);
+        }
+
+        $schedules = $scheduleQuery->get();
 
         // Get unique subjects from schedules
         $uniqueSubjects = $schedules->pluck('subject_id')->unique()->count();
 
         // Get students enrolled in classes that have schedules for this exam
         $classIds = $schedules->pluck('class_id')->unique();
+
+        // Get all classes with their numeric values for sorting
+        $classesMap = collect();
+        if ($classIds->isNotEmpty()) {
+            $classesMap = SchoolClass::forTenant($tenant->id)
+                ->whereIn('id', $classIds)
+                ->get()
+                ->keyBy('class_name')
+                ->map(function($class) {
+                    return [
+                        'id' => $class->id,
+                        'class_name' => $class->class_name,
+                        'class_numeric' => $class->class_numeric ?? 999999, // Use high number for null values (sort last)
+                    ];
+                });
+        }
         $totalStudents = \App\Models\ClassEnrollment::forTenant($tenant->id)
             ->whereIn('class_id', $classIds)
             ->where('is_current', true)
@@ -261,31 +316,179 @@ class ExamController extends Controller
         $admitCardsProgress = $totalStudents > 0 ? round(($studentsWithAdmitCards / $totalStudents) * 100, 1) : 0;
         $reportCardsProgress = $totalStudents > 0 ? round(($studentsWithReportCards / $totalStudents) * 100, 1) : 0;
 
-        // Get timeline data (exam dates from schedules)
-        $timelineDates = collect();
+        // Get all shifts for this tenant, ordered by display_order
+        $shifts = \App\Models\ExamShift::forTenant($tenant->id)
+            ->active()
+            ->ordered()
+            ->get();
+
+        // Create shift ID to index mapping (for color assignment)
+        $shiftColorIndex = [];
+        foreach ($shifts as $index => $shift) {
+            $shiftColorIndex[$shift->id] = $index;
+        }
+
+        // Prepare data for different views
+        $dateWiseData = collect();
+        $dateClassData = collect();
+        $calendarData = [];
+
         if ($schedules->count() > 0) {
-            $grouped = [];
+            // Date-wise grouping
+            $dateGrouped = [];
             foreach ($schedules as $schedule) {
                 if (!$schedule->exam_date) continue;
                 $dateKey = $schedule->exam_date->format('Y-m-d');
-                if (!isset($grouped[$dateKey])) {
-                    $grouped[$dateKey] = [
+                if (!isset($dateGrouped[$dateKey])) {
+                    $dateGrouped[$dateKey] = [
                         'date' => $schedule->exam_date,
                         'count' => 0,
                         'schedules' => []
                     ];
                 }
-                $grouped[$dateKey]['count']++;
-                $grouped[$dateKey]['schedules'][] = [
-                    'subject' => $schedule->subject->subject_name ?? 'N/A',
-                    'time' => $schedule->start_time ? $schedule->start_time->format('H:i') : 'N/A',
-                    'class' => $schedule->schoolClass->class_name ?? 'N/A',
-                    'section' => $schedule->section->section_name ?? null,
+                $dateGrouped[$dateKey]['count']++;
+                $shiftId = $schedule->shift ? $schedule->shift->id : null;
+                $dateGrouped[$dateKey]['schedules'][] = [
+                    'id' => $schedule->id,
+                    'subject' => $schedule->subject ? $schedule->subject->subject_name : 'N/A',
+                    'subject_code' => $schedule->subject ? $schedule->subject->subject_code : null,
+                    'time' => $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') : 'N/A',
+                    'end_time' => $schedule->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') : null,
+                    'shift' => $schedule->shift ? $schedule->shift->shift_name : null,
+                    'shift_id' => $shiftId,
+                    'class' => $schedule->schoolClass ? $schedule->schoolClass->class_name : 'N/A',
+                    'section' => $schedule->section ? $schedule->section->section_name : null,
+                    'duration' => $schedule->duration_minutes ?? null,
+                    'supervisor' => $schedule->supervisor ? $schedule->supervisor->full_name : null,
                 ];
             }
-            $timelineDates = collect($grouped)->sortBy(function($item) {
+            // Sort schedules within each date by class_numeric (using database ordering)
+            $compareFn = [$this, 'compareClassesByNumeric'];
+            foreach ($dateGrouped as $dateKey => &$dayData) {
+                usort($dayData['schedules'], function($a, $b) use ($classesMap, $compareFn) {
+                    $aClass = $a['class'] ?? 'N/A';
+                    $bClass = $b['class'] ?? 'N/A';
+                    return call_user_func($compareFn, $aClass, $bClass, $classesMap);
+                });
+            }
+            unset($dayData);
+
+            $dateWiseData = collect($dateGrouped)->sortBy(function($item) {
                 return $item['date']->timestamp ?? 0;
             })->values();
+
+            // Date, Shift, and Class grouping - Table format (dates -> shifts -> classes as columns)
+            $dateClassTable = [];
+            $allClasses = [];
+            $allDates = [];
+            $allShifts = [];
+
+            // First pass: collect all unique dates, classes, and shifts
+            foreach ($schedules as $schedule) {
+                if (!$schedule->exam_date) continue;
+                $dateKey = $schedule->exam_date->format('Y-m-d');
+                $classKey = $schedule->schoolClass->class_name ?? 'N/A';
+                $shiftKey = $schedule->shift->shift_name ?? 'No Shift';
+
+                if (!in_array($dateKey, $allDates)) {
+                    $allDates[] = $dateKey;
+                }
+                if (!in_array($classKey, $allClasses)) {
+                    $allClasses[] = $classKey;
+                }
+                if (!in_array($shiftKey, $allShifts)) {
+                    $allShifts[] = $shiftKey;
+                }
+            }
+
+            // Sort dates
+            sort($allDates);
+
+            // Sort classes by class_numeric (using database ordering)
+            usort($allClasses, function($a, $b) use ($classesMap) {
+                return $this->compareClassesByNumeric($a, $b, $classesMap);
+            });
+
+            // Sort shifts
+            sort($allShifts);
+
+            // Second pass: populate table structure (date -> shift -> class -> schedules)
+            foreach ($schedules as $schedule) {
+                // Skip if schedule is not an object or doesn't have exam_date
+                if (!is_object($schedule) || !$schedule->exam_date) continue;
+
+                $dateKey = $schedule->exam_date->format('Y-m-d');
+                $classKey = ($schedule->schoolClass && $schedule->schoolClass->class_name) ? $schedule->schoolClass->class_name : 'N/A';
+                $shiftKey = ($schedule->shift && $schedule->shift->shift_name) ? $schedule->shift->shift_name : 'No Shift';
+
+                if (!isset($dateClassTable[$dateKey])) {
+                    $dateClassTable[$dateKey] = [
+                        'date' => $schedule->exam_date,
+                        'shifts' => []
+                    ];
+                }
+
+                if (!isset($dateClassTable[$dateKey]['shifts'][$shiftKey])) {
+                    $dateClassTable[$dateKey]['shifts'][$shiftKey] = [
+                        'shift_name' => $shiftKey,
+                        'classes' => []
+                    ];
+                }
+
+                if (!isset($dateClassTable[$dateKey]['shifts'][$shiftKey]['classes'][$classKey])) {
+                    $dateClassTable[$dateKey]['shifts'][$shiftKey]['classes'][$classKey] = [];
+                }
+
+                $shiftId = $schedule->shift ? $schedule->shift->id : null;
+                $dateClassTable[$dateKey]['shifts'][$shiftKey]['classes'][$classKey][] = [
+                    'id' => $schedule->id,
+                    'subject' => $schedule->subject ? $schedule->subject->subject_name : 'N/A',
+                    'subject_code' => $schedule->subject ? $schedule->subject->subject_code : null,
+                    'time' => $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') : 'N/A',
+                    'end_time' => $schedule->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') : null,
+                    'section' => $schedule->section ? $schedule->section->section_name : null,
+                    'duration' => $schedule->duration_minutes ?? null,
+                    'supervisor' => $schedule->supervisor ? $schedule->supervisor->full_name : null,
+                    'shift' => $schedule->shift ? $schedule->shift->shift_name : null,
+                    'shift_id' => $shiftId,
+                ];
+            }
+
+            $dateClassData = [
+                'dates' => $allDates,
+                'classes' => $allClasses,
+                'shifts' => $allShifts,
+                'table' => $dateClassTable
+            ];
+
+            // Calendar data (for calendar view)
+            foreach ($schedules as $schedule) {
+                if (!$schedule->exam_date) continue;
+                $dateKey = $schedule->exam_date->format('Y-m-d');
+                if (!isset($calendarData[$dateKey])) {
+                    $calendarData[$dateKey] = [];
+                }
+                $shiftId = $schedule->shift ? $schedule->shift->id : null;
+                $calendarData[$dateKey][] = [
+                    'id' => $schedule->id,
+                    'subject' => $schedule->subject ? $schedule->subject->subject_name : 'N/A',
+                    'time' => $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') : 'N/A',
+                    'class' => $schedule->schoolClass ? $schedule->schoolClass->class_name : 'N/A',
+                    'section' => $schedule->section ? $schedule->section->section_name : null,
+                    'shift_id' => $shiftId,
+                ];
+            }
+
+            // Sort calendar data by class_numeric within each date (using database ordering)
+            $compareFn = [$this, 'compareClassesByNumeric'];
+            foreach ($calendarData as $dateKey => &$dateSchedules) {
+                usort($dateSchedules, function($a, $b) use ($classesMap, $compareFn) {
+                    $aClass = $a['class'] ?? 'N/A';
+                    $bClass = $b['class'] ?? 'N/A';
+                    return call_user_func($compareFn, $aClass, $bClass, $classesMap);
+                });
+            }
+            unset($dateSchedules);
         }
 
         // Get statistics
@@ -307,7 +510,7 @@ class ExamController extends Controller
             'report_cards_progress' => $reportCardsProgress,
         ];
 
-        return view('tenant.admin.examinations.exams.show', compact('exam', 'stats', 'tenant', 'timelineDates', 'schedules'));
+        return view('tenant.admin.examinations.exams.show', compact('exam', 'stats', 'tenant', 'dateWiseData', 'dateClassData', 'calendarData', 'schedules', 'request', 'shiftColorIndex'));
     }
 
     /**
@@ -402,195 +605,42 @@ class ExamController extends Controller
     }
 
     /**
-     * Show exam setup wizard
+     * Compare two classes by their class_numeric value from database
+     * Falls back to alphabetical if class_numeric is not available
+     *
+     * @param string $a First class name
+     * @param string $b Second class name
+     * @param \Illuminate\Support\Collection $classesMap Map of class_name => class data
+     * @return int Comparison result (-1, 0, or 1)
      */
-    public function createWizard(Request $request)
+    protected function compareClassesByNumeric($a, $b, $classesMap)
     {
-        $tenant = $this->getTenant($request);
+        $aData = $classesMap->get($a);
+        $bData = $classesMap->get($b);
 
-        $classes = SchoolClass::forTenant($tenant->id)
-            ->active()
-            ->ordered()
-            ->with(['sections' => function($q) {
-                $q->where('is_active', true);
-            }])
-            ->get();
+        // If both classes have numeric values, compare by numeric
+        if ($aData && $bData) {
+            $aNumeric = $aData['class_numeric'] ?? 999999;
+            $bNumeric = $bData['class_numeric'] ?? 999999;
 
-        $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
-
-        // Get class-subject and section-subject mappings
-        $classSubjects = [];
-        $sectionSubjects = [];
-
-        foreach ($classes as $class) {
-            $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
-
-            if ($class->has_sections) {
-                foreach ($class->sections as $section) {
-                    $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
-                }
+            if ($aNumeric != $bNumeric) {
+                return $aNumeric <=> $bNumeric;
             }
+            // If numeric values are equal, compare by name
+            return strcmp($a, $b);
         }
 
-        return view('tenant.admin.examinations.exams.create-wizard', compact(
-            'classes',
-            'subjects',
-            'classSubjects',
-            'sectionSubjects',
-            'tenant'
-        ));
+        // If only one has data, prioritize the one with data
+        if ($aData && !$bData) {
+            return -1;
+        }
+        if (!$aData && $bData) {
+            return 1;
+        }
+
+        // If neither has data, compare alphabetically
+        return strcmp($a, $b);
     }
 
-    /**
-     * Store exam and schedules from wizard
-     */
-    public function storeWizard(Request $request)
-    {
-        $tenant = $this->getTenant($request);
-
-        $validator = Validator::make($request->all(), [
-            'exam_name' => 'required|string|max:255',
-            'exam_type' => 'required|in:unit_test,mid_term,final,quiz,assignment,preliminary',
-            'academic_year' => 'nullable|string|max:50',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'description' => 'nullable|string',
-            'status' => 'nullable|in:draft,scheduled,ongoing,completed,published,archived',
-            'class_ids' => 'required|array|min:1',
-            'class_ids.*' => [
-                'required',
-                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'section_ids' => 'nullable|array',
-            'section_ids.*' => [
-                'nullable',
-                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'subject_ids' => 'required|array|min:1',
-            'subject_ids.*' => [
-                'required',
-                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'default_date' => 'nullable|date',
-            'default_start_time' => 'nullable|date_format:H:i',
-            'default_end_time' => 'nullable|date_format:H:i',
-            'default_duration' => 'nullable|integer|min:1',
-            'default_max_marks' => 'nullable|numeric|min:0',
-            'default_passing_marks' => 'nullable|numeric|min:0',
-            'schedules' => 'required|array|min:1',
-            'schedules.*.class_id' => [
-                'required',
-                Rule::exists('classes', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'schedules.*.section_id' => [
-                'nullable',
-                Rule::exists('sections', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'schedules.*.subject_id' => [
-                'required',
-                Rule::exists('subjects', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'schedules.*.exam_date' => 'required|date',
-            'schedules.*.start_time' => 'required|date_format:H:i',
-            'schedules.*.end_time' => 'required|date_format:H:i|after:schedules.*.start_time',
-            'schedules.*.max_marks' => 'required|numeric|min:0',
-            'schedules.*.passing_marks' => 'nullable|numeric|min:0',
-            'schedules.*.room_number' => 'nullable|string|max:50',
-        ]);
-
-        if ($validator->fails()) {
-            return back()
-                ->withErrors($validator)
-                ->withInput()
-                ->with('error', 'Please fix the validation errors.');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // Create exam
-            $exam = Exam::create([
-                'tenant_id' => $tenant->id,
-                'exam_name' => $request->exam_name,
-                'exam_type' => $request->exam_type,
-                'academic_year' => $request->academic_year,
-                'class_id' => null, // Can be set if single class
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-                'description' => $request->description,
-                'status' => $request->status ?? 'draft',
-                'created_by' => auth()->id(),
-            ]);
-
-            // Create schedules
-            $created = 0;
-            $conflicts = [];
-
-            foreach ($request->schedules as $scheduleData) {
-                // Check for conflicts
-                $conflict = ExamSchedule::forTenant($tenant->id)
-                    ->where('exam_date', $scheduleData['exam_date'])
-                    ->where('start_time', $scheduleData['start_time'])
-                    ->where(function($q) use ($scheduleData) {
-                        $q->where('room_number', $scheduleData['room_number'] ?? '')
-                          ->orWhere(function($q2) use ($scheduleData) {
-                              $q2->where('class_id', $scheduleData['class_id'])
-                                 ->where(function($q3) use ($scheduleData) {
-                                     if ($scheduleData['section_id']) {
-                                         $q3->where('section_id', $scheduleData['section_id']);
-                                     } else {
-                                         $q3->whereNull('section_id');
-                                     }
-                                 });
-                          });
-                    })
-                    ->exists();
-
-                if ($conflict) {
-                    $conflicts[] = $scheduleData;
-                    continue;
-                }
-
-                $start = \Carbon\Carbon::parse($scheduleData['start_time']);
-                $end = \Carbon\Carbon::parse($scheduleData['end_time']);
-                $duration = $start->diffInMinutes($end);
-
-                ExamSchedule::create([
-                    'tenant_id' => $tenant->id,
-                    'exam_id' => $exam->id,
-                    'subject_id' => $scheduleData['subject_id'],
-                    'class_id' => $scheduleData['class_id'],
-                    'section_id' => $scheduleData['section_id'] ?? null,
-                    'exam_date' => $scheduleData['exam_date'],
-                    'start_time' => $scheduleData['start_time'],
-                    'end_time' => $scheduleData['end_time'],
-                    'duration_minutes' => $duration,
-                    'room_number' => $scheduleData['room_number'] ?? null,
-                    'max_marks' => $scheduleData['max_marks'],
-                    'passing_marks' => $scheduleData['passing_marks'] ?? null,
-                    'instructions' => $scheduleData['instructions'] ?? null,
-                    'supervisor_id' => $scheduleData['supervisor_id'] ?? null,
-                ]);
-
-                $created++;
-            }
-
-            DB::commit();
-
-            $message = "Exam '{$exam->exam_name}' created successfully with {$created} schedule(s)!";
-            if (count($conflicts) > 0) {
-                $message .= " " . count($conflicts) . " schedule(s) skipped due to conflicts.";
-            }
-
-            return redirect(url('/admin/examinations/exams/' . $exam->id))
-                ->with('success', $message)
-                ->with('conflicts', $conflicts);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create exam: ' . $e->getMessage());
-        }
-    }
 }
 

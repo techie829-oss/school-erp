@@ -169,6 +169,8 @@ class SettingsController extends Controller
             'academic_year_end' => 'nullable|date|after:academic_year_start',
             'default_session' => 'nullable|string|max:50',
             'week_start_day' => 'nullable|in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+            'class_subject_assignment_mode' => 'nullable|in:class_wise,student_wise',
+            'section_subject_assignment_mode' => 'nullable|in:section_wise,student_wise',
         ]);
 
         if ($validator->fails()) {
@@ -220,6 +222,29 @@ class SettingsController extends Controller
                 'string',
                 'academic',
                 'Week start day'
+            );
+        }
+
+        // Subject Assignment Settings
+        if ($request->has('class_subject_assignment_mode')) {
+            TenantSetting::setSetting(
+                $tenant->id,
+                'class_subject_assignment_mode',
+                $request->class_subject_assignment_mode,
+                'string',
+                'academic',
+                'Class subject assignment mode (class_wise or student_wise)'
+            );
+        }
+
+        if ($request->has('section_subject_assignment_mode')) {
+            TenantSetting::setSetting(
+                $tenant->id,
+                'section_subject_assignment_mode',
+                $request->section_subject_assignment_mode,
+                'string',
+                'academic',
+                'Section subject assignment mode (section_wise or student_wise)'
             );
         }
 

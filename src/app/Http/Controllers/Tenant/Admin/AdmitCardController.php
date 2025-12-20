@@ -9,12 +9,13 @@ use App\Models\ExamSchedule;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Services\TenantService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AdmitCardController extends Controller
@@ -909,4 +910,3 @@ class AdmitCardController extends Controller
         return $hallTicketNumber;
     }
 }
-

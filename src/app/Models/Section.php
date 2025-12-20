@@ -14,6 +14,7 @@ class Section extends Model
         'tenant_id',
         'class_id',
         'section_name',
+        'group_name',
         'capacity',
         'room_number',
         'class_teacher_id',

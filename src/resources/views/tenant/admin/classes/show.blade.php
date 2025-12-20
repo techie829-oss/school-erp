@@ -376,7 +376,7 @@
     <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 class="text-lg font-medium text-gray-900">Exams</h2>
-            <a href="{{ url('/admin/examinations/exams/create-wizard') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+            <a href="{{ url('/admin/examinations/exams/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
                 <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -468,7 +468,7 @@
             <h3 class="mt-2 text-sm font-medium text-gray-900">No exams</h3>
             <p class="mt-1 text-sm text-gray-500">Get started by creating a new exam for this class.</p>
             <div class="mt-6">
-                <a href="{{ url('/admin/examinations/exams/create-wizard') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                <a href="{{ url('/admin/examinations/exams/create') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -512,7 +512,12 @@
                                 <span class="text-indigo-600 font-bold text-lg">{{ strtoupper(substr($section->section_name, 0, 1)) }}</span>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Section {{ $section->section_name }}</h3>
+                                <h3 class="text-lg font-semibold text-gray-900">
+                                    Section {{ $section->section_name }}
+                                    @if($section->group_name)
+                                        <span class="text-sm font-normal text-gray-600">({{ $section->group_name }})</span>
+                                    @endif
+                                </h3>
                                 <div class="flex items-center gap-2 mt-1">
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $section->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $section->is_active ? 'Active' : 'Inactive' }}
@@ -562,7 +567,13 @@
                 <!-- Section Information -->
                 <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Section Information</h4>
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        @if($section->group_name)
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500">Group Name</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $section->group_name }}</dd>
+                        </div>
+                        @endif
                         <div>
                             <dt class="text-xs font-medium text-gray-500">Room Number</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ $section->room_number ?: 'Not Set' }}</dd>

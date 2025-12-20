@@ -239,40 +239,638 @@
         </dl>
     </div>
 
-    <!-- Timeline View -->
-    @if($timelineDates && $timelineDates->count() > 0)
+    <!-- Schedule Views -->
+    @if($stats['total_schedules'] > 0)
     <div class="bg-white shadow rounded-lg p-4 sm:p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Exam Timeline</h2>
-        <div class="space-y-4">
-            @foreach($timelineDates as $dayData)
-            <div class="border-l-4 border-primary-500 pl-4 py-2">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-900">
-                            {{ $dayData['date']->format('l, M d, Y') }}
-                        </h3>
-                        <p class="text-xs text-gray-500 mt-1">{{ $dayData['count'] }} exam{{ $dayData['count'] != 1 ? 's' : '' }} scheduled</p>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h2 class="text-lg font-medium text-gray-900">Schedule Views</h2>
+                <p class="text-sm text-gray-500 mt-1">View schedules in different formats</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchView('date-wise')" id="btn-date-wise" class="view-btn active inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Date-wise
+                </button>
+                <button onclick="switchView('date-class')" id="btn-date-class" class="view-btn inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    Date & Class
+                </button>
+                <button onclick="switchView('calendar')" id="btn-calendar" class="view-btn inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Calendar
+                </button>
+            </div>
+        </div>
+
+        <!-- Date-wise View -->
+        <div id="view-date-wise" class="schedule-view">
+            @if($dateWiseData && $dateWiseData->count() > 0)
+            <div class="space-y-4">
+                @foreach($dateWiseData as $dayData)
+                <div class="border-l-4 border-primary-500 pl-4 py-3 bg-gray-50 rounded-r-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">
+                                {{ $dayData['date']->format('l, M d, Y') }}
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-1">{{ $dayData['count'] }} exam{{ $dayData['count'] != 1 ? 's' : '' }} scheduled</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 space-y-2">
+                        @foreach($dayData['schedules'] as $scheduleItem)
+                        <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-primary-300 transition-colors">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 flex-wrap">
+                                    <span class="font-semibold text-gray-900">{{ $scheduleItem['subject'] }}</span>
+                                    @if($scheduleItem['subject_code'])
+                                    <span class="text-xs text-gray-500">({{ $scheduleItem['subject_code'] }})</span>
+                                    @endif
+                                    <span class="text-sm text-gray-600">•</span>
+                                    <span class="text-sm text-gray-700">{{ $scheduleItem['time'] }}</span>
+                                    @if($scheduleItem['end_time'])
+                                    <span class="text-xs text-gray-500">- {{ $scheduleItem['end_time'] }}</span>
+                                    @endif
+                                    @if($scheduleItem['shift'])
+                                    <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700">{{ $scheduleItem['shift'] }}</span>
+                                    @endif
+                                    <span class="text-sm text-gray-600">•</span>
+                                    <span class="text-sm text-gray-700">{{ $scheduleItem['class'] }}</span>
+                                    @if($scheduleItem['section'])
+                                    <span class="text-xs text-gray-500">({{ $scheduleItem['section'] }})</span>
+                                    @endif
+                                    @if($scheduleItem['duration'])
+                                    <span class="text-xs text-gray-500">• {{ $scheduleItem['duration'] }} min</span>
+                                    @endif
+                                </div>
+                                @if($scheduleItem['supervisor'])
+                                <div class="mt-1 text-xs text-gray-500">Supervisor: {{ $scheduleItem['supervisor'] }}</div>
+                                @endif
+                            </div>
+                            <div class="ml-4 flex gap-2">
+                                <a href="{{ url('/admin/examinations/schedules/' . $scheduleItem['id'] . '/edit') }}"
+                                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                    <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit
+                                </a>
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
-                <div class="mt-2 space-y-1">
-                    @foreach($dayData['schedules'] as $schedule)
-                    <div class="flex items-center text-xs text-gray-600">
-                        <svg class="h-3 w-3 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span class="font-medium">{{ $schedule['subject'] }}</span>
-                        <span class="mx-2">•</span>
-                        <span>{{ $schedule['time'] }}</span>
-                        <span class="mx-2">•</span>
-                        <span>{{ $schedule['class'] }}</span>
-                        @if($schedule['section'])
-                        <span class="ml-1 text-gray-500">({{ $schedule['section'] }})</span>
-                        @endif
+                @endforeach
+            </div>
+            @else
+            <p class="text-sm text-gray-500 text-center py-8">No schedules found</p>
+            @endif
+        </div>
+
+        <!-- Date & Class View -->
+        <div id="view-date-class" class="schedule-view hidden">
+            @php
+                // Dynamic shift color mapping based on shift index/ID - defined once for the entire view
+                // Color palette: primary (0), secondary (1), accent (2), success (3), warning (4), error (5), info (6)
+                $colorPalette = [
+                    0 => 'bg-primary-50 text-primary-700 border-primary-600 font-bold',      // 1st shift - Primary
+                    1 => 'bg-secondary-100 text-secondary-700 border-secondary-600 font-bold', // 2nd shift - Secondary
+                    2 => 'bg-accent-50 text-accent-700 border-accent-600 font-bold',          // 3rd shift - Accent
+                    3 => 'bg-green-50 text-green-700 border-green-600 font-bold',             // 4th shift - Success (green)
+                    4 => 'bg-yellow-50 text-yellow-700 border-yellow-600 font-bold',          // 5th shift - Warning (yellow)
+                    5 => 'bg-red-50 text-red-700 border-red-600 font-bold',                  // 6th shift - Error (red)
+                    6 => 'bg-blue-50 text-blue-700 border-blue-600 font-bold',                 // 7th shift - Info (blue)
+                ];
+
+                // Ensure shiftColorIndex is available
+                $shiftIndexMap = $shiftColorIndex ?? [];
+            @endphp
+            @if($dateClassData && isset($dateClassData['dates']) && count($dateClassData['dates']) > 0)
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 border border-gray-300">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300 sticky left-0 bg-gray-50 z-10">
+                                Date
+                            </th>
+                            @foreach($dateClassData['classes'] as $className)
+                            <th scope="col" class="px-3 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300 min-w-[180px]">
+                                {{ $className }}
+                            </th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach($dateClassData['dates'] as $dateKey)
+                            @php
+                                $dateObj = \Carbon\Carbon::parse($dateKey);
+                                $rowData = $dateClassData['table'][$dateKey] ?? null;
+                                $shiftsForDate = $rowData['shifts'] ?? [];
+
+                                // Get all schedules for all shifts and classes for this date
+                                $allSchedulesForDate = [];
+                                foreach ($shiftsForDate as $shiftName => $shiftData) {
+                                    foreach ($shiftData['classes'] as $className => $schedules) {
+                                        foreach ($schedules as $schedule) {
+                                            // Ensure schedule is an array and add shift name
+                                            $scheduleWithShift = is_array($schedule) ? $schedule : (array)$schedule;
+                                            $scheduleWithShift['shift_name'] = $shiftName;
+                                            $allSchedulesForDate[] = [
+                                                'class' => $className,
+                                                'schedule' => $scheduleWithShift
+                                            ];
+                                        }
+                                    }
+                                }
+
+                                // Group by class
+                                $schedulesByClass = [];
+                                foreach ($allSchedulesForDate as $item) {
+                                    if (!isset($schedulesByClass[$item['class']])) {
+                                        $schedulesByClass[$item['class']] = [];
+                                    }
+                                    $schedulesByClass[$item['class']][] = $item['schedule'];
+                                }
+                            @endphp
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-3 py-2 whitespace-nowrap border-r border-gray-300 sticky left-0 bg-white z-10">
+                                    <div class="text-xs font-semibold text-gray-900">{{ $dateObj->format('M d, Y') }}</div>
+                                    <div class="text-xs text-gray-500">{{ $dateObj->format('l') }}</div>
+                                </td>
+                                @foreach($dateClassData['classes'] as $className)
+                                <td class="px-2 py-1 border-r border-gray-300 align-top">
+                                    @if(isset($schedulesByClass[$className]) && count($schedulesByClass[$className]) > 0)
+                                        <div class="space-y-1">
+                                            @foreach($schedulesByClass[$className] as $scheduleItem)
+                                            @php
+                                                // Ensure scheduleItem is an array
+                                                $item = is_array($scheduleItem) ? $scheduleItem : [];
+                                                $shiftId = $item['shift_id'] ?? null;
+
+                                                // Get color class based on shift ID/index
+                                                if ($shiftId && isset($shiftIndexMap[$shiftId])) {
+                                                    $shiftIndex = $shiftIndexMap[$shiftId];
+                                                    $shiftColorClass = $colorPalette[$shiftIndex] ?? $colorPalette[$shiftIndex % count($colorPalette)];
+                                                } else {
+                                                    $shiftColorClass = 'bg-gray-50 text-gray-700 border-gray-600 font-bold'; // Default for no shift
+                                                }
+
+                                                $subject = $item['subject'] ?? 'N/A';
+                                                $time = $item['time'] ?? 'N/A';
+                                                $section = $item['section'] ?? null;
+                                                $scheduleId = $item['id'] ?? null;
+                                            @endphp
+                                            @if($scheduleId)
+                                            <div class="flex items-center gap-1.5 text-xs py-0.5 px-1.5 rounded hover:opacity-90 transition-colors group">
+                                                <span class="px-2 py-1 rounded text-[10px] border-2 {{ $shiftColorClass }} flex-shrink-0 truncate max-w-[120px] shadow-sm" title="{{ $subject }} - {{ $shiftName }}">
+                                                    {{ $subject }}
+                                                </span>
+                                                <span class="text-gray-600 flex-shrink-0">{{ $time }}</span>
+                                                @if($section)
+                                                <span class="text-gray-500 flex-shrink-0">({{ $section }})</span>
+                                                @endif
+                                                <a href="{{ url('/admin/examinations/schedules/' . $scheduleId . '/edit') }}"
+                                                   class="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 text-gray-400 hover:text-primary-600 transition-all"
+                                                   title="Edit">
+                                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                            @endif
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="text-[10px] text-gray-300 text-center py-1">-</div>
+                                    @endif
+                                </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @else
+            <p class="text-sm text-gray-500 text-center py-8">No schedules found</p>
+            @endif
+        </div>
+
+        <!-- Calendar View -->
+        <div id="view-calendar" class="schedule-view hidden">
+            @php
+                $calendarDates = array_keys($calendarData ?? []);
+                if (!empty($calendarDates)) {
+                    $firstDate = \Carbon\Carbon::parse(min($calendarDates));
+                    $lastDate = \Carbon\Carbon::parse(max($calendarDates));
+                    // Show from first month to last month
+                    $months = [];
+                    $currentMonth = $firstDate->copy()->startOfMonth();
+                    while ($currentMonth <= $lastDate->copy()->endOfMonth()) {
+                        $months[] = $currentMonth->copy();
+                        $currentMonth->addMonth();
+                    }
+                } else {
+                    $months = [now()->startOfMonth()];
+                }
+            @endphp
+
+            @foreach($months as $monthStart)
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">{{ $monthStart->format('F Y') }}</h3>
+                <div class="overflow-x-auto">
+                    <div class="inline-block min-w-full">
+                        <div class="grid grid-cols-7 gap-2 mb-2">
+                            @foreach(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $day)
+                            <div class="text-center text-xs font-semibold text-gray-600 py-2 bg-gray-50 rounded">{{ $day }}</div>
+                            @endforeach
+                        </div>
+                        <div class="grid grid-cols-7 gap-2">
+                            @php
+                                $currentDate = $monthStart->copy()->startOfWeek();
+                                $monthEnd = $monthStart->copy()->endOfMonth()->endOfWeek();
+                            @endphp
+                            @while($currentDate <= $monthEnd)
+                                @php
+                                    $dateKey = $currentDate->format('Y-m-d');
+                                    $isCurrentMonth = $currentDate->month == $monthStart->month;
+                                    $hasSchedules = isset($calendarData[$dateKey]);
+                                    $isToday = $currentDate->isToday();
+                                    $scheduleCount = $hasSchedules ? count($calendarData[$dateKey]) : 0;
+                                @endphp
+                                <div class="min-h-[120px] p-2 border border-gray-200 rounded-lg {{ !$isCurrentMonth ? 'bg-gray-50 opacity-50' : 'bg-white hover:bg-gray-50' }} {{ $isToday ? 'ring-2 ring-primary-500 bg-primary-50' : '' }} transition-colors">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="text-sm font-medium {{ $isCurrentMonth ? 'text-gray-900' : 'text-gray-400' }} {{ $isToday ? 'text-primary-600 font-bold' : '' }}">
+                                            {{ $currentDate->format('d') }}
+                                        </div>
+                                        @if($hasSchedules)
+                                        <span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-100 text-primary-700">
+                                            {{ $scheduleCount }}
+                                        </span>
+                                        @endif
+                                    </div>
+                                    @if($hasSchedules)
+                                    <div class="space-y-1 max-h-[90px] overflow-y-auto">
+                                        @foreach(array_slice($calendarData[$dateKey], 0, 3) as $scheduleItem)
+                                        <a href="{{ url('/admin/examinations/schedules/' . $scheduleItem['id'] . '/edit') }}"
+                                           class="block text-xs p-1.5 bg-primary-100 hover:bg-primary-200 text-primary-800 rounded cursor-pointer transition-colors"
+                                           title="{{ $scheduleItem['subject'] }} - {{ $scheduleItem['time'] }} - {{ $scheduleItem['class'] }}">
+                                            <div class="font-medium truncate">{{ $scheduleItem['subject'] }}</div>
+                                            <div class="text-xs text-primary-600 truncate">{{ $scheduleItem['time'] }}</div>
+                                        </a>
+                                        @endforeach
+                                        @if(count($calendarData[$dateKey]) > 3)
+                                        <div class="text-xs text-primary-600 font-medium text-center pt-1">
+                                            +{{ count($calendarData[$dateKey]) - 3 }} more
+                                        </div>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                                @php $currentDate->addDay(); @endphp
+                            @endwhile
+                        </div>
                     </div>
-                    @endforeach
                 </div>
             </div>
             @endforeach
+        </div>
+    </div>
+
+    <script>
+        function switchView(viewType) {
+            // Hide all views
+            document.querySelectorAll('.schedule-view').forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-600', 'text-white', 'border-transparent');
+                btn.classList.add('border-gray-300', 'text-gray-700', 'bg-white');
+            });
+
+            // Show selected view
+            document.getElementById('view-' + viewType).classList.remove('hidden');
+
+            // Add active class to selected button
+            const activeBtn = document.getElementById('btn-' + viewType);
+            activeBtn.classList.add('active', 'bg-primary-600', 'text-white', 'border-transparent');
+            activeBtn.classList.remove('border-gray-300', 'text-gray-700', 'bg-white');
+        }
+    </script>
+    @endif
+
+    <!-- Exam Schedules Table -->
+    @if($stats['total_schedules'] > 0)
+    <div class="bg-white shadow rounded-lg p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h2 class="text-lg font-medium text-gray-900">Exam Schedules</h2>
+                <p class="text-sm text-gray-500 mt-1">Manage and edit exam schedules</p>
+            </div>
+            <a href="{{ url('/admin/examinations/schedules/smart-bulk-create?exam_id=' . $exam->id) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Schedule
+            </a>
+        </div>
+
+        <!-- Filters and Sorting -->
+        <form method="GET" action="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+                    <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+                    <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="sort_by" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                    <select name="sort_by" id="sort_by" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="exam_date" {{ request('sort_by') == 'exam_date' ? 'selected' : '' }}>Date</option>
+                        <option value="subject" {{ request('sort_by') == 'subject' ? 'selected' : '' }}>Subject</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                    <select name="sort_order" id="sort_order" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="asc" {{ request('sort_order', 'asc') == 'asc' ? 'selected' : '' }}>Ascending</option>
+                        <option value="desc" {{ request('sort_order') == 'desc' ? 'selected' : '' }}>Descending</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-4">
+                <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Clear
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+
+        <!-- Schedules Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class/Section</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supervisor</th>
+                        <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($schedules as $schedule)
+                    @php
+                        // Ensure we can safely access schedule properties
+                        $subject = is_object($schedule) && $schedule->subject ? $schedule->subject->subject_name : (is_array($schedule) ? ($schedule['subject'] ?? 'N/A') : 'N/A');
+                        $subjectCode = is_object($schedule) && $schedule->subject ? ($schedule->subject->subject_code ?? null) : (is_array($schedule) ? ($schedule['subject_code'] ?? null) : null);
+                        $className = is_object($schedule) && $schedule->schoolClass ? $schedule->schoolClass->class_name : (is_array($schedule) ? ($schedule['class'] ?? 'N/A') : 'N/A');
+                        $sectionName = is_object($schedule) && $schedule->section ? $schedule->section->section_name : (is_array($schedule) ? ($schedule['section'] ?? null) : null);
+                        $examDate = is_object($schedule) ? $schedule->exam_date : (is_array($schedule) ? (isset($schedule['exam_date']) ? \Carbon\Carbon::parse($schedule['exam_date']) : null) : null);
+                        $startTime = is_object($schedule) ? $schedule->start_time : (is_array($schedule) ? ($schedule['time'] ?? null) : null);
+                        $endTime = is_object($schedule) ? $schedule->end_time : (is_array($schedule) ? ($schedule['end_time'] ?? null) : null);
+                        $duration = is_object($schedule) ? $schedule->duration_minutes : (is_array($schedule) ? ($schedule['duration'] ?? null) : null);
+                        $shiftName = is_object($schedule) && $schedule->shift ? $schedule->shift->shift_name : (is_array($schedule) ? ($schedule['shift'] ?? null) : null);
+                        $supervisorName = is_object($schedule) && $schedule->supervisor ? $schedule->supervisor->full_name : (is_array($schedule) ? ($schedule['supervisor'] ?? null) : null);
+                        $scheduleId = is_object($schedule) ? $schedule->id : (is_array($schedule) ? ($schedule['id'] ?? null) : null);
+                        $examId = is_object($schedule) ? $schedule->exam_id : (is_array($schedule) ? ($schedule['exam_id'] ?? null) : null);
+                    @endphp
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 text-sm font-semibold">
+                                {{ $loop->iteration }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ $subject }}</div>
+                            @if($subjectCode)
+                            <div class="text-xs text-gray-500">{{ $subjectCode }}</div>
+                            @endif
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $className }}</div>
+                            @if($sectionName)
+                            <div class="text-xs text-gray-500">Section: {{ $sectionName }}</div>
+                            @endif
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ $examDate ? $examDate->format('M d, Y') : 'N/A' }}</div>
+                            <div class="text-xs text-gray-500">{{ $examDate ? $examDate->format('l') : '' }}</div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            @if($startTime && $endTime)
+                            <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($startTime)->format('h:i A') }}</div>
+                            <div class="text-xs text-gray-500">to {{ \Carbon\Carbon::parse($endTime)->format('h:i A') }}</div>
+                            @else
+                            <span class="text-sm text-gray-400">-</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ $duration ? $duration . ' min' : '-' }}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            @if($shiftName)
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                {{ $shiftName }}
+                            </span>
+                            @else
+                            <span class="text-xs text-gray-400">-</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ $supervisorName ?? 'Not assigned' }}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            @if($scheduleId)
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ url('/admin/examinations/schedules/' . $scheduleId . '/edit') }}"
+                                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                                   title="Edit Schedule">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit
+                                </a>
+                                @if($examId)
+                                <a href="{{ url('/admin/examinations/results/entry?exam_id=' . $examId . '&schedule_id=' . $scheduleId) }}"
+                                   class="inline-flex items-center px-3 py-1.5 border border-primary-300 rounded-md text-sm font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors"
+                                   title="Enter Results">
+                                    Results
+                                </a>
+                                @endif
+                            </div>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9" class="px-4 py-12 text-center">
+                            <div class="text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No schedules found</h3>
+                                <p class="mt-1 text-sm text-gray-500">Try adjusting your filters</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    <!-- Schedule View Options -->
+    @if($stats['total_schedules'] > 0)
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">View & Manage Schedule</h2>
+        <p class="text-sm text-gray-500 mb-6">Choose how you want to view or manage the exam schedule</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Option 1: Basic Simple -->
+            <div class="border-2 border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer" onclick="window.open('{{ url('/admin/examinations/schedules?exam_id=' . $exam->id . '&view=basic') }}', '_blank')">
+                <div class="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4 mx-auto">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 text-center">Basic Simple</h3>
+                <p class="text-sm text-gray-600 mb-4 text-center">
+                    Clean, printable format like traditional exam schedules. Perfect for printing and distribution.
+                </p>
+                <div class="text-xs text-gray-500 space-y-1 mb-4">
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        School header & logo
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Shift information
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Date-wise table
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Student info fields
+                    </div>
+                </div>
+                <button class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
+                    View Basic Format
+                </button>
+            </div>
+
+            <!-- Option 2: Advanced for Editing -->
+            <div class="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors cursor-pointer" onclick="window.location.href='{{ url('/admin/examinations/schedules?exam_id=' . $exam->id . '&view=advanced') }}'">
+                <div class="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4 mx-auto">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 text-center">Advanced for Editing</h3>
+                <p class="text-sm text-gray-600 mb-4 text-center">
+                    Detailed view with all information. Perfect for editing, reviewing, and administrative tasks.
+                </p>
+                <div class="text-xs text-gray-500 space-y-1 mb-4">
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Complete schedule details
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Room numbers & supervisors
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Time slots & durations
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Editable format
+                    </div>
+                </div>
+                <button class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium">
+                    View & Edit
+                </button>
+            </div>
+
+            <!-- Option 3: Custom -->
+            <div class="border-2 border-gray-200 rounded-lg p-6 hover:border-purple-500 transition-colors cursor-pointer" onclick="window.location.href='{{ url('/admin/examinations/schedules?exam_id=' . $exam->id . '&view=custom') }}'">
+                <div class="flex items-center justify-center w-16 h-16 rounded-full bg-purple-100 text-purple-600 mb-4 mx-auto">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 text-center">Custom</h3>
+                <p class="text-sm text-gray-600 mb-4 text-center">
+                    Customize the layout and choose what information to display. Create your own format.
+                </p>
+                <div class="text-xs text-gray-500 space-y-1 mb-4">
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Customizable layout
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Select fields to display
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Choose color scheme
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        Export to PDF/Excel
+                    </div>
+                </div>
+                <button class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium">
+                    Customize & Export
+                </button>
+            </div>
         </div>
     </div>
     @endif
@@ -292,6 +890,26 @@
                     <p class="text-xs text-gray-500">Create all schedules at once</p>
                 </div>
             </a>
+
+            @if($stats['total_schedules'] > 0)
+            <form action="{{ url('/admin/examinations/schedules/bulk/delete') }}" method="POST" class="flex items-center p-4 border-2 border-red-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors bg-red-50" onsubmit="return confirm('Are you sure you want to delete ALL {{ $stats['total_schedules'] }} schedule(s) for this exam? This action cannot be undone. Make sure you have no results entered for these schedules.');">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="exam_id" value="{{ $exam->id }}">
+                <div class="flex-shrink-0 bg-red-100 rounded-lg p-3">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div class="ml-4 flex-1">
+                    <p class="text-sm font-medium text-gray-900">Delete All Schedules</p>
+                    <p class="text-xs text-gray-500">Delete all {{ $stats['total_schedules'] }} schedule(s) to regenerate</p>
+                </div>
+                <button type="submit" class="ml-2 px-3 py-1 text-sm font-medium text-red-700 hover:text-red-900">
+                    Delete
+                </button>
+            </form>
+            @endif
 
             <a href="{{ url('/admin/examinations/schedules/select-exam?exam_id=' . $exam->id) }}" class="flex items-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
                 <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">

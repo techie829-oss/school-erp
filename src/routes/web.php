@@ -610,13 +610,20 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             // Exams
             Route::get('exams', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'index'])->name('exams.index');
             Route::get('exams/create', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'create'])->name('exams.create');
-            Route::get('exams/create-wizard', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'createWizard'])->name('exams.create-wizard');
-            Route::post('exams/wizard', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'storeWizard'])->name('exams.store-wizard');
             Route::post('exams', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'store'])->name('exams.store');
             Route::get('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'show'])->name('exams.show');
             Route::get('exams/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'edit'])->name('exams.edit');
             Route::put('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'update'])->name('exams.update');
             Route::delete('exams/{id}', [\App\Http\Controllers\Tenant\Admin\ExamController::class, 'destroy'])->name('exams.destroy');
+
+            // Exam Shifts
+            Route::get('shifts', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'index'])->name('shifts.index');
+            Route::get('shifts/create', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'create'])->name('shifts.create');
+            Route::post('shifts', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'store'])->name('shifts.store');
+            Route::get('shifts/create-example', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'createExamplePattern'])->name('shifts.create-example');
+            Route::get('shifts/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'edit'])->name('shifts.edit');
+            Route::put('shifts/{id}', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'update'])->name('shifts.update');
+            Route::delete('shifts/{id}', [\App\Http\Controllers\Tenant\Admin\ExamShiftController::class, 'destroy'])->name('shifts.destroy');
 
             // Exam Schedules
             Route::get('schedules', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'index'])->name('schedules.index');
@@ -629,6 +636,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
             Route::get('schedules/{id}/edit', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'edit'])->name('schedules.edit');
             Route::put('schedules/{id}', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'update'])->name('schedules.update');
             Route::delete('schedules/{id}', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
+            Route::delete('schedules/bulk/delete', [\App\Http\Controllers\Tenant\Admin\ExamScheduleController::class, 'bulkDestroy'])->name('schedules.bulk-destroy');
 
             // Exam Results
             Route::get('results', [\App\Http\Controllers\Tenant\Admin\ExamResultController::class, 'index'])->name('results.index');

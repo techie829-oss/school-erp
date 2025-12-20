@@ -23,6 +23,14 @@ class Exam extends Model
         'is_published',
         'publish_date',
         'created_by',
+        'max_exams_per_day',
+        'shift_selection_mode',
+        'default_shift_id',
+        'skip_weekends',
+        'default_max_marks',
+        'default_passing_marks',
+        'default_duration_minutes',
+        'scheduling_preferences',
     ];
 
     protected $casts = [
@@ -30,6 +38,8 @@ class Exam extends Model
         'end_date' => 'date',
         'publish_date' => 'date',
         'is_published' => 'boolean',
+        'skip_weekends' => 'boolean',
+        'scheduling_preferences' => 'array',
     ];
 
     /**
@@ -68,6 +78,11 @@ class Exam extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function defaultShift()
+    {
+        return $this->belongsTo(ExamShift::class, 'default_shift_id');
     }
 
     /**

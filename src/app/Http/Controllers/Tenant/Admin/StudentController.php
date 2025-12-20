@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\SchoolClass;
 use App\Models\Section;
+use App\Models\Subject;
+use App\Models\StudentSubject;
+use App\Models\TenantSetting;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
@@ -95,6 +99,14 @@ class StudentController extends Controller
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $sections = Section::forTenant($tenant->id)->active()->get();
 
+        // Get subject assignment settings
+        $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+        $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+
+        // Get all subjects for selection
+        $allSubjects = Subject::forTenant($tenant->id)->active()->get();
+
         // Generate admission number
         $admissionNumber = Student::generateAdmissionNumber($tenant->id);
 
@@ -102,7 +114,10 @@ class StudentController extends Controller
             'classes',
             'sections',
             'admissionNumber',
-            'tenant'
+            'tenant',
+            'classSubjectMode',
+            'sectionSubjectMode',
+            'allSubjects'
         ));
     }
 
@@ -159,6 +174,8 @@ class StudentController extends Controller
             'current_city' => 'nullable|string|max:100',
             'current_state' => 'nullable|string|max:100',
             'current_pincode' => 'nullable|string|max:10',
+            'subjects' => 'nullable|array',
+            'subjects.*' => 'exists:subjects,id',
         ]);
 
         if ($validator->fails()) {
@@ -246,6 +263,41 @@ class StudentController extends Controller
             $request->academic_year,
             $request->roll_number
         );
+
+        // Handle subject assignment (if student-wise is enabled)
+        if ($request->has('subjects') && $request->academic_year) {
+            $academicYear = $request->academic_year;
+            $subjectIds = $request->input('subjects', []);
+
+            // Get subject assignment settings
+            $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+            $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+            $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+
+            // Check if student-wise is enabled
+            $currentClass = SchoolClass::find($request->current_class_id);
+            $currentSection = $request->current_section_id ? Section::find($request->current_section_id) : null;
+
+            $allowStudentWise = false;
+            if ($currentSection && $currentClass && $currentClass->has_sections) {
+                $allowStudentWise = ($sectionSubjectMode === 'student_wise');
+            } elseif ($currentClass) {
+                $allowStudentWise = ($classSubjectMode === 'student_wise');
+            }
+
+            if ($allowStudentWise && !empty($subjectIds)) {
+                // Add subject assignments
+                foreach ($subjectIds as $subjectId) {
+                    StudentSubject::create([
+                        'tenant_id' => $tenant->id,
+                        'student_id' => $student->id,
+                        'subject_id' => $subjectId,
+                        'academic_year' => $academicYear,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+        }
 
         return redirect('/admin/students/' . $student->id)
             ->with('success', 'Student added successfully!');
@@ -377,16 +429,76 @@ class StudentController extends Controller
             abort(404, 'Tenant not found');
         }
 
-        $student = Student::where('tenant_id', $tenant->id)->where('id', $studentId)->firstOrFail();
+        $student = Student::where('tenant_id', $tenant->id)
+            ->with(['currentEnrollment', 'studentSubjects'])
+            ->where('id', $studentId)
+            ->firstOrFail();
 
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $sections = Section::forTenant($tenant->id)->active()->get();
+
+        // Get subject assignment settings
+        $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+        $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+
+        // Get current enrollment info
+        $currentEnrollment = $student->currentEnrollment;
+        $currentClass = $currentEnrollment ? $currentEnrollment->schoolClass : null;
+        $currentSection = $currentEnrollment ? $currentEnrollment->section : null;
+        $academicYear = $currentEnrollment ? $currentEnrollment->academic_year : null;
+
+        // Determine if student-wise assignment is enabled
+        $allowStudentWise = false;
+        $subjectsFrom = null; // 'class' or 'section'
+
+        if ($currentSection && $currentClass && $currentClass->has_sections) {
+            // Student has section - check section setting
+            $allowStudentWise = ($sectionSubjectMode === 'student_wise');
+            $subjectsFrom = 'section';
+        } elseif ($currentClass) {
+            // Student has class but no section - check class setting
+            $allowStudentWise = ($classSubjectMode === 'student_wise');
+            $subjectsFrom = 'class';
+        }
+
+        // Get all subjects for selection
+        $allSubjects = Subject::forTenant($tenant->id)->active()->get();
+
+        // Get subjects from class/section if not student-wise
+        $classOrSectionSubjects = collect();
+        if (!$allowStudentWise) {
+            if ($subjectsFrom === 'section' && $currentSection) {
+                $classOrSectionSubjects = $currentSection->subjects;
+            } elseif ($subjectsFrom === 'class' && $currentClass) {
+                $classOrSectionSubjects = $currentClass->subjects;
+            }
+        }
+
+        // Get student's assigned subjects for current academic year
+        $studentSubjectIds = [];
+        if ($academicYear && $allowStudentWise) {
+            $studentSubjectIds = StudentSubject::forTenant($tenant->id)
+                ->forStudent($student->id)
+                ->forAcademicYear($academicYear)
+                ->active()
+                ->pluck('subject_id')
+                ->toArray();
+        }
 
         return view('tenant.admin.students.edit', compact(
             'student',
             'classes',
             'sections',
-            'tenant'
+            'tenant',
+            'allowStudentWise',
+            'subjectsFrom',
+            'allSubjects',
+            'classOrSectionSubjects',
+            'studentSubjectIds',
+            'academicYear',
+            'currentClass',
+            'currentSection'
         ));
     }
 
@@ -419,6 +531,9 @@ class StudentController extends Controller
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'current_class_id' => 'required|exists:classes,id',
             'current_section_id' => 'nullable|exists:sections,id',
+            'subjects' => 'nullable|array',
+            'subjects.*' => 'exists:subjects,id',
+            'academic_year' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -463,6 +578,48 @@ class StudentController extends Controller
         } elseif ($request->has('roll_number') && $student->currentEnrollment) {
             // Just update roll number
             $student->currentEnrollment->update(['roll_number' => $request->roll_number]);
+        }
+
+        // Handle subject assignment (if student-wise is enabled)
+        if ($request->has('subjects') && $request->has('academic_year') && $request->academic_year) {
+            $academicYear = $request->academic_year;
+            $subjectIds = $request->input('subjects', []);
+
+            // Get subject assignment settings
+            $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+            $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+            $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+
+            // Check if student-wise is enabled
+            $currentEnrollment = $student->currentEnrollment;
+            $currentClass = $currentEnrollment ? $currentEnrollment->schoolClass : null;
+            $currentSection = $currentEnrollment ? $currentEnrollment->section : null;
+
+            $allowStudentWise = false;
+            if ($currentSection && $currentClass && $currentClass->has_sections) {
+                $allowStudentWise = ($sectionSubjectMode === 'student_wise');
+            } elseif ($currentClass) {
+                $allowStudentWise = ($classSubjectMode === 'student_wise');
+            }
+
+            if ($allowStudentWise) {
+                // Remove existing subjects for this academic year
+                StudentSubject::forTenant($tenant->id)
+                    ->forStudent($student->id)
+                    ->forAcademicYear($academicYear)
+                    ->delete();
+
+                // Add new subject assignments
+                foreach ($subjectIds as $subjectId) {
+                    StudentSubject::create([
+                        'tenant_id' => $tenant->id,
+                        'student_id' => $student->id,
+                        'subject_id' => $subjectId,
+                        'academic_year' => $academicYear,
+                        'is_active' => true,
+                    ]);
+                }
+            }
         }
 
         return back()->with('success', 'Student updated successfully!');

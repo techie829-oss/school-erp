@@ -65,6 +65,53 @@
         </div>
     </div>
 
+    <!-- Subject Assignment Settings -->
+    <div class="mt-8 pt-6 border-t border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Subject Assignment Settings</h3>
+        <p class="text-sm text-gray-500 mb-6">Configure how subjects are assigned to classes and sections</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <!-- Class Subject Assignment Mode -->
+            <div>
+                <label for="class_subject_assignment_mode" class="block text-sm font-medium text-gray-700">
+                    Class Subject Assignment Mode
+                </label>
+                <select name="class_subject_assignment_mode" id="class_subject_assignment_mode"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('class_subject_assignment_mode') border-red-300 @enderror">
+                    <option value="class_wise" {{ old('class_subject_assignment_mode', $academicSettings['class_subject_assignment_mode'] ?? 'class_wise') == 'class_wise' ? 'selected' : '' }}>Class-wise</option>
+                    <option value="student_wise" {{ old('class_subject_assignment_mode', $academicSettings['class_subject_assignment_mode'] ?? 'class_wise') == 'student_wise' ? 'selected' : '' }}>Student-wise</option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    <strong>Class-wise:</strong> All students in a class have the same subjects<br>
+                    <strong>Student-wise:</strong> Each student can have different subjects
+                </p>
+                @error('class_subject_assignment_mode')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Section Subject Assignment Mode -->
+            <div>
+                <label for="section_subject_assignment_mode" class="block text-sm font-medium text-gray-700">
+                    Section Subject Assignment Mode
+                </label>
+                <select name="section_subject_assignment_mode" id="section_subject_assignment_mode"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm @error('section_subject_assignment_mode') border-red-300 @enderror">
+                    <option value="section_wise" {{ old('section_subject_assignment_mode', $academicSettings['section_subject_assignment_mode'] ?? 'section_wise') == 'section_wise' ? 'selected' : '' }}>Section-wise</option>
+                    <option value="student_wise" {{ old('section_subject_assignment_mode', $academicSettings['section_subject_assignment_mode'] ?? 'section_wise') == 'student_wise' ? 'selected' : '' }}>Student-wise</option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    <strong>Section-wise:</strong> All students in a section have the same subjects<br>
+                    <strong>Student-wise:</strong> Each student can have different subjects
+                </p>
+                <p class="mt-1 text-xs text-gray-400">Note: This applies only to classes that have sections enabled</p>
+                @error('section_subject_assignment_mode')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+    </div>
+
     <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
         <div class="flex">
             <div class="flex-shrink-0">

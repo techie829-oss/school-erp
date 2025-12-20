@@ -234,6 +234,91 @@
             </div>
         </div>
 
+        <!-- Subject Assignment -->
+        @if($currentClass)
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Subject Assignment</h3>
+
+            @if($academicYear)
+                <input type="hidden" name="academic_year" value="{{ $academicYear }}">
+
+                @if($allowStudentWise)
+                    <!-- Student-wise assignment enabled - show subject selection -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Subjects for Academic Year: <strong>{{ $academicYear }}</strong>
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">
+                            You can assign individual subjects to this student. Subjects are assigned per academic year.
+                        </p>
+                        <div class="border border-gray-300 rounded-md p-4 max-h-64 overflow-y-auto bg-gray-50">
+                            @if($allSubjects && $allSubjects->count() > 0)
+                                <div class="space-y-2">
+                                    @foreach($allSubjects as $subject)
+                                        <label class="flex items-center p-2 hover:bg-white rounded cursor-pointer">
+                                            <input type="checkbox" name="subjects[]" value="{{ $subject->id }}"
+                                                {{ in_array($subject->id, old('subjects', $studentSubjectIds ?? [])) ? 'checked' : '' }}
+                                                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                            <span class="ml-2 text-sm text-gray-700">
+                                                {{ $subject->subject_name }}
+                                                @if($subject->subject_code)
+                                                    <span class="text-gray-500">({{ $subject->subject_code }})</span>
+                                                @endif
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500 text-center py-4">No active subjects available.</p>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    <!-- Class/Section-wise assignment - show subjects from class/section (read-only) -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Subjects for Academic Year: <strong>{{ $academicYear }}</strong>
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">
+                            Subjects are assigned at the {{ $subjectsFrom === 'section' ? 'section' : 'class' }} level.
+                            All students in this {{ $subjectsFrom === 'section' ? 'section' : 'class' }} have the same subjects.
+                        </p>
+                        <div class="border border-gray-300 rounded-md p-4 bg-gray-50">
+                            @if($classOrSectionSubjects && $classOrSectionSubjects->count() > 0)
+                                <div class="space-y-2">
+                                    @foreach($classOrSectionSubjects as $subject)
+                                        <div class="flex items-center p-2 bg-white rounded">
+                                            <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="text-sm text-gray-700">
+                                                {{ $subject->subject_name }}
+                                                @if($subject->subject_code)
+                                                    <span class="text-gray-500">({{ $subject->subject_code }})</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500 text-center py-4">
+                                    No subjects assigned to this {{ $subjectsFrom === 'section' ? 'section' : 'class' }}.
+                                    <a href="{{ url('/admin/' . ($subjectsFrom === 'section' ? 'sections' : 'classes') . '/' . ($subjectsFrom === 'section' ? $currentSection->id : $currentClass->id) . '/edit') }}" class="text-primary-600 hover:text-primary-700">Assign subjects</a> first.
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            @else
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p class="text-sm text-yellow-800">
+                        <strong>Note:</strong> Student must be enrolled in a class to assign subjects. Please complete the enrollment information above first.
+                    </p>
+                </div>
+            @endif
+        </div>
+        @endif
+
         <!-- Submit Buttons -->
         <div class="flex justify-end space-x-3">
             <a href="{{ url('/admin/students') }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">

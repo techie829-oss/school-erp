@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClassEnrollment;
 use App\Models\SchoolClass;
 use App\Models\Subject;
+use App\Models\TenantSetting;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -138,7 +139,7 @@ class ClassController extends Controller
         ]);
 
         // Check if class numeric already exists for this tenant
-        // Allow multiple classes with class_numeric = 0 (for pre-primary classes like NC, KG)
+        // Allow multiple classes with class_numeric = 0 (for pre-primary classes)
         // But enforce uniqueness for class_numeric 1-20
         if ($validated['class_numeric'] != 0) {
             $exists = SchoolClass::forTenant($tenant->id)
@@ -263,6 +264,11 @@ class ClassController extends Controller
         $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
         $assignedSubjectIds = $class->allSubjects()->pluck('subjects.id')->toArray();
 
+        // Get subject assignment settings
+        $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+        $allowClassWiseAssignment = ($classSubjectMode === 'class_wise');
+
         // Use database value, but if sections exist, it should be true
         $hasSections = $class->has_sections || $class->sections->count() > 0;
 
@@ -277,7 +283,7 @@ class ClassController extends Controller
             $teacherClassAssignments[$teacher->id] = $assignedClasses;
         }
 
-        return view('tenant.admin.classes.edit', compact('class', 'tenant', 'teachers', 'hasSections', 'subjects', 'assignedSubjectIds', 'teacherClassAssignments'));
+        return view('tenant.admin.classes.edit', compact('class', 'tenant', 'teachers', 'hasSections', 'subjects', 'assignedSubjectIds', 'teacherClassAssignments', 'allowClassWiseAssignment', 'classSubjectMode'));
     }
 
     /**
@@ -305,7 +311,7 @@ class ClassController extends Controller
         ]);
 
         // Check if class numeric already exists for another class
-        // Allow multiple classes with class_numeric = 0 (for pre-primary classes like NC, KG)
+        // Allow multiple classes with class_numeric = 0 (for pre-primary classes)
         // But enforce uniqueness for class_numeric 1-20
         if ($validated['class_numeric'] != 0) {
             $exists = SchoolClass::forTenant($tenant->id)
@@ -331,8 +337,10 @@ class ClassController extends Controller
             'is_active' => $validated['is_active'] ?? $class->is_active,
         ]);
 
-        // Update subjects if provided
-        if ($request->has('subjects')) {
+        // Update subjects - always process to handle unassignment
+        // When checkboxes are unchecked, they don't send values, so we need to handle both cases:
+        // 1. subjects parameter exists (some or all checked)
+        // 2. subjects parameter doesn't exist (all unchecked)
             $subjectIds = $request->input('subjects', []);
 
             // Sync subjects with is_active = true for selected subjects
@@ -358,7 +366,6 @@ class ClassController extends Controller
 
             // Sync new/active subjects
             $class->allSubjects()->sync($syncData, false);
-        }
 
         return redirect(url('/admin/classes'))->with('success', 'Class updated successfully!');
     }

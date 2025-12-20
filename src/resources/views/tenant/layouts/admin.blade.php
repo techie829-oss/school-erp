@@ -143,8 +143,20 @@
             color: var(--color-secondary-600) !important;
         }
 
+        .text-secondary-700 {
+            color: var(--color-secondary-700) !important;
+        }
+
+        .bg-secondary-50 {
+            background-color: var(--color-secondary-50) !important;
+        }
+
         .bg-secondary-100 {
             background-color: var(--color-secondary-100) !important;
+        }
+
+        .border-secondary-600 {
+            border-color: var(--color-secondary-600) !important;
         }
 
         .hover\:bg-secondary-200:hover {
@@ -155,12 +167,20 @@
             color: var(--color-accent-600) !important;
         }
 
+        .text-accent-700 {
+            color: var(--color-accent-700) !important;
+        }
+
         .bg-accent-50 {
             background-color: var(--color-accent-50) !important;
         }
 
         .bg-accent-100 {
             background-color: var(--color-accent-100) !important;
+        }
+
+        .border-accent-600 {
+            border-color: var(--color-accent-600) !important;
         }
 
         .text-success {
@@ -480,20 +500,20 @@
                                 {{-- Exams (Setup) --}}
                                 @if ($featureSettings['exams'] ?? true)
                                     <a href="{{ url('/admin/examinations/exams') }}"
-                                        class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                        class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/exams*') || request()->is('*/admin/examinations/schedules*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                                         <x-heroicon-o-document-text
-                                            class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/exams*') && !request()->is('*/admin/examinations/exams/*/schedules*') && !request()->is('*/admin/examinations/exams/*/results*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                            class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/exams*') || request()->is('*/admin/examinations/schedules*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
                                         Exams
                                     </a>
                                 @endif
 
-                                {{-- Exam Schedules (Operations) --}}
+                                {{-- Exam Shifts (Setup) --}}
                                 @if ($featureSettings['exams'] ?? true)
-                                    <a href="{{ url('/admin/examinations/schedules') }}"
-                                        class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                                        <x-heroicon-o-calendar-days
-                                            class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/schedules*') || request()->is('*/admin/examinations/exams/*/schedules*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
-                                        Exam Schedules
+                                    <a href="{{ url('/admin/examinations/shifts') }}"
+                                        class="group flex items-center px-6 py-2 text-sm font-medium rounded-md {{ request()->is('*/admin/examinations/shifts*') ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                                        <x-heroicon-o-clock
+                                            class="mr-3 h-4 w-4 {{ request()->is('*/admin/examinations/shifts*') ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" />
+                                        Exam Shifts
                                     </a>
                                 @endif
 

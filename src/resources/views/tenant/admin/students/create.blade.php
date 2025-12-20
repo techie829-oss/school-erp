@@ -361,6 +361,15 @@
             </div>
         </div>
 
+        <!-- Subject Assignment -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6" id="subject-assignment-section" style="display: none;">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Subject Assignment</h3>
+
+            <div id="subject-assignment-content">
+                <p class="text-sm text-gray-500 mb-4">Please select a class first to see subject assignment options.</p>
+            </div>
+        </div>
+
         <!-- Submit Buttons -->
         <div class="flex justify-end space-x-3">
             <a href="{{ url('/admin/students') }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
@@ -372,5 +381,117 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelect = document.getElementById('current_class_id');
+    const sectionSelect = document.getElementById('current_section_id');
+    const subjectSection = document.getElementById('subject-assignment-section');
+    const subjectContent = document.getElementById('subject-assignment-content');
+
+    // Settings from backend
+    const classSubjectMode = @json($classSubjectMode ?? 'class_wise');
+    const sectionSubjectMode = @json($sectionSubjectMode ?? 'section_wise');
+    const allSubjects = @json($allSubjects ?? []);
+    const classes = @json($classes ?? []);
+    const sections = @json($sections ?? []);
+
+    function updateSubjectAssignment() {
+        const classId = classSelect.value;
+        const sectionId = sectionSelect.value;
+
+        if (!classId) {
+            subjectSection.style.display = 'none';
+            return;
+        }
+
+        const selectedClass = classes.find(c => c.id == classId);
+        if (!selectedClass) {
+            subjectSection.style.display = 'none';
+            return;
+        }
+
+        const hasSections = selectedClass.has_sections;
+        const allowStudentWise = hasSections && sectionId
+            ? (sectionSubjectMode === 'student_wise')
+            : (classSubjectMode === 'student_wise');
+
+        subjectSection.style.display = 'block';
+
+        if (allowStudentWise) {
+            // Show subject selection checkboxes
+            let html = `
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Subjects for Academic Year: <strong id="academic-year-display">{{ old('academic_year', date('Y') . '-' . (date('Y') + 1)) }}</strong>
+                </label>
+                <p class="text-xs text-gray-500 mb-3">
+                    You can assign individual subjects to this student. Subjects are assigned per academic year.
+                </p>
+                <div class="border border-gray-300 rounded-md p-4 max-h-64 overflow-y-auto bg-gray-50">
+                    <div class="space-y-2">
+            `;
+
+            allSubjects.forEach(subject => {
+                html += `
+                    <label class="flex items-center p-2 hover:bg-white rounded cursor-pointer">
+                        <input type="checkbox" name="subjects[]" value="${subject.id}"
+                            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-700">
+                            ${subject.subject_name}
+                            ${subject.subject_code ? `<span class="text-gray-500">(${subject.subject_code})</span>` : ''}
+                        </span>
+                    </label>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            subjectContent.innerHTML = html;
+        } else {
+            // Show read-only subjects from class/section
+            const subjectsFrom = hasSections && sectionId ? 'section' : 'class';
+            let html = `
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Subjects for Academic Year: <strong id="academic-year-display-2">{{ old('academic_year', date('Y') . '-' . (date('Y') + 1)) }}</strong>
+                </label>
+                <p class="text-xs text-gray-500 mb-3">
+                    Subjects are assigned at the ${subjectsFrom} level.
+                    All students in this ${subjectsFrom} will have the same subjects.
+                </p>
+                <div class="border border-gray-300 rounded-md p-4 bg-gray-50">
+                    <p class="text-sm text-gray-500 text-center py-4">
+                        <svg class="inline h-5 w-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        Subjects will be automatically assigned from the selected ${subjectsFrom}.
+                        Please ensure subjects are assigned to the ${subjectsFrom} in ${subjectsFrom === 'section' ? 'section' : 'class'} settings.
+                    </p>
+                </div>
+            `;
+
+            subjectContent.innerHTML = html;
+        }
+    }
+
+    const academicYearInput = document.getElementById('academic_year');
+
+    classSelect.addEventListener('change', updateSubjectAssignment);
+    sectionSelect.addEventListener('change', updateSubjectAssignment);
+    academicYearInput.addEventListener('input', function() {
+        const yearDisplays = document.querySelectorAll('#academic-year-display, #academic-year-display-2');
+        yearDisplays.forEach(el => {
+            if (el) el.textContent = academicYearInput.value || '{{ date('Y') . '-' . (date('Y') + 1) }}';
+        });
+    });
+
+    // Initial load if class is pre-selected
+    if (classSelect.value) {
+        updateSubjectAssignment();
+    }
+});
+</script>
 @endsection
 

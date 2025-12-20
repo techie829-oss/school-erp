@@ -13,6 +13,7 @@ class ExamSchedule extends Model
     protected $fillable = [
         'tenant_id',
         'exam_id',
+        'shift_id',
         'subject_id',
         'class_id',
         'section_id',
@@ -48,6 +49,11 @@ class ExamSchedule extends Model
     public function exam()
     {
         return $this->belongsTo(Exam::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(ExamShift::class);
     }
 
     public function subject()
