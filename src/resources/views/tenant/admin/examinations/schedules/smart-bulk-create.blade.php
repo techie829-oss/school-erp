@@ -78,6 +78,38 @@
             <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Selection</h2>
             <p class="text-sm text-gray-500 mb-4">Select classes, sections, and subjects. Assigned subjects are pre-selected.</p>
 
+            @php
+                $classSubjectMode = $classSubjectMode ?? 'class_wise';
+                $sectionSubjectMode = $sectionSubjectMode ?? 'section_wise';
+            @endphp
+
+            @if($classSubjectMode === 'student_wise' || $sectionSubjectMode === 'student_wise')
+            <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm text-blue-800 font-medium mb-1">Student-wise Subject Assignment Enabled</p>
+                        <p class="text-xs text-blue-700 mb-2">
+                            Subjects shown are aggregated from individual student assignments.
+                            @if($classSubjectMode === 'student_wise')
+                                Classes show all subjects assigned to students in that class.
+                            @endif
+                            @if($sectionSubjectMode === 'student_wise')
+                                Sections show all subjects assigned to students in that section.
+                            @endif
+                        </p>
+                        <p class="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
+                            <strong>Note:</strong> If students don't have subjects assigned for the current academic year,
+                            all available subjects will be shown to allow you to select and assign them.
+                            Once students have subjects assigned, only those subjects will be shown.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Compact Table Layout -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">

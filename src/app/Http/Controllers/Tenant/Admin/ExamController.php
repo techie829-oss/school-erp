@@ -167,13 +167,15 @@ class ExamController extends Controller
 
         $validator = Validator::make($request->all(), [
             'exam_name' => 'required|string|max:255',
-            'exam_type' => 'required|in:unit_test,mid_term,final,quiz,assignment,preliminary',
+            'exam_type' => 'required|in:unit_test,mid_term,final,quiz,assignment,preliminary,practical,oral',
             'academic_year' => 'nullable|string|max:50',
             'class_id' => 'nullable|exists:classes,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'description' => 'nullable|string',
             'status' => 'nullable|in:draft,scheduled,ongoing,completed,published,archived',
+            'admit_card_enabled' => 'nullable|boolean',
+            'result_enabled' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -204,6 +206,8 @@ class ExamController extends Controller
                 'default_max_marks' => $request->default_max_marks,
                 'default_passing_marks' => $request->default_passing_marks,
                 'default_duration_minutes' => $request->default_duration_minutes,
+                'admit_card_enabled' => $request->has('admit_card_enabled') ? (bool)$request->admit_card_enabled : true,
+                'result_enabled' => $request->has('result_enabled') ? (bool)$request->result_enabled : true,
             ]);
 
             DB::commit();
@@ -236,8 +240,9 @@ class ExamController extends Controller
             ->findOrFail($id);
 
         // Get all schedules for this exam with filtering and sorting
-        $scheduleQuery = $exam->examSchedules()
-            ->with(['subject', 'schoolClass', 'section', 'supervisor', 'shift']);
+        // Query directly from ExamSchedule model to ensure we get all schedules
+        $scheduleQuery = \App\Models\ExamSchedule::forTenant($tenant->id)
+            ->where('exam_id', $exam->id);
 
         // Filter by date range
         if ($request->has('date_from') && $request->date_from) {
@@ -247,25 +252,35 @@ class ExamController extends Controller
             $scheduleQuery->where('exam_date', '<=', $request->date_to);
         }
 
+        // Get all schedules first with relationships
+        $schedules = $scheduleQuery->with(['subject', 'schoolClass', 'section', 'supervisor', 'shift'])->get();
+
         // Sorting
         $sortBy = $request->get('sort_by', 'exam_date');
         $sortOrder = $request->get('sort_order', 'asc');
 
         if ($sortBy === 'exam_date') {
-            $scheduleQuery->orderBy('exam_date', $sortOrder)
-                         ->orderBy('start_time', $sortOrder);
+            $schedules = $schedules->sortBy(function($schedule) use ($sortOrder) {
+                $dateValue = $schedule->exam_date ? $schedule->exam_date->format('U') : 9999999999;
+                $timeValue = $schedule->start_time ? strtotime($schedule->start_time) : 0;
+                return $dateValue . '_' . $timeValue;
+            }, SORT_REGULAR, $sortOrder === 'desc');
         } elseif ($sortBy === 'subject') {
-            $scheduleQuery->join('subjects', 'exam_schedules.subject_id', '=', 'subjects.id')
-                         ->orderBy('subjects.subject_name', $sortOrder)
-                         ->orderBy('exam_date', 'asc')
-                         ->orderBy('start_time', 'asc')
-                         ->select('exam_schedules.*');
+            $schedules = $schedules->sortBy(function($schedule) use ($sortOrder) {
+                $subjectName = $schedule->subject ? $schedule->subject->subject_name : 'ZZZ';
+                $dateValue = $schedule->exam_date ? $schedule->exam_date->format('U') : 9999999999;
+                $timeValue = $schedule->start_time ? strtotime($schedule->start_time) : 0;
+                return $subjectName . '_' . $dateValue . '_' . $timeValue;
+            }, SORT_REGULAR, $sortOrder === 'desc');
         } else {
-            $scheduleQuery->orderBy('exam_date', $sortOrder)
-                         ->orderBy('start_time', $sortOrder);
+            $schedules = $schedules->sortBy(function($schedule) use ($sortOrder) {
+                $dateValue = $schedule->exam_date ? $schedule->exam_date->format('U') : 9999999999;
+                $timeValue = $schedule->start_time ? strtotime($schedule->start_time) : 0;
+                return $dateValue . '_' . $timeValue;
+            }, SORT_REGULAR, $sortOrder === 'desc');
         }
 
-        $schedules = $scheduleQuery->get();
+        $schedules = $schedules->values();
 
         // Get unique subjects from schedules
         $uniqueSubjects = $schedules->pluck('subject_id')->unique()->count();
@@ -334,7 +349,7 @@ class ExamController extends Controller
         $calendarData = [];
 
         if ($schedules->count() > 0) {
-            // Date-wise grouping
+            // Date-wise grouping with shift-based columns
             $dateGrouped = [];
             foreach ($schedules as $schedule) {
                 if (!$schedule->exam_date) continue;
@@ -343,18 +358,29 @@ class ExamController extends Controller
                     $dateGrouped[$dateKey] = [
                         'date' => $schedule->exam_date,
                         'count' => 0,
-                        'schedules' => []
+                        'shifts' => []
                     ];
                 }
                 $dateGrouped[$dateKey]['count']++;
                 $shiftId = $schedule->shift ? $schedule->shift->id : null;
-                $dateGrouped[$dateKey]['schedules'][] = [
+                $shiftName = $schedule->shift ? $schedule->shift->shift_name : 'No Shift';
+                $shiftIndex = isset($shiftColorIndex[$shiftId]) ? $shiftColorIndex[$shiftId] : 999;
+
+                if (!isset($dateGrouped[$dateKey]['shifts'][$shiftIndex])) {
+                    $dateGrouped[$dateKey]['shifts'][$shiftIndex] = [
+                        'shift_name' => $shiftName,
+                        'shift_id' => $shiftId,
+                        'schedules' => []
+                    ];
+                }
+
+                $dateGrouped[$dateKey]['shifts'][$shiftIndex]['schedules'][] = [
                     'id' => $schedule->id,
                     'subject' => $schedule->subject ? $schedule->subject->subject_name : 'N/A',
                     'subject_code' => $schedule->subject ? $schedule->subject->subject_code : null,
                     'time' => $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') : 'N/A',
                     'end_time' => $schedule->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') : null,
-                    'shift' => $schedule->shift ? $schedule->shift->shift_name : null,
+                    'shift' => $shiftName,
                     'shift_id' => $shiftId,
                     'class' => $schedule->schoolClass ? $schedule->schoolClass->class_name : 'N/A',
                     'section' => $schedule->section ? $schedule->section->section_name : null,
@@ -362,19 +388,23 @@ class ExamController extends Controller
                     'supervisor' => $schedule->supervisor ? $schedule->supervisor->full_name : null,
                 ];
             }
-            // Sort schedules within each date by class_numeric (using database ordering)
+            // Sort schedules within each shift by class_numeric
             $compareFn = [$this, 'compareClassesByNumeric'];
             foreach ($dateGrouped as $dateKey => &$dayData) {
-                usort($dayData['schedules'], function($a, $b) use ($classesMap, $compareFn) {
-                    $aClass = $a['class'] ?? 'N/A';
-                    $bClass = $b['class'] ?? 'N/A';
-                    return call_user_func($compareFn, $aClass, $bClass, $classesMap);
-                });
+                ksort($dayData['shifts']); // Sort shifts by index
+                foreach ($dayData['shifts'] as &$shiftData) {
+                    usort($shiftData['schedules'], function($a, $b) use ($classesMap, $compareFn) {
+                        $aClass = $a['class'] ?? 'N/A';
+                        $bClass = $b['class'] ?? 'N/A';
+                        return call_user_func($compareFn, $aClass, $bClass, $classesMap);
+                    });
+                }
+                unset($shiftData);
             }
             unset($dayData);
 
             $dateWiseData = collect($dateGrouped)->sortBy(function($item) {
-                return $item['date']->timestamp ?? 0;
+                return $item['date'] ? $item['date']->format('U') : 0;
             })->values();
 
             // Date, Shift, and Class grouping - Table format (dates -> shifts -> classes as columns)
@@ -510,6 +540,15 @@ class ExamController extends Controller
             'report_cards_progress' => $reportCardsProgress,
         ];
 
+        // Debug: Log schedule count
+        \Log::info('Exam Show - Schedules Count', [
+            'exam_id' => $exam->id,
+            'total_schedules' => $schedules->count(),
+            'has_date_filter' => $request->hasAny(['date_from', 'date_to']),
+            'date_from' => $request->date_from,
+            'date_to' => $request->date_to,
+        ]);
+
         return view('tenant.admin.examinations.exams.show', compact('exam', 'stats', 'tenant', 'dateWiseData', 'dateClassData', 'calendarData', 'schedules', 'request', 'shiftColorIndex'));
     }
 
@@ -565,6 +604,8 @@ class ExamController extends Controller
                 'end_date' => $request->end_date,
                 'description' => $request->description,
                 'status' => $request->status ?? $exam->status,
+                'admit_card_enabled' => $request->has('admit_card_enabled') ? (bool)$request->admit_card_enabled : ($exam->admit_card_enabled ?? true),
+                'result_enabled' => $request->has('result_enabled') ? (bool)$request->result_enabled : ($exam->result_enabled ?? true),
             ]);
 
             DB::commit();

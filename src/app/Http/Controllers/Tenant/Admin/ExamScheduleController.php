@@ -8,6 +8,8 @@ use App\Models\ExamSchedule;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Subject;
+use App\Models\StudentSubject;
+use App\Models\TenantSetting;
 use App\Models\Teacher;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
@@ -61,7 +63,7 @@ class ExamScheduleController extends Controller
 
         $query = ExamSchedule::forTenant($tenant->id)
             ->where('exam_id', $exam->id)
-            ->with(['exam', 'subject', 'schoolClass', 'section', 'supervisor', 'shift']);
+            ->with(['exam', 'subject', 'schoolClass', 'section.schoolClass', 'supervisor', 'shift']);
 
         // Filter by class
         if ($request->has('class_id') && $request->class_id) {
@@ -82,12 +84,58 @@ class ExamScheduleController extends Controller
             $query->where('exam_date', '<=', $request->date_to);
         }
 
-        $schedules = $query->orderBy('exam_date')->orderBy('start_time')->paginate(20)->withQueryString();
+        // Get total count before pagination for debugging
+        $totalCount = $query->count();
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'exam_date');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        if ($sortBy === 'exam_date') {
+            // Order by exam_date (NULLs last), then by start_time
+            $query->orderByRaw('exam_date IS NULL, exam_date ' . strtoupper($sortOrder))
+                  ->orderBy('start_time', $sortOrder);
+        } elseif ($sortBy === 'subject') {
+            $query->join('subjects', 'exam_schedules.subject_id', '=', 'subjects.id')
+                  ->orderBy('subjects.subject_name', $sortOrder)
+                  ->orderByRaw('exam_date IS NULL, exam_date ASC')
+                  ->orderBy('start_time', 'asc')
+                  ->select('exam_schedules.*');
+        } elseif ($sortBy === 'class') {
+            $query->join('classes', 'exam_schedules.class_id', '=', 'classes.id')
+                  ->orderBy('classes.class_numeric', $sortOrder)
+                  ->orderBy('classes.class_name', $sortOrder)
+                  ->orderByRaw('exam_date IS NULL, exam_date ASC')
+                  ->orderBy('start_time', 'asc')
+                  ->select('exam_schedules.*');
+        } elseif ($sortBy === 'time') {
+            $query->orderBy('start_time', $sortOrder)
+                  ->orderByRaw('exam_date IS NULL, exam_date ASC');
+        } else {
+            // Default: order by exam_date (NULLs last), then by start_time
+            $query->orderByRaw('exam_date IS NULL, exam_date ' . strtoupper($sortOrder))
+                  ->orderBy('start_time', $sortOrder);
+        }
+
+        $schedules = $query->paginate(20)->withQueryString();
+
+        // Log for debugging (can be removed later)
+        \Log::info('Exam Schedules Query', [
+            'exam_id' => $exam->id,
+            'total_schedules' => $totalCount,
+            'showing' => $schedules->count(),
+            'has_filters' => $request->hasAny(['class_id', 'subject_id', 'date_from', 'date_to']),
+        ]);
 
         $classes = SchoolClass::forTenant($tenant->id)->active()->ordered()->get();
         $subjects = Subject::forTenant($tenant->id)->active()->get();
 
-        return view('tenant.admin.examinations.schedules.index', compact('schedules', 'exam', 'classes', 'subjects', 'tenant'));
+        // Get all exams for the filter dropdown
+        $exams = Exam::forTenant($tenant->id)
+            ->orderBy('exam_name')
+            ->get();
+
+        return view('tenant.admin.examinations.schedules.index', compact('schedules', 'exam', 'classes', 'subjects', 'tenant', 'exams'));
     }
 
     /**
@@ -114,24 +162,83 @@ class ExamScheduleController extends Controller
         $teachers = Teacher::forTenant($tenant->id)->active()->get();
         $shifts = \App\Models\ExamShift::forTenant($tenant->id)->active()->ordered()->get();
 
+        // Get subject assignment settings
+        $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+        $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+
         // Get class-subject mappings (common subjects for all sections)
         // Get section-subject mappings (section-specific subjects)
         $classSubjects = [];
         $sectionSubjects = [];
 
         foreach ($classes as $class) {
-            // Always get class subjects (common subjects)
-            $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
+            // Get subjects based on assignment mode
+            if ($classSubjectMode === 'student_wise') {
+                // For student-wise: get all unique subjects from students in this class
+                $enrollmentIds = \App\Models\ClassEnrollment::forTenant($tenant->id)
+                    ->where('class_id', $class->id)
+                    ->where('is_current', true)
+                    ->pluck('student_id');
+
+                $academicYear = $exam->academic_year ?? date('Y') . '-' . (date('Y') + 1);
+                $studentSubjectIds = StudentSubject::forTenant($tenant->id)
+                    ->whereIn('student_id', $enrollmentIds)
+                    ->where('academic_year', $academicYear)
+                    ->active()
+                    ->distinct()
+                    ->pluck('subject_id')
+                    ->toArray();
+
+                // If no student subjects found and student-wise is enabled, show ALL subjects
+                // This allows admins to select any subject when students haven't been assigned yet
+                if (empty($studentSubjectIds)) {
+                    // Show all active subjects for flexibility
+                    $classSubjects[$class->id] = Subject::forTenant($tenant->id)->active()->pluck('id')->toArray();
+                } else {
+                    $classSubjects[$class->id] = $studentSubjectIds;
+                }
+            } else {
+                // Class-wise: get subjects from class
+                $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
+            }
 
             // For classes with sections, also get section-subject mappings
             if ($class->has_sections) {
                 foreach ($class->sections as $section) {
-                    $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
+                    if ($sectionSubjectMode === 'student_wise') {
+                        // For student-wise: get all unique subjects from students in this section
+                        $enrollmentIds = \App\Models\ClassEnrollment::forTenant($tenant->id)
+                            ->where('section_id', $section->id)
+                            ->where('is_current', true)
+                            ->pluck('student_id');
+
+                        $academicYear = $exam->academic_year ?? date('Y') . '-' . (date('Y') + 1);
+                        $studentSubjectIds = StudentSubject::forTenant($tenant->id)
+                            ->whereIn('student_id', $enrollmentIds)
+                            ->where('academic_year', $academicYear)
+                            ->active()
+                            ->distinct()
+                            ->pluck('subject_id')
+                            ->toArray();
+
+                        // If no student subjects found and student-wise is enabled, show ALL subjects
+                        // This allows admins to select any subject when students haven't been assigned yet
+                        if (empty($studentSubjectIds)) {
+                            // Show all active subjects for flexibility
+                            $sectionSubjects[$section->id] = Subject::forTenant($tenant->id)->active()->pluck('id')->toArray();
+                        } else {
+                            $sectionSubjects[$section->id] = $studentSubjectIds;
+                        }
+                    } else {
+                        // Section-wise: get subjects from section
+                        $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
+                    }
                 }
             }
         }
 
-        return view('tenant.admin.examinations.schedules.create', compact('exam', 'classes', 'subjects', 'teachers', 'tenant', 'classSubjects', 'sectionSubjects'));
+        return view('tenant.admin.examinations.schedules.create', compact('exam', 'classes', 'subjects', 'teachers', 'tenant', 'classSubjects', 'sectionSubjects', 'classSubjectMode', 'sectionSubjectMode'));
     }
 
     /**
@@ -533,18 +640,77 @@ class ExamScheduleController extends Controller
         // Get all subjects
         $subjects = Subject::forTenant($tenant->id)->active()->orderBy('subject_name')->get();
 
+        // Get subject assignment settings
+        $academicSettings = TenantSetting::getAllForTenant($tenant->id, 'academic');
+        $classSubjectMode = $academicSettings['class_subject_assignment_mode'] ?? 'class_wise';
+        $sectionSubjectMode = $academicSettings['section_subject_assignment_mode'] ?? 'section_wise';
+
         // Get class-subject and section-subject mappings
         $classSubjects = [];
         $sectionSubjects = [];
 
         foreach ($classes as $class) {
-            // Common subjects for class
-            $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
+            // Get subjects based on assignment mode
+            if ($classSubjectMode === 'student_wise') {
+                // For student-wise: get all unique subjects from students in this class
+                $enrollmentIds = \App\Models\ClassEnrollment::forTenant($tenant->id)
+                    ->where('class_id', $class->id)
+                    ->where('is_current', true)
+                    ->pluck('student_id');
+
+                $academicYear = $exam->academic_year ?? date('Y') . '-' . (date('Y') + 1);
+                $studentSubjectIds = StudentSubject::forTenant($tenant->id)
+                    ->whereIn('student_id', $enrollmentIds)
+                    ->where('academic_year', $academicYear)
+                    ->active()
+                    ->distinct()
+                    ->pluck('subject_id')
+                    ->toArray();
+
+                // If no student subjects found and student-wise is enabled, show ALL subjects
+                // This allows admins to select any subject when students haven't been assigned yet
+                if (empty($studentSubjectIds)) {
+                    // Show all active subjects for flexibility
+                    $classSubjects[$class->id] = Subject::forTenant($tenant->id)->active()->pluck('id')->toArray();
+                } else {
+                    $classSubjects[$class->id] = $studentSubjectIds;
+                }
+            } else {
+                // Class-wise: get subjects from class
+                $classSubjects[$class->id] = $class->subjects()->pluck('subjects.id')->toArray();
+            }
 
             // Section-specific subjects
             if ($class->has_sections) {
                 foreach ($class->sections as $section) {
-                    $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
+                    if ($sectionSubjectMode === 'student_wise') {
+                        // For student-wise: get all unique subjects from students in this section
+                        $enrollmentIds = \App\Models\ClassEnrollment::forTenant($tenant->id)
+                            ->where('section_id', $section->id)
+                            ->where('is_current', true)
+                            ->pluck('student_id');
+
+                        $academicYear = $exam->academic_year ?? date('Y') . '-' . (date('Y') + 1);
+                        $studentSubjectIds = StudentSubject::forTenant($tenant->id)
+                            ->whereIn('student_id', $enrollmentIds)
+                            ->where('academic_year', $academicYear)
+                            ->active()
+                            ->distinct()
+                            ->pluck('subject_id')
+                            ->toArray();
+
+                        // If no student subjects found and student-wise is enabled, show ALL subjects
+                        // This allows admins to select any subject when students haven't been assigned yet
+                        if (empty($studentSubjectIds)) {
+                            // Show all active subjects for flexibility
+                            $sectionSubjects[$section->id] = Subject::forTenant($tenant->id)->active()->pluck('id')->toArray();
+                        } else {
+                            $sectionSubjects[$section->id] = $studentSubjectIds;
+                        }
+                    } else {
+                        // Section-wise: get subjects from section
+                        $sectionSubjects[$section->id] = $section->subjects()->pluck('subjects.id')->toArray();
+                    }
                 }
             }
         }
@@ -577,7 +743,9 @@ class ExamScheduleController extends Controller
             'shifts',
             'tenant',
             'classSubjects',
-            'sectionSubjects'
+            'sectionSubjects',
+            'classSubjectMode',
+            'sectionSubjectMode'
         ));
     }
 

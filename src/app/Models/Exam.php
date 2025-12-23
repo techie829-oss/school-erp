@@ -31,6 +31,8 @@ class Exam extends Model
         'default_passing_marks',
         'default_duration_minutes',
         'scheduling_preferences',
+        'admit_card_enabled',
+        'result_enabled',
     ];
 
     protected $casts = [
@@ -40,6 +42,8 @@ class Exam extends Model
         'is_published' => 'boolean',
         'skip_weekends' => 'boolean',
         'scheduling_preferences' => 'array',
+        'admit_card_enabled' => 'boolean',
+        'result_enabled' => 'boolean',
     ];
 
     /**
@@ -119,6 +123,9 @@ class Exam extends Model
             'unit_test' => 'Unit Test',
             'quiz' => 'Quiz',
             'assignment' => 'Assignment',
+            'preliminary' => 'Preliminary',
+            'practical' => 'Practical',
+            'oral' => 'Oral',
             default => ucfirst(str_replace('_', ' ', $this->exam_type)),
         };
     }

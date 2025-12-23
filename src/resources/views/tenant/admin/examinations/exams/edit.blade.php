@@ -86,6 +86,8 @@
                     <option value="quiz" {{ old('exam_type', $exam->exam_type) == 'quiz' ? 'selected' : '' }}>Quiz</option>
                     <option value="assignment" {{ old('exam_type', $exam->exam_type) == 'assignment' ? 'selected' : '' }}>Assignment</option>
                     <option value="preliminary" {{ old('exam_type', $exam->exam_type) == 'preliminary' ? 'selected' : '' }}>Preliminary</option>
+                    <option value="practical" {{ old('exam_type', $exam->exam_type) == 'practical' ? 'selected' : '' }}>Practical</option>
+                    <option value="oral" {{ old('exam_type', $exam->exam_type) == 'oral' ? 'selected' : '' }}>Oral</option>
                 </select>
             </div>
 
@@ -155,6 +157,32 @@
                     <option value="published" {{ old('status', $exam->status) == 'published' ? 'selected' : '' }}>Published</option>
                     <option value="archived" {{ old('status', $exam->status) == 'archived' ? 'selected' : '' }}>Archived</option>
                 </select>
+            </div>
+
+            <!-- Exam Options -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-sm font-medium text-gray-900 mb-4">Exam Options</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="admit_card_enabled" id="admit_card_enabled" value="1"
+                            {{ old('admit_card_enabled', $exam->admit_card_enabled ?? true) ? 'checked' : '' }}
+                            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="admit_card_enabled" class="ml-2 block text-sm text-gray-700">
+                            Enable Admit Card
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 ml-6">Allow generation of admit cards for this exam</p>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" name="result_enabled" id="result_enabled" value="1"
+                            {{ old('result_enabled', $exam->result_enabled ?? true) ? 'checked' : '' }}
+                            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="result_enabled" class="ml-2 block text-sm text-gray-700">
+                            Enable Result
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 ml-6">Allow result entry and publication for this exam</p>
+                </div>
             </div>
         </div>
 

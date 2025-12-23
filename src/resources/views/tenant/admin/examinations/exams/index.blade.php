@@ -164,7 +164,7 @@
     </div>
 
     <!-- Exams Table -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="bg-white shadow rounded-lg">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -187,7 +187,9 @@
                     @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4">
-                            <div class="text-sm font-medium text-gray-900">{{ $exam->exam_name }}</div>
+                            <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                {{ $exam->exam_name }}
+                            </a>
                             @if($exam->description)
                             <div class="text-sm text-gray-500 mt-1">{{ Str::limit($exam->description, 50) }}</div>
                             @endif
@@ -245,47 +247,27 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end">
-                                <div class="relative inline-block text-left" x-data="{ open: false }">
-                                    <button @click="open = !open" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        Actions
-                                        <svg class="-mr-1 ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="inline-flex items-center justify-center p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-md transition-colors" title="View Details">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </a>
+                                <a href="{{ url('/admin/examinations/exams/' . $exam->id . '/edit') }}" class="inline-flex items-center justify-center p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-md transition-colors" title="Edit Exam">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                <form action="{{ url('/admin/examinations/exams/' . $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this exam?');" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center justify-center p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-md transition-colors" title="Delete Exam">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
-                                    <div x-show="open" @click.away="open = false" x-transition class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                                        <div class="py-1">
-                                            <a href="{{ url('/admin/examinations/exams/' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Details</a>
-                                            @if(!$hasSchedules)
-                                            <a href="{{ url('/admin/examinations/schedules/smart-bulk-create?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-primary-600 hover:bg-gray-100 font-medium">
-                                                ⚡ Create Schedules
-                                            </a>
-                                            @else
-                                            <a href="{{ url('/admin/examinations/schedules?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Schedules</a>
-                                            <a href="{{ url('/admin/examinations/schedules/smart-bulk-create?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Add More Schedules</a>
-                                            @endif
-                                            @if($hasSchedules && !$hasResults)
-                                            <a href="{{ url('/admin/examinations/results/quick-entry?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-green-600 hover:bg-gray-100 font-medium">
-                                                ⚡ Enter Results
-                                            </a>
-                                            @elseif($hasResults)
-                                            <a href="{{ url('/admin/examinations/results/quick-entry?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Enter/Edit Results</a>
-                                            <a href="{{ url('/admin/examinations/results?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Results</a>
-                                            @endif
-                                            @if($hasResults)
-                                            <a href="{{ url('/admin/examinations/admit-cards/generate?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Generate Admit Cards</a>
-                                            <a href="{{ url('/admin/examinations/report-cards/generate?exam_id=' . $exam->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Generate Report Cards</a>
-                                            @endif
-                                            <a href="{{ url('/admin/examinations/exams/' . $exam->id . '/edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Exam</a>
-                                            <div class="border-t border-gray-100"></div>
-                                            <form action="{{ url('/admin/examinations/exams/' . $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this exam?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Delete</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -313,6 +295,7 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
         <!-- Pagination -->
         @if($exams->hasPages())
