@@ -27,6 +27,7 @@ class ExamSchedule extends Model
         'passing_marks',
         'instructions',
         'supervisor_id',
+        'is_done',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class ExamSchedule extends Model
         'duration_minutes' => 'integer',
         'max_marks' => 'decimal:2',
         'passing_marks' => 'decimal:2',
+        'is_done' => 'boolean',
     ];
 
     /**

@@ -243,7 +243,7 @@
     @if($stats['total_schedules'] > 0)
     <div class="bg-white shadow rounded-lg p-3">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
-            <div>
+                    <div>
                 <h2 class="text-base font-medium text-gray-900">Schedule Views</h2>
             </div>
             <div class="flex gap-1.5">
@@ -294,26 +294,45 @@
                             </div>
                             <div class="space-y-0.5">
                                 @foreach($shiftData['schedules'] as $scheduleItem)
-                                <div class="text-xs p-1 {{ $shiftColorClass }} rounded hover:opacity-80 transition-colors group">
+                                @php
+                                    $isDone = $scheduleItem['is_done'] ?? false;
+                                    $missingAdmitCards = $scheduleItem['missing_admit_cards'] ?? false;
+                                    $itemHighlight = ($exam->admit_card_enabled && $missingAdmitCards) ? 'ring-2 ring-yellow-400' : '';
+                                @endphp
+                                <div class="text-xs p-1 {{ $shiftColorClass }} rounded hover:opacity-80 transition-colors group {{ $itemHighlight }}">
                                     <div class="flex items-center justify-between gap-1">
                                         <div class="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
                                             <span class="font-medium truncate">{{ $scheduleItem['subject'] }}</span>
                                             <span class="text-[10px] opacity-90">{{ $scheduleItem['time'] }}</span>
                                             <span class="text-[10px] opacity-75">{{ $scheduleItem['class'] }}@if($scheduleItem['section']) - {{ $scheduleItem['section'] }}@endif</span>
-                                        </div>
+                                            @if($isDone)
+                                            <span class="inline-flex items-center" title="Exam Done">
+                                                <svg class="h-2.5 w-2.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </span>
+                                            @endif
+                                            @if($exam->admit_card_enabled && $missingAdmitCards)
+                                            <span class="inline-flex items-center" title="Missing Admit Card">
+                                                <svg class="h-2.5 w-2.5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </span>
+                                            @endif
+                </div>
                                         <a href="{{ url('/admin/examinations/schedules/' . $scheduleItem['id'] . '/edit') }}"
                                            class="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 hover:bg-white hover:bg-opacity-50 rounded transition-all"
                                            title="Edit">
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
+                        </svg>
                                         </a>
                                     </div>
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                        @endforeach
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
                     </div>
                 </div>
                 @endforeach
@@ -415,9 +434,12 @@
                                                 $time = $item['time'] ?? 'N/A';
                                                 $section = $item['section'] ?? null;
                                                 $scheduleId = $item['id'] ?? null;
+                                                $isDone = $item['is_done'] ?? false;
+                                                $missingAdmitCards = $item['missing_admit_cards'] ?? false;
+                                                $itemHighlight = ($exam->admit_card_enabled && $missingAdmitCards) ? 'ring-2 ring-yellow-400' : '';
                                             @endphp
                                             @if($scheduleId)
-                                            <div class="flex items-center gap-1.5 text-xs py-0.5 px-1.5 rounded hover:opacity-90 transition-colors group">
+                                            <div class="flex items-center gap-1.5 text-xs py-0.5 px-1.5 rounded hover:opacity-90 transition-colors group {{ $itemHighlight }}">
                                                 <span class="px-2 py-1 rounded text-[10px] border-2 {{ $shiftColorClass }} flex-shrink-0 truncate max-w-[120px] shadow-sm" title="{{ $subject }} - {{ $shiftName }}">
                                                     {{ $subject }}
                                                 </span>
@@ -425,6 +447,18 @@
                                                 @if($section)
                                                 <span class="text-gray-500 flex-shrink-0">({{ $section }})</span>
                                                 @endif
+                                                <div class="flex items-center gap-0.5 flex-shrink-0">
+                                                    @if($isDone)
+                                                    <svg class="h-2.5 w-2.5 text-green-600" fill="currentColor" viewBox="0 0 20 20" title="Done">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    @endif
+                                                    @if($exam->admit_card_enabled && $missingAdmitCards)
+                                                    <svg class="h-2.5 w-2.5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20" title="Missing Admit Card">
+                                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    @endif
+                                                </div>
                                                 <a href="{{ url('/admin/examinations/schedules/' . $scheduleId . '/edit') }}"
                                                    class="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 text-gray-400 hover:text-primary-600 transition-all"
                                                    title="Edit">
@@ -569,6 +603,7 @@
                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supervisor</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -588,8 +623,11 @@
                         $supervisorName = is_object($schedule) && $schedule->supervisor ? $schedule->supervisor->full_name : (is_array($schedule) ? ($schedule['supervisor'] ?? null) : null);
                         $scheduleId = is_object($schedule) ? $schedule->id : (is_array($schedule) ? ($schedule['id'] ?? null) : null);
                         $examId = is_object($schedule) ? $schedule->exam_id : (is_array($schedule) ? ($schedule['exam_id'] ?? null) : null);
+                        $isDone = is_object($schedule) ? ($schedule->is_done ?? false) : (is_array($schedule) ? ($schedule['is_done'] ?? false) : false);
+                        $missingAdmitCards = is_object($schedule) ? ($schedule->missing_admit_cards ?? false) : (is_array($schedule) ? ($schedule['missing_admit_cards'] ?? false) : false);
+                        $rowHighlight = ($exam->admit_card_enabled && $missingAdmitCards) ? 'bg-yellow-50 border-l-4 border-yellow-400' : '';
                     @endphp
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors {{ $rowHighlight }}">
                         <td class="px-4 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 text-sm font-semibold">
                                 {{ $loop->iteration }}
@@ -634,6 +672,30 @@
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ $supervisorName ?? 'Not assigned' }}
                         </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="flex flex-col gap-1">
+                                @if($isDone)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Done
+                                </span>
+                                @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                    Pending
+                                </span>
+                                @endif
+                                @if($exam->admit_card_enabled && $missingAdmitCards)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <svg class="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Missing Admit Card
+                                </span>
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                             @if($scheduleId)
                             <div class="flex items-center justify-end gap-2">
@@ -663,7 +725,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-12 text-center">
+                        <td colspan="10" class="px-4 py-12 text-center">
                             <div class="text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>

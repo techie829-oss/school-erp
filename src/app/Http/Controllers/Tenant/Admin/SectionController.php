@@ -236,31 +236,31 @@ class SectionController extends Controller
         // When checkboxes are unchecked, they don't send values, so we need to handle both cases:
         // 1. subjects parameter exists (some or all checked)
         // 2. subjects parameter doesn't exist (all unchecked)
-        $subjectIds = $request->input('subjects', []);
+            $subjectIds = $request->input('subjects', []);
 
-        // Sync subjects with is_active = true for selected subjects
-        $syncData = [];
-        foreach ($subjectIds as $subjectId) {
-            $syncData[$subjectId] = ['is_active' => true, 'tenant_id' => $tenant->id];
-        }
+            // Sync subjects with is_active = true for selected subjects
+            $syncData = [];
+            foreach ($subjectIds as $subjectId) {
+                $syncData[$subjectId] = ['is_active' => true, 'tenant_id' => $tenant->id];
+            }
 
-        // Get current assignments
-        $currentAssignments = DB::table('section_subjects')
-            ->where('section_id', $section->id)
-            ->pluck('subject_id')
-            ->toArray();
-
-        // For subjects that were removed, set is_active = false instead of deleting
-        $removedSubjects = array_diff($currentAssignments, $subjectIds);
-        foreach ($removedSubjects as $removedId) {
-            DB::table('section_subjects')
+            // Get current assignments
+            $currentAssignments = DB::table('section_subjects')
                 ->where('section_id', $section->id)
-                ->where('subject_id', $removedId)
-                ->update(['is_active' => false]);
-        }
+                ->pluck('subject_id')
+                ->toArray();
 
-        // Sync new/active subjects
-        $section->allSubjects()->sync($syncData, false);
+            // For subjects that were removed, set is_active = false instead of deleting
+            $removedSubjects = array_diff($currentAssignments, $subjectIds);
+            foreach ($removedSubjects as $removedId) {
+                DB::table('section_subjects')
+                    ->where('section_id', $section->id)
+                    ->where('subject_id', $removedId)
+                    ->update(['is_active' => false]);
+            }
+
+            // Sync new/active subjects
+            $section->allSubjects()->sync($syncData, false);
 
         // Redirect back to the class show page
         $class = SchoolClass::forTenant($tenant->id)->findOrFail($validated['class_id']);

@@ -253,7 +253,22 @@ class ExamController extends Controller
         }
 
         // Get all schedules first with relationships
-        $schedules = $scheduleQuery->with(['subject', 'schoolClass', 'section', 'supervisor', 'shift'])->get();
+        $schedules = $scheduleQuery->with(['subject', 'schoolClass', 'section', 'supervisor', 'shift', 'examResults'])->get();
+
+        // Get all admit cards for this exam to check missing ones
+        $admitCardsByStudent = $exam->admitCards()->pluck('student_id')->unique()->toArray();
+
+        // Get students for each schedule to check admit card status
+        $scheduleStudentsMap = [];
+        foreach ($schedules as $schedule) {
+            $students = \App\Models\ClassEnrollment::forTenant($tenant->id)
+                ->where('class_id', $schedule->class_id)
+                ->where('is_current', true);
+            if ($schedule->section_id) {
+                $students->where('section_id', $schedule->section_id);
+            }
+            $scheduleStudentsMap[$schedule->id] = $students->pluck('student_id')->toArray();
+        }
 
         // Sorting
         $sortBy = $request->get('sort_by', 'exam_date');
@@ -278,6 +293,21 @@ class ExamController extends Controller
                 $timeValue = $schedule->start_time ? strtotime($schedule->start_time) : 0;
                 return $dateValue . '_' . $timeValue;
             }, SORT_REGULAR, $sortOrder === 'desc');
+        }
+
+        // Add status information to each schedule
+        foreach ($schedules as $schedule) {
+            // Check if schedule is done (has results)
+            $hasResults = $schedule->examResults && $schedule->examResults->count() > 0;
+            $schedule->is_done = $schedule->is_done || $hasResults;
+
+            // Check if admit cards are missing for this schedule
+            $schedule->missing_admit_cards = false;
+            if ($exam->admit_card_enabled) {
+                $scheduleStudentIds = $scheduleStudentsMap[$schedule->id] ?? [];
+                $missingStudents = array_diff($scheduleStudentIds, $admitCardsByStudent);
+                $schedule->missing_admit_cards = !empty($missingStudents);
+            }
         }
 
         $schedules = $schedules->values();
@@ -374,6 +404,18 @@ class ExamController extends Controller
                     ];
                 }
 
+                // Check if schedule is done (has results)
+                $hasResults = $schedule->examResults && $schedule->examResults->count() > 0;
+                $isDone = $schedule->is_done || $hasResults;
+
+                // Check if admit cards are missing for this schedule
+                $missingAdmitCards = false;
+                if ($exam->admit_card_enabled) {
+                    $scheduleStudentIds = $scheduleStudentsMap[$schedule->id] ?? [];
+                    $missingStudents = array_diff($scheduleStudentIds, $admitCardsByStudent);
+                    $missingAdmitCards = !empty($missingStudents);
+                }
+
                 $dateGrouped[$dateKey]['shifts'][$shiftIndex]['schedules'][] = [
                     'id' => $schedule->id,
                     'subject' => $schedule->subject ? $schedule->subject->subject_name : 'N/A',
@@ -386,7 +428,9 @@ class ExamController extends Controller
                     'section' => $schedule->section ? $schedule->section->section_name : null,
                     'duration' => $schedule->duration_minutes ?? null,
                     'supervisor' => $schedule->supervisor ? $schedule->supervisor->full_name : null,
-                ];
+                    'is_done' => $isDone,
+                    'missing_admit_cards' => $missingAdmitCards,
+                    ];
             }
             // Sort schedules within each shift by class_numeric
             $compareFn = [$this, 'compareClassesByNumeric'];
@@ -470,6 +514,19 @@ class ExamController extends Controller
                 }
 
                 $shiftId = $schedule->shift ? $schedule->shift->id : null;
+
+                // Check if schedule is done (has results)
+                $hasResults = $schedule->examResults && $schedule->examResults->count() > 0;
+                $isDone = $schedule->is_done || $hasResults;
+
+                // Check if admit cards are missing for this schedule
+                $missingAdmitCards = false;
+                if ($exam->admit_card_enabled) {
+                    $scheduleStudentIds = $scheduleStudentsMap[$schedule->id] ?? [];
+                    $missingStudents = array_diff($scheduleStudentIds, $admitCardsByStudent);
+                    $missingAdmitCards = !empty($missingStudents);
+                }
+
                 $dateClassTable[$dateKey]['shifts'][$shiftKey]['classes'][$classKey][] = [
                     'id' => $schedule->id,
                     'subject' => $schedule->subject ? $schedule->subject->subject_name : 'N/A',
@@ -481,6 +538,8 @@ class ExamController extends Controller
                     'supervisor' => $schedule->supervisor ? $schedule->supervisor->full_name : null,
                     'shift' => $schedule->shift ? $schedule->shift->shift_name : null,
                     'shift_id' => $shiftId,
+                    'is_done' => $isDone,
+                    'missing_admit_cards' => $missingAdmitCards,
                 ];
             }
 
