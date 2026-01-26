@@ -207,3 +207,42 @@ graph TD
         Types --> Export[Export PDF/Excel]
     end
 ```
+
+## 7. Detailed Examination System Flow
+Comprehensive view of the examination module from setup to final report card.
+
+```mermaid
+graph TD
+    subgraph "Setup Phase"
+        CreateExam[Create Exam Entry] -->|Set Dates, Type| ExamDB[(Exam DB)]
+        ExamDB --> CreateShifts[Configure Exam Shifts]
+        CreateShifts --> Schedule[Schedule Exams]
+        
+        Schedule -->|Bulk/Smart Create| ExamSchedule[(Exam Schedule)]
+        ExamSchedule -.->|Subject, Date, Time, Room| AdmitGen
+    end
+
+    subgraph "Pre-Exam"
+        AdmitGen[Generate Admit Cards] -->|PDF| Distribute[Distribute to Students]
+    end
+
+    subgraph "Execution & Grading"
+        Conduct[Conduct Exam] --> Marks[Marks Entry]
+        Marks -->|Teacher Inputs| ExamResult[(Exam Results)]
+        ExamResult -->|Auto-Calc| Status{Pass/Fail}
+    end
+
+    subgraph "Result Processing"
+        GenerateRC[Generate Report Card] -->|Fetch| ExamResult
+        GenerateRC -->|Fetch| Attendance[Attendance Records]
+        GenerateRC -->|Calculate| Rank[Class/Section Rank]
+        GenerateRC -->|Calculate| Grade[Overall Grade/GPA]
+        
+        Rank & Grade --> ReportCard[(Report Card DB)]
+        ReportCard -->|Review| Publish[Publish Results]
+        Publish -->|Visible| StudentPortal[Student/Parent Portal]
+        Publish -->|Print| PhysicalCard[Printed Report Card]
+    end
+
+    ExamDB --> GenerateRC
+```
