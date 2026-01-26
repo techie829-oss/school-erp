@@ -167,3 +167,43 @@ graph TD
     Submit -.-> GradeAssign
     Quiz -.-> TakeQuiz
 ```
+
+## 6. Detailed Attendance Flow
+The logic behind marking attendance, handling notifications, and reporting.
+
+```mermaid
+graph TD
+    User[User (Admin/Teacher)] --> SelectAction{Select Action}
+    
+    SelectAction -->|Daily Attendance| MarkDaily[Mark Class Attendance]
+    SelectAction -->|Period Attendance| MarkPeriod[Mark Period Attendance]
+    
+    subgraph "Processing Logic"
+        MarkDaily -->|Submit| Validate[Validate Input]
+        MarkPeriod -->|Submit| Validate
+        
+        Validate -->|Success| SaveDB[Update DB (student_attendance)]
+        
+        SaveDB --> CalcSummary[Recalculate Monthly Summary]
+        
+        CalcSummary --> CheckAbsent{Is Absent?}
+        CheckAbsent -->|Yes| NotifyAbsent[Send Absent SMS/Email]
+        CheckAbsent -->|No| CheckLow{< 75% Attendance?}
+        
+        CheckLow -->|Yes| NotifyLow[Send Low Attendance Warning]
+        CheckLow -->|No| Finish
+    end
+    
+    subgraph "Reporting"
+        Dashboard[Attendance Dashboard] --> DailyStats[Daily Stats]
+        Dashboard --> MonthlySummary[Monthly Summary]
+        
+        ReportGen[Report Generation] --> Types{Report Types}
+        Types --> DailyRep[Daily Report]
+        Types --> MonthlyRep[Monthly Report]
+        Types --> StudentRep[Student Wise]
+        Types --> DefaulterRep[Defaulters List]
+        
+        Types --> Export[Export PDF/Excel]
+    end
+```
