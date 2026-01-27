@@ -8,7 +8,7 @@ echo "Waiting for database connection..."
 sleep 10
 
 # Run migrations
-echo "Running migrations..."
+# Migrations skipped for manual execution
 # Migration command removed for manual execution
 
 # Seed database if needed (optional)
