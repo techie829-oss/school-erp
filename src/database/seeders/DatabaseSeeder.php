@@ -15,7 +15,6 @@ class DatabaseSeeder extends Seeder
 
         // Call other seeders
         $this->call([
-            TenantSeeder::class,
             AdminUserSeeder::class,
             ColorPaletteSeeder::class,
         ]);

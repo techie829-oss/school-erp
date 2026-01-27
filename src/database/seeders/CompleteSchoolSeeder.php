@@ -18,33 +18,61 @@ class CompleteSchoolSeeder extends Seeder
         $this->command->info("🏫 COMPLETE SCHOOL ERP SYSTEM - TEST DATA SEEDER");
         $this->command->info(str_repeat('=', 70) . "\n");
 
-        $this->command->warn("⚠️  This will create comprehensive test data for:");
-        $this->command->warn("   - Departments, Subjects, Teachers");
-        $this->command->warn("   - Classes, Sections (with Class Teachers)");
-        $this->command->warn("   - Students with Enrollments");
-        $this->command->warn("   - Examinations (Exams, Schedules, Results)");
-        $this->command->warn("\n   Make sure you have a tenant in the database!");
+        // 1. Create Demo Tenant (if not exists)
+        $tenant = \App\Models\Tenant::firstOrCreate(
+            ['id' => 'demo-school'],
+            [
+                'data' => [
+                    'name' => 'Demo Public School',
+                    'email' => 'admin@demo.com',
+                    'type' => 'school',
+                    'database_strategy' => 'shared',
+                    'subdomain' => 'demo',
+                    'full_domain' => 'demo.myschool.test',
+                    'custom_domain' => null,
+                    'active' => true,
+                    'description' => 'Demo school for testing and showcase',
+                    'student_count' => 500,
+                    'location' => 'Demo City, Cloud',
+                    'established' => '2025',
+                    'curriculum' => 'CBSE',
+                    'is_active' => true,
+                ]
+            ]
+        );
+        $this->command->info("Tenant '{$tenant->name}' ready.");
 
-        if (!$this->command->confirm("\nDo you want to continue?", true)) {
-            $this->command->info("Seeding cancelled.");
-            return;
-        }
+        // 2. Create Admin User for this Tenant
+        $admin = \App\Models\AdminUser::firstOrCreate(
+            ['email' => 'admin@demo.com'],
+            [
+                'name' => 'Demo Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'tenant_id' => $tenant->id,
+                'admin_type' => \App\Models\AdminUser::TYPE_SCHOOL_ADMIN,
+                'is_active' => true,
+                'notes' => 'Admin for Demo Tenant',
+            ]
+        );
+        $this->command->info("Admin '{$admin->email}' ready.");
+
+        $this->command->newLine();
 
         $this->command->newLine();
 
         // Run all seeders in order
         $this->call([
-            // Step 1: Teacher Management
-            DepartmentSeeder::class,        // 8 departments
-            SubjectSeeder::class,           // 24 subjects
-            TeacherSeeder::class,           // 10 teachers with qualifications
+                // Step 1: Teacher Management
+            Demo\DepartmentSeeder::class,        // 8 departments
+            Demo\SubjectSeeder::class,           // 24 subjects
+            Demo\TeacherSeeder::class,           // 10 teachers with qualifications
 
-            // Step 2: Student Management
-            ClassSectionSeeder::class,      // 10 classes, 25+ sections (assigns class teachers)
-            StudentSeeder::class,           // 200+ students with enrollments
+                // Step 2: Student Management
+            Demo\ClassSectionSeeder::class,      // 10 classes, 25+ sections (assigns class teachers)
+            Demo\StudentSeeder::class,           // 200+ students with enrollments
 
-            // Step 3: Examinations
-            ExaminationSeeder::class,       // Exams, schedules, results
+                // Step 3: Examinations
+            Demo\ExaminationSeeder::class,       // Exams, schedules, results
         ]);
 
         $this->command->newLine();
