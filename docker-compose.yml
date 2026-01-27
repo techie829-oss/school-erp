@@ -2,10 +2,10 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.prod
     image: school-erp-app
     container_name: school_erp_app
-    restart: unless-stopped
+    restart: always
     working_dir: /var/www
     volumes:
       - ./src:/var/www
@@ -13,15 +13,11 @@ services:
       - "127.0.0.1:9001:9000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    env_file:
+      - src/.env.production
     environment:
       - DB_HOST=host.docker.internal
       - DB_PORT=8086
-      - DB_DATABASE=${DB_DATABASE:-school_erp}
-      - DB_USERNAME=${DB_USERNAME:-root}
-      - DB_PASSWORD=${DB_PASSWORD:-root}
-      - APP_KEY=${APP_KEY:-base64:YOUR_GENERATED_KEY_HERE}
-      - APP_DEBUG=${APP_DEBUG:-true}
-      - APP_URL=${APP_URL:-http://localhost}
     networks:
       - school_erp_network
 
