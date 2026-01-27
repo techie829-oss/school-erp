@@ -14,7 +14,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
-      - src/.env.production
+      - src/.env
     environment:
       - DB_HOST=host.docker.internal
       - DB_PORT=8086
