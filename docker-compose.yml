@@ -15,12 +15,13 @@ services:
       - "host.docker.internal:host-gateway"
     env_file:
       - src/.env
-    environment:
-      - DB_HOST=host.docker.internal
-      - DB_PORT=8086
     networks:
       - school_erp_network
+      - mysql_default
 
 networks:
   school_erp_network:
     driver: bridge
+
+  mysql_default:
+    external: true
