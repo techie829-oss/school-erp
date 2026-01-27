@@ -10,7 +10,7 @@ services:
     volumes:
       - ./src:/var/www
     ports:
-      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:

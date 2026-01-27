@@ -16,7 +16,7 @@ services:
       # - ./.env.production:/var/www/.env
     ports:
       # Expose only to localhost or use internal network if using another proxy container
-      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9000"
     env_file:
       - .env.production
     networks:

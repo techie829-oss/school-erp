@@ -19,7 +19,7 @@ if [ -z "$1" ]; then
 fi
 
 PROJECT_PATH="$1"
-VHOST_TEMPLATE="school-erp.vhost.conf"
+VHOST_TEMPLATE="infrastructure/nginx/school-erp.vhost.conf"
 VHOST_NAME="school-erp"
 NGINX_SITES_AVAILABLE="/etc/nginx/sites-available"
 NGINX_SITES_ENABLED="/etc/nginx/sites-enabled"

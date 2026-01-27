@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-PROJECT_CONFIG="host_nginx_proxy.conf"
+PROJECT_CONFIG="infrastructure/nginx/host_nginx_proxy.conf"
 PROJECT_PATH=$(pwd)
 CONFIG_SOURCE="$PROJECT_PATH/$PROJECT_CONFIG"
 LINK_NAME="school-erp.conf"
