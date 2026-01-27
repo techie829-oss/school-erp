@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.env.production
+node_modules
+vendor
+storage
+tests
+docs
+infrastructure
+scripts
+docker-compose.yml
+docker-compose.prod.yml
+README.md
