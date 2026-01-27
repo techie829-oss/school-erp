@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.prod
+    image: school-erp:prod
+    container_name: school-erp-app-prod
+    restart: always
+    working_dir: /var/www
+    volumes:
+      # In production, we typically don't mount the whole code directory to avoid
+      # host sync issues and ensure we run what was built.
+      # However, for storage we do need persistence.
+      - ./src/storage:/var/www/storage
+      # If you need to override config or env (though env file is better):
+      # - ./.env.production:/var/www/.env
+    ports:
+      # Expose only to localhost or use internal network if using another proxy container
+      - "127.0.0.1:9000:9000"
+    env_file:
+      - .env.production
+    networks:
+      - school-erp-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  school-erp-network:
+    driver: bridge
