@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/Dockerfile.prod
+      dockerfile: docker/Dockerfile
     image: school-erp-app
     container_name: school_erp_app
     restart: always
