@@ -9,7 +9,7 @@ sleep 10
 
 # Run migrations
 echo "Running migrations..."
-php artisan migrate --force
+php artisan migrate --force || echo "Migration failed, but continuing..."
 
 # Seed database if needed (optional)
 # echo "Seeding database..."
