@@ -16,8 +16,8 @@ class AdminUserSeeder extends Seeder
         // 1. Super Admin (Global System Owner)
         AdminUser::create([
             'name' => 'Super Admin',
-            'email' => 'admin@myschool.test',
-            'password' => Hash::make('password'),
+            'email' => 'rohitkmarch96@gmail.com',
+            'password' => Hash::make('password123'),
             'tenant_id' => null, // Global access
             'admin_type' => AdminUser::TYPE_SUPER_ADMIN,
             'is_active' => true,
@@ -27,14 +27,14 @@ class AdminUserSeeder extends Seeder
         // 2. Super Manager (Global Manager)
         AdminUser::create([
             'name' => 'Super Manager',
-            'email' => 'manager@myschool.test',
-            'password' => Hash::make('password'),
+            'email' => 'lmprkmkp@gmail.com',
+            'password' => Hash::make('password123'),
             'tenant_id' => null, // Global access
             'admin_type' => AdminUser::TYPE_SUPER_MANAGER,
             'is_active' => true,
             'notes' => 'System manager with limited global access',
         ]);
 
-        $this->command->info('Created Global Admins: admin@myschool.test / manager@myschool.test');
+        $this->command->info('Created Global Admins: [EMAIL_ADDRESS] / [EMAIL_ADDRESS]');
     }
 }
