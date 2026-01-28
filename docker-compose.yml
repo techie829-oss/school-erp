@@ -7,15 +7,20 @@ services:
     container_name: school_erp_app
     restart: always
     working_dir: /var/www
+
+    # 🔑 CRITICAL FIX — mount full source
     volumes:
-      - ./src/storage:/var/www/storage
-      - ./src/.env:/var/www/.env
+      - ./src:/var/www
+
     ports:
       - "127.0.0.1:9001:9000"
+
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
     env_file:
       - src/.env
+
     networks:
       - school_erp_network
       - mysql_default
