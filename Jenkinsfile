@@ -13,7 +13,7 @@ pipeline {
         // 2. Deploy: Build image & deploy containers with zero downtime (orphans removed)
         stage('Deploy') {
             steps {
-                sh 'docker compose up -d --build --remove-orphans'
+                sh 'docker-compose up -d --build --remove-orphans'
             }
         }
 
