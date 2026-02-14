@@ -37,10 +37,16 @@ pipeline {
         stage('Build & Deploy') {
             steps {
                 sh '''
-                    # Stop existing containers
+                    # Stop and remove any existing containers with the same name
+                    echo "Cleaning up old containers..."
+                    docker stop school_erp_app school_erp_nginx 2>/dev/null || true
+                    docker rm school_erp_app school_erp_nginx 2>/dev/null || true
+                    
+                    # Stop compose managed containers
                     docker compose down || true
                     
                     # Build and start containers
+                    echo "Building and starting containers..."
                     docker compose up -d --build
                     
                     # Wait for containers to be healthy
@@ -48,6 +54,7 @@ pipeline {
                     sleep 10
                     
                     # Verify containers are running
+                    echo "✓ Containers started successfully"
                     docker compose ps
                 '''
             }
@@ -56,16 +63,16 @@ pipeline {
         stage('Migrate & Optimize') {
             steps {
                 sh '''
-                    # Run migrations
+                    echo "Running database migrations..."
                     docker compose exec -T app php artisan migrate --force
                     
-                    # Cache configuration
+                    echo "Caching configuration..."
                     docker compose exec -T app php artisan config:cache
                     
-                    # Cache routes
+                    echo "Caching routes..."
                     docker compose exec -T app php artisan route:cache
                     
-                    # Cache views
+                    echo "Caching views..."
                     docker compose exec -T app php artisan view:cache
                     
                     echo "✓ Database migrations and optimizations completed"
@@ -77,12 +84,19 @@ pipeline {
     post {
         success {
             echo "✓ Deployment Successful"
+            sh '''
+                echo ""
+                echo "Application is running at: http://127.0.0.1:9001"
+                docker compose ps
+            '''
         }
         failure {
             echo "✗ Deployment Failed"
             sh '''
+                echo ""
                 echo "Container Status:"
                 docker compose ps || true
+                docker ps -a --filter "name=school_erp" || true
                 echo ""
                 echo "Recent Logs:"
                 docker compose logs --tail=50 || true
