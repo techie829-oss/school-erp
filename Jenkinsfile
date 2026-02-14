@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     options {
-        // Clean workspace before build to ensure fresh checkout
         skipDefaultCheckout(true)
     }
 
@@ -10,14 +9,12 @@ pipeline {
 
         stage('Clean Workspace') {
             steps {
-                // Clean workspace to ensure no stale files
                 cleanWs()
             }
         }
 
         stage('Checkout') {
             steps {
-                // Fresh checkout from repository
                 checkout scm
                 
                 sh '''
@@ -25,24 +22,28 @@ pipeline {
                     echo "Repository checked out successfully"
                     echo "======================================"
                     echo ""
-                    echo "Verifying critical files..."
+                    echo "Detailed file verification..."
                     
-                    # Check for nginx config
+                    # Check file type (not just existence)
                     if [ -f docker/nginx/default.conf ]; then
-                        echo "✓ docker/nginx/default.conf found"
+                        echo "✓ docker/nginx/default.conf is a FILE"
+                        ls -lh docker/nginx/default.conf
+                        file docker/nginx/default.conf
+                    elif [ -d docker/nginx/default.conf ]; then
+                        echo "✗ ERROR: docker/nginx/default.conf is a DIRECTORY (should be a file)"
+                        ls -la docker/nginx/default.conf/
+                        exit 1
                     else
                         echo "✗ ERROR: docker/nginx/default.conf NOT FOUND"
-                        echo "Listing docker directory contents:"
-                        find docker -type f 2>/dev/null || echo "No docker directory found"
                         exit 1
                     fi
                     
-                    # Check other required files
+                    # Verify other files
                     [ -f docker/Dockerfile ] && echo "✓ docker/Dockerfile found" || (echo "✗ docker/Dockerfile missing" && exit 1)
                     [ -f docker-compose.yml ] && echo "✓ docker-compose.yml found" || (echo "✗ docker-compose.yml missing" && exit 1)
                     
                     echo ""
-                    echo "All required files present!"
+                    echo "All required files present and valid!"
                 '''
             }
         }
@@ -51,16 +52,10 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'school-erp-env', variable: 'ENV_FILE')]) {
                     sh '''
-                        # Remove existing .env file if present
                         rm -f .env
-                        
-                        # Copy the env file using cat to avoid permission issues
                         cat "$ENV_FILE" > .env
-                        
-                        # Set appropriate permissions
                         chmod 644 .env
                         
-                        # Verify the file was created
                         if [ ! -f .env ]; then
                             echo "ERROR: Failed to create .env file"
                             exit 1
@@ -72,25 +67,60 @@ pipeline {
             }
         }
 
+        stage('Cleanup Docker State') {
+            steps {
+                sh '''
+                    echo "Performing thorough cleanup..."
+                    
+                    # Stop and remove containers
+                    docker stop school_erp_app school_erp_nginx 2>/dev/null || true
+                    docker rm -f school_erp_app school_erp_nginx 2>/dev/null || true
+                    
+                    # Remove compose resources
+                    docker compose down -v 2>/dev/null || true
+                    
+                    # Clean up any orphaned volumes that might have file conflicts
+                    docker volume ls -q | grep school || true
+                    
+                    echo "✓ Cleanup completed"
+                '''
+            }
+        }
+
         stage('Build & Deploy') {
             steps {
                 sh '''
-                    echo "Cleaning up old containers..."
-                    docker stop school_erp_app school_erp_nginx 2>/dev/null || true
-                    docker rm school_erp_app school_erp_nginx 2>/dev/null || true
-                    
-                    # Stop compose managed containers
-                    docker compose down || true
-                    
-                    # Build and start containers
                     echo "Building and starting containers..."
+                    
+                    # Verify the nginx config file one more time before docker compose
+                    if [ ! -f docker/nginx/default.conf ]; then
+                        echo "ERROR: docker/nginx/default.conf disappeared!"
+                        exit 1
+                    fi
+                    
+                    # Show absolute path for debugging
+                    echo "Nginx config absolute path: $(pwd)/docker/nginx/default.conf"
+                    
+                    # Start containers
                     docker compose up -d --build
                     
-                    # Wait for containers to be healthy
+                    # Wait for containers
                     echo "Waiting for containers to start..."
                     sleep 10
                     
-                    # Verify containers are running
+                    # Verify both containers are running
+                    if ! docker ps | grep -q school_erp_app; then
+                        echo "ERROR: school_erp_app container failed to start"
+                        docker logs school_erp_app 2>&1 || true
+                        exit 1
+                    fi
+                    
+                    if ! docker ps | grep -q school_erp_nginx; then
+                        echo "ERROR: school_erp_nginx container failed to start"
+                        docker logs school_erp_nginx 2>&1 || true
+                        exit 1
+                    fi
+                    
                     echo "✓ Containers started successfully"
                     docker compose ps
                 '''
@@ -123,7 +153,9 @@ pipeline {
             echo "✓ Deployment Successful"
             sh '''
                 echo ""
+                echo "========================================="
                 echo "Application is running at: http://127.0.0.1:9001"
+                echo "========================================="
                 docker compose ps
             '''
         }
@@ -135,8 +167,11 @@ pipeline {
                 docker compose ps || true
                 docker ps -a --filter "name=school_erp" || true
                 echo ""
-                echo "Recent Logs:"
-                docker compose logs --tail=50 || true
+                echo "App Container Logs:"
+                docker logs school_erp_app 2>&1 | tail -50 || true
+                echo ""
+                echo "Nginx Container Logs:"
+                docker logs school_erp_nginx 2>&1 | tail -50 || true
             '''
         }
         always {
