@@ -16,18 +16,27 @@ RUN npm run build
 # Stage 3: Final Runtime Image
 FROM php:8.2-fpm
 
-# Install system dependencies (runtime only)
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
+# Install/Manage PHP Extensions (via mlocati/php-extension-installer)
+# This simplifies dependency management and avoids compilation issues (like JIT circular deps)
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    install-php-extensions \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    opcache \
     zip \
+    intl
+
+# Install system utilities (runtime only)
+RUN apt-get update && apt-get install -y \
     unzip \
     default-mysql-client \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd opcache
 
 # Copy custom PHP configuration
 COPY docker/php/production.ini /usr/local/etc/php/conf.d/production.ini
