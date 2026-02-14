@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "school-erp-app"
+        IMAGE_TAG  = "${env.GIT_COMMIT}"
+        CONTAINER  = "school_erp_app"
+        // Using existing path for now, but abstracted for portability
+        ENV_PATH   = "/opt/school-erp/src/.env"
+    }
+
     stages {
 
         stage('Checkout Code') {
@@ -9,11 +17,14 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Build Fresh Image') {
             steps {
                 sh '''
                     docker build \\
-                      -t school-erp-app:latest \\
+                      --pull \\
+                      --no-cache \\
+                      -t ${IMAGE_NAME}:${IMAGE_TAG} \\
+                      -t ${IMAGE_NAME}:latest \\
                       -f docker/Dockerfile .
                 '''
             }
@@ -22,36 +33,32 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sh '''
-                    docker stop school_erp_app || true
-                    docker rm school_erp_app || true
+                    docker stop ${CONTAINER} || true
+                    docker rm ${CONTAINER} || true
 
-                    docker run -d \
-                    --name school_erp_app \
-                    --restart=always \
-                    -p 127.0.0.1:9001:9000 \
-                    -v school_storage:/var/www/storage \
-                    -v /opt/school-erp/src/.env:/var/www/.env \
-                    --network school_erp_network \
-                    --network mysql_default \
-                    school-erp-app:latest
+                    # Ensure network exists
+                    docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
+
+                    docker run -d \\
+                      --name ${CONTAINER} \\
+                      --restart=always \\
+                      -p 127.0.0.1:9001:9000 \\
+                      -v school_storage:/var/www/storage \
+                      --env-file ${ENV_PATH} \
+                      --network school_erp_network \
+                      --network mysql_default \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
 
-
-
-        stage('Run Migrations') {
-            steps {
-                sh 'docker exec school_erp_app php artisan migrate --force'
-            }
-        }
-
-        stage('Optimize Application') {
+        stage('Migrate & Optimize') {
             steps {
                 sh '''
-                    docker exec school_erp_app php artisan config:cache
-                    docker exec school_erp_app php artisan route:cache
-                    docker exec school_erp_app php artisan view:cache
+                    docker exec ${CONTAINER} php artisan migrate --force
+                    docker exec ${CONTAINER} php artisan config:cache
+                    docker exec ${CONTAINER} php artisan route:cache
+                    docker exec ${CONTAINER} php artisan view:cache
                 '''
             }
         }
@@ -59,7 +66,7 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful - Pure Docker Mode"
+            echo "Deployment Successful - Clean Architecture"
         }
         failure {
             echo "Deployment Failed"
