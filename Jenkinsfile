@@ -38,17 +38,17 @@ pipeline {
             steps {
                 sh '''
                     # Stop existing containers
-                    docker compose down || true
+                    docker-compose down || true
                     
                     # Build and start containers
-                    docker compose up -d --build
+                    docker-compose up -d --build
                     
                     # Wait for containers to be healthy
                     echo "Waiting for containers to start..."
                     sleep 10
                     
                     # Verify containers are running
-                    docker compose ps
+                    docker-compose ps
                 '''
             }
         }
@@ -57,16 +57,16 @@ pipeline {
             steps {
                 sh '''
                     # Run migrations
-                    docker compose exec -T app php artisan migrate --force
+                    docker-compose exec -T app php artisan migrate --force
                     
                     # Cache configuration
-                    docker compose exec -T app php artisan config:cache
+                    docker-compose exec -T app php artisan config:cache
                     
                     # Cache routes
-                    docker compose exec -T app php artisan route:cache
+                    docker-compose exec -T app php artisan route:cache
                     
                     # Cache views
-                    docker compose exec -T app php artisan view:cache
+                    docker-compose exec -T app php artisan view:cache
                     
                     echo "✓ Database migrations and optimizations completed"
                 '''
@@ -82,9 +82,10 @@ pipeline {
             echo "✗ Deployment Failed"
             sh '''
                 echo "Container Status:"
-                docker compose ps || true
-                echo "\nRecent Logs:"
-                docker compose logs --tail=50 || true
+                docker-compose ps || true
+                echo ""
+                echo "Recent Logs:"
+                docker-compose logs --tail=50 || true
             '''
         }
         always {
