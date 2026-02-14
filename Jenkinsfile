@@ -3,19 +3,16 @@ pipeline {
 
     stages {
 
-        stage('Pull Latest Code') {
+        stage('Checkout Code') {
             steps {
-                sh '''
-                    cd /opt/school-erp
-                    git pull origin main
-                '''
+                checkout scm
             }
         }
 
         stage('Build & Deploy') {
             steps {
                 sh '''
-                    cd /opt/school-erp
+                    docker compose down || true
                     docker compose up -d --build --remove-orphans
                 '''
             }
@@ -23,9 +20,7 @@ pipeline {
 
         stage('Run Migrations') {
             steps {
-                sh '''
-                    docker exec school_erp_app php artisan migrate --force
-                '''
+                sh 'docker exec school_erp_app php artisan migrate --force'
             }
         }
 
@@ -37,15 +32,6 @@ pipeline {
                     docker exec school_erp_app php artisan view:cache
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Deployment Successful"
-        }
-        failure {
-            echo "Deployment Failed"
         }
     }
 }
