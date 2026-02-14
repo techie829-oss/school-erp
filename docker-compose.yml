@@ -9,6 +9,7 @@ services:
     restart: always
     volumes:
       - school_storage:/var/www/storage
+      - ${ENV_PATH}:/var/www/.env
     networks:
       - school_network
       - mysql_default

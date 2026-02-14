@@ -17,38 +17,9 @@ pipeline {
             }
         }
 
-        stage('Build Fresh Image') {
+        stage('Deploy') {
             steps {
-                sh '''
-                    docker build \\
-                      --pull \\
-                      --no-cache \\
-                      -t ${IMAGE_NAME}:${IMAGE_TAG} \\
-                      -t ${IMAGE_NAME}:latest \\
-                      -f docker/Dockerfile .
-                '''
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                    docker stop ${CONTAINER} || true
-                    docker rm ${CONTAINER} || true
-
-                    # Ensure network exists
-                    docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
-
-                    docker run -d \\
-                      --name ${CONTAINER} \\
-                      --restart=always \\
-                      -p 127.0.0.1:9001:9000 \\
-                      -v school_storage:/var/www/storage \
-                      -v ${ENV_PATH}:/var/www/.env \
-                      --network school_erp_network \
-                      --network mysql_default \
-                      ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                sh 'docker compose up -d --build --remove-orphans'
             }
         }
 
