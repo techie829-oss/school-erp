@@ -2,74 +2,38 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "school-erp-app"
-        IMAGE_TAG  = "${env.GIT_COMMIT}"
-        CONTAINER  = "school_erp_app"
-        // Using existing path for now, but abstracted for portability
-        ENV_PATH   = "/opt/school-erp/src/.env"
+        ENV_FILE = "/opt/school-erp/src/.env"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build Fresh Image') {
+        stage('Build & Deploy') {
             steps {
-                sh '''
-                    docker build \\
-                      --pull \\
-                      --no-cache \\
-                      -t ${IMAGE_NAME}:${IMAGE_TAG} \\
-                      -t ${IMAGE_NAME}:latest \\
-                      -f docker/Dockerfile .
-                '''
-            }
-        }
+                sh """
+                    docker compose down || true
 
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                    docker stop ${CONTAINER} || true
-                    docker rm ${CONTAINER} || true
-
-                    # Ensure network exists
-                    docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
-
-                    docker run -d \\
-                      --name ${CONTAINER} \\
-                      --restart=always \\
-                      -p 127.0.0.1:9001:9000 \\
-                      -v school_storage:/var/www/storage \
-                      -v ${ENV_PATH}:/var/www/.env \
-                      --network school_erp_network \
-                      --network mysql_default \
-                      ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                    docker compose \
+                        --env-file ${ENV_FILE} \
+                        up -d --build --remove-orphans
+                """
             }
         }
 
         stage('Migrate & Optimize') {
             steps {
                 sh '''
-                    docker exec ${CONTAINER} php artisan migrate --force
-                    docker exec ${CONTAINER} php artisan config:cache
-                    docker exec ${CONTAINER} php artisan route:cache
-                    docker exec ${CONTAINER} php artisan view:cache
+                    docker exec school_erp_app php artisan migrate --force
+                    docker exec school_erp_app php artisan config:cache
+                    docker exec school_erp_app php artisan route:cache || true
+                    docker exec school_erp_app php artisan view:cache
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Deployment Successful - Clean Architecture"
-        }
-        failure {
-            echo "Deployment Failed"
         }
     }
 }

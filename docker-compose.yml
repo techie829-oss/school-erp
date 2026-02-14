@@ -3,12 +3,10 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     image: school-erp-app:latest
     container_name: school_erp_app
     restart: always
-    env_file:
-      - .env
     volumes:
       - school_storage:/var/www/storage
     networks:
