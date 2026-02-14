@@ -8,9 +8,9 @@ services:
     restart: always
     working_dir: /var/www
 
-    # 🔑 CRITICAL FIX — mount full source
+    # ✅ PRODUCTION CONFIG — persist storage only
     volumes:
-      - ./src:/var/www
+      - school_storage:/var/www/storage
 
     ports:
       - "127.0.0.1:9001:9000"
@@ -31,3 +31,6 @@ networks:
 
   mysql_default:
     external: true
+
+volumes:
+  school_storage:
