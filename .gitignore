@@ -8,3 +8,4 @@
 /multi_tenancy_management_plan.md
 /requirements_document.md
 /school-erp.vhost.conf
+/prod/.env
