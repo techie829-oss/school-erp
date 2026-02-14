@@ -1,13 +1,9 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "school-erp"
-    }
-
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
@@ -16,7 +12,10 @@ pipeline {
         stage('Inject ENV') {
             steps {
                 withCredentials([file(credentialsId: 'school-erp-env', variable: 'ENV_FILE')]) {
-                    sh 'cp $ENV_FILE .env'
+                    sh '''
+                        cp $ENV_FILE .env
+                        chmod 600 .env
+                    '''
                 }
             }
         }
@@ -25,7 +24,7 @@ pipeline {
             steps {
                 sh '''
                     docker compose down || true
-                    docker compose up -d --build --remove-orphans
+                    docker compose up -d --build
                 '''
             }
         }
