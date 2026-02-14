@@ -30,13 +30,14 @@ pipeline {
                     --restart=always \
                     -p 127.0.0.1:9001:9000 \
                     -v school_storage:/var/www/storage \
+                    -v /opt/school-erp/src/.env:/var/www/.env \
                     --network school_erp_network \
                     --network mysql_default \
-                    --env-file /opt/school-erp/src/.env \
                     school-erp-app:latest
                 '''
             }
         }
+
 
 
         stage('Run Migrations') {
