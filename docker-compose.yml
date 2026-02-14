@@ -16,8 +16,8 @@ services:
 
   nginx:
     build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+      context: ./docker/nginx
+      dockerfile: Dockerfile
     image: school-erp-nginx:latest
     container_name: school_erp_nginx
     restart: always
