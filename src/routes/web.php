@@ -57,7 +57,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
         })->name('admin.profile');
 
         // Logout route
-    Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('admin.logout');
+        Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('admin.logout');
     });
 
     // Tenant check route for admin domain
@@ -113,35 +113,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
         Route::get('/tenants/{tenant}/settings/notifications', [\App\Http\Controllers\Admin\TenantController::class, 'settingsNotifications'])->name('tenants.settings.notifications')->where('tenant', '[a-z0-9-]+');
         Route::post('/tenants/{tenant}/settings/notifications', [\App\Http\Controllers\Admin\TenantController::class, 'updateSettingsNotifications'])->name('tenants.settings.notifications.update')->where('tenant', '[a-z0-9-]+');
 
-        // Vhost Management
-        Route::prefix('vhost')->name('vhost.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\VhostController::class, 'index'])->name('index');
-            Route::get('/edit', [\App\Http\Controllers\Admin\VhostController::class, 'edit'])->name('edit');
-            Route::put('/update', [\App\Http\Controllers\Admin\VhostController::class, 'update'])->name('update');
-            Route::get('/show', [\App\Http\Controllers\Admin\VhostController::class, 'show'])->name('show');
-            Route::post('/restore', [\App\Http\Controllers\Admin\VhostController::class, 'restore'])->name('restore');
-            Route::post('/validate', [\App\Http\Controllers\Admin\VhostController::class, 'validate'])->name('validate');
-            Route::get('/system-info', [\App\Http\Controllers\Admin\VhostController::class, 'systemInfo'])->name('system-info');
-            Route::get('/backups', [\App\Http\Controllers\Admin\VhostController::class, 'backups'])->name('backups');
 
-            // Herd Configuration Management
-            Route::get('/herd/edit', [\App\Http\Controllers\Admin\VhostController::class, 'editHerd'])->name('herd.edit');
-            Route::put('/herd/update', [\App\Http\Controllers\Admin\VhostController::class, 'updateHerd'])->name('herd.update');
-            Route::get('/herd/show', [\App\Http\Controllers\Admin\VhostController::class, 'showHerd'])->name('herd.show');
-
-            // .herd.yml Configuration Management
-            Route::get('/herd-yml/edit', [\App\Http\Controllers\Admin\VhostController::class, 'editHerdYml'])->name('herd-yml.edit');
-            Route::put('/herd-yml/update', [\App\Http\Controllers\Admin\VhostController::class, 'updateHerdYml'])->name('herd-yml.update');
-            Route::get('/herd-yml/show', [\App\Http\Controllers\Admin\VhostController::class, 'showHerdYml'])->name('herd-yml.show');
-
-            // Service Management
-            Route::post('/herd/start', [\App\Http\Controllers\Admin\VhostController::class, 'startHerd'])->name('herd.start');
-            Route::post('/herd/stop', [\App\Http\Controllers\Admin\VhostController::class, 'stopHerd'])->name('herd.stop');
-            Route::post('/herd/restart', [\App\Http\Controllers\Admin\VhostController::class, 'restartHerd'])->name('herd.restart');
-            Route::post('/nginx/start', [\App\Http\Controllers\Admin\VhostController::class, 'startNginx'])->name('nginx.start');
-            Route::post('/nginx/stop', [\App\Http\Controllers\Admin\VhostController::class, 'stopNginx'])->name('nginx.stop');
-            Route::post('/nginx/restart', [\App\Http\Controllers\Admin\VhostController::class, 'restartNginx'])->name('nginx.restart');
-        });
 
         // Admin Users Management
         Route::resource('users', \App\Http\Controllers\Admin\AdminUserController::class)->only(['index', 'show']);
@@ -237,12 +209,12 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
 
     // Public tenant pages (require CMS to be enabled)
     Route::middleware('cms.enabled')->group(function () {
-    Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
-    Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');
-    Route::get('/programs', [SchoolController::class, 'programs'])->name('tenant.programs');
-    Route::get('/facilities', [SchoolController::class, 'facilities'])->name('tenant.facilities');
-    Route::get('/admission', [SchoolController::class, 'admission'])->name('tenant.admission');
-    Route::get('/contact', [SchoolController::class, 'contact'])->name('tenant.contact');
+        Route::get('/', [SchoolController::class, 'home'])->name('tenant.home');
+        Route::get('/about', [SchoolController::class, 'about'])->name('tenant.about');
+        Route::get('/programs', [SchoolController::class, 'programs'])->name('tenant.programs');
+        Route::get('/facilities', [SchoolController::class, 'facilities'])->name('tenant.facilities');
+        Route::get('/admission', [SchoolController::class, 'admission'])->name('tenant.admission');
+        Route::get('/contact', [SchoolController::class, 'contact'])->name('tenant.contact');
     });
 
     // Auth routes for tenants (ONLY on tenant domains)
@@ -361,7 +333,7 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
 
             // Section Management
             // Sections are managed within classes - redirect index to classes
-            Route::get('sections', function() {
+            Route::get('sections', function () {
                 return redirect()->route('classes.index');
             })->name('sections.index');
             Route::get('sections/create', [\App\Http\Controllers\Tenant\Admin\SectionController::class, 'create'])->name('sections.create');
@@ -401,26 +373,26 @@ Route::domain('{tenant}.' . config('all.domains.primary'))->middleware(['tenant.
 
         // Department Management (requires classes feature)
         Route::middleware('feature:classes')->group(function () {
-        Route::get('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'index'])->name('departments.index');
-        Route::get('departments/create', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'create'])->name('departments.create');
-        Route::post('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'store'])->name('departments.store');
-        Route::get('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'show'])->name('departments.show')->where('departmentId', '[0-9]+');
-        Route::get('departments/{departmentId}/edit', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'edit'])->name('departments.edit')->where('departmentId', '[0-9]+');
-        Route::put('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update')->where('departmentId', '[0-9]+');
-        Route::patch('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update.patch')->where('departmentId', '[0-9]+');
-        Route::delete('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'destroy'])->name('departments.destroy')->where('departmentId', '[0-9]+');
+            Route::get('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'index'])->name('departments.index');
+            Route::get('departments/create', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'create'])->name('departments.create');
+            Route::post('departments', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'store'])->name('departments.store');
+            Route::get('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'show'])->name('departments.show')->where('departmentId', '[0-9]+');
+            Route::get('departments/{departmentId}/edit', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'edit'])->name('departments.edit')->where('departmentId', '[0-9]+');
+            Route::put('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update')->where('departmentId', '[0-9]+');
+            Route::patch('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'update'])->name('departments.update.patch')->where('departmentId', '[0-9]+');
+            Route::delete('departments/{departmentId}', [\App\Http\Controllers\Tenant\Admin\DepartmentController::class, 'destroy'])->name('departments.destroy')->where('departmentId', '[0-9]+');
         });
 
         // Subject Management (requires classes feature)
         Route::middleware('feature:classes')->group(function () {
-        Route::get('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'index'])->name('subjects.index');
-        Route::get('subjects/create', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'create'])->name('subjects.create');
-        Route::post('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'store'])->name('subjects.store');
-        Route::get('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'show'])->name('subjects.show')->where('subjectId', '[0-9]+');
-        Route::get('subjects/{subjectId}/edit', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'edit'])->name('subjects.edit')->where('subjectId', '[0-9]+');
-        Route::put('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update')->where('subjectId', '[0-9]+');
-        Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
-        Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
+            Route::get('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'index'])->name('subjects.index');
+            Route::get('subjects/create', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'create'])->name('subjects.create');
+            Route::post('subjects', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'store'])->name('subjects.store');
+            Route::get('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'show'])->name('subjects.show')->where('subjectId', '[0-9]+');
+            Route::get('subjects/{subjectId}/edit', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'edit'])->name('subjects.edit')->where('subjectId', '[0-9]+');
+            Route::put('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update')->where('subjectId', '[0-9]+');
+            Route::patch('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'update'])->name('subjects.update.patch')->where('subjectId', '[0-9]+');
+            Route::delete('subjects/{subjectId}', [\App\Http\Controllers\Tenant\Admin\SubjectController::class, 'destroy'])->name('subjects.destroy')->where('subjectId', '[0-9]+');
         });
 
         // Examination Management - Grade Scales (requires grades feature)

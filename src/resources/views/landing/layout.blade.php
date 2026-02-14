@@ -16,6 +16,19 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WEYDBBHMZ1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+
+        gtag('config', 'G-WEYDBBHMZ1');
+    </script>
+
     <!-- Default Color Palette for Landing Page -->
     <style>
         :root {
@@ -274,8 +287,23 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <a href="{{ route('landing.home') }}" class="text-2xl font-bold text-primary-600">
-                            {{ config('all.company.name') }}
+                        <a href="{{ route('landing.home') }}" class="flex items-center">
+                            @php
+                                $companyLogo = config('all.company.logo');
+                            @endphp
+                            @if ($companyLogo)
+                                <img src="{{ asset($companyLogo) }}" alt="{{ config('all.company.name') }}"
+                                    class="h-10 w-auto">
+                            @else
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center shadow-md mr-3">
+                                        <x-heroicon-o-academic-cap class="w-6 h-6 text-white" />
+                                    </div>
+                                    <span
+                                        class="text-2xl font-bold text-primary-600">{{ config('all.company.name') }}</span>
+                                </div>
+                            @endif
                         </a>
                     </div>
                 </div>
@@ -394,7 +422,24 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Company Info -->
                 <div class="col-span-1 md:col-span-2">
-                    <h3 class="text-xl font-bold text-white mb-4">{{ config('all.company.name') }}</h3>
+                    @php
+                        $companyLogo = config('all.company.logo');
+                    @endphp
+                    @if ($companyLogo)
+                        <img src="{{ asset($companyLogo) }}" alt="{{ config('all.company.name') }}"
+                            class="h-12 w-auto mb-4">
+                    @else
+                        <div class="flex items-center mb-4">
+                            <div
+                                class="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center shadow-md mr-3">
+                                <x-heroicon-o-academic-cap class="w-6 h-6 text-white" />
+                            </div>
+                            <h3 class="text-xl font-bold text-white">{{ config('all.company.name') }}</h3>
+                        </div>
+                    @endif
+                    @if ($companyLogo)
+                        <h3 class="text-xl font-bold text-white mb-4">{{ config('all.company.name') }}</h3>
+                    @endif
                     <p class="text-secondary-300 mb-4">{{ config('all.company.tagline') }}</p>
                     <div class="flex space-x-4">
                         <a href="#" class="text-secondary-300 hover:text-white transition-colors">
