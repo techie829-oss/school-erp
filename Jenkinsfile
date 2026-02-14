@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         APP_CONTAINER = "school_erp_app"
-        PROJECT_PATH = "/opt/school-erp/src"
     }
 
     stages {
@@ -14,31 +13,16 @@ pipeline {
             }
         }
 
-        stage('Sync Code Safely') {
+        stage('Build & Deploy') {
             steps {
-                sh """
-                    rsync -av --delete \
-                        --exclude='.env' \
-                        --exclude='storage' \
-                        --exclude='.git' \
-                        ./ ${PROJECT_PATH}/
-                """
-            }
-        }
-
-        stage('Composer Install') {
-            steps {
-                sh """
-                    docker exec ${APP_CONTAINER} composer install --no-dev --optimize-autoloader
-                """
+                // Safer rolling update style
+                sh 'docker compose up -d --build app'
             }
         }
 
         stage('Run Migrations') {
             steps {
-                sh """
-                    docker exec ${APP_CONTAINER} php artisan migrate --force
-                """
+                sh "docker exec ${APP_CONTAINER} php artisan migrate --force"
             }
         }
 
@@ -55,10 +39,10 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful - No Data Lost"
+            echo "Deployment Successful - Image Based"
         }
         failure {
-            echo "Deployment Failed - Review Logs"
+            echo "Deployment Failed"
         }
     }
 }
