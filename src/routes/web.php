@@ -50,7 +50,7 @@ Route::domain(config('all.domains.admin'))->group(function () {
         // Protected admin routes
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
-        })->name('admin.dashboard');
+        })->name('admin.dashboard.alternate');
 
         Route::get('/profile', function () {
             return view('profile');
