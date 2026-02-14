@@ -5,43 +5,46 @@ pipeline {
         IMAGE_NAME = "school-erp-app"
         IMAGE_TAG  = "${env.GIT_COMMIT}"
         CONTAINER  = "school_erp_app"
-        // Using existing path for now, but abstracted for portability
         ENV_PATH   = "/opt/school-erp/src/.env"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build Images') {
+        stage('Build Image') {
             steps {
                 sh '''
-                    # Build App Image
                     docker build \
                       --pull \
                       --no-cache \
                       -t ${IMAGE_NAME}:${IMAGE_TAG} \
                       -t ${IMAGE_NAME}:latest \
                       -f docker/Dockerfile .
-
-                    # Build Nginx Image
-                    docker build \
-                      --pull \
-                      --no-cache \
-                      -t school-erp-nginx:${IMAGE_TAG} \
-                      -t school-erp-nginx:latest \
-                      -f docker/nginx/Dockerfile .
                 '''
             }
         }
 
         stage('Deploy') {
             steps {
-                sh 'docker-compose up -d --build --remove-orphans'
+                sh '''
+                    docker stop ${CONTAINER} || true
+                    docker rm ${CONTAINER} || true
+
+                    docker run -d \
+                      --name ${CONTAINER} \
+                      --restart=always \
+                      -p 127.0.0.1:9001:9000 \
+                      -v school_storage:/var/www/storage \
+                      -v ${ENV_PATH}:/var/www/.env \
+                      --network school_erp_network \
+                      --network mysql_default \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
             }
         }
 
@@ -49,20 +52,11 @@ pipeline {
             steps {
                 sh '''
                     docker exec ${CONTAINER} php artisan migrate --force
+                    docker exec ${CONTAINER} php artisan config:clear
                     docker exec ${CONTAINER} php artisan config:cache
-                    docker exec ${CONTAINER} php artisan route:cache
                     docker exec ${CONTAINER} php artisan view:cache
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Deployment Successful - Clean Architecture"
-        }
-        failure {
-            echo "Deployment Failed"
         }
     }
 }
