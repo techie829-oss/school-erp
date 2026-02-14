@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        APP_CONTAINER = "school_erp_app"
-    }
-
     stages {
 
         stage('Checkout Code') {
@@ -13,33 +9,60 @@ pipeline {
             }
         }
 
-        stage('Build & Deploy') {
+        stage('Build Image') {
             steps {
-                // Safer rolling update style
-                sh 'docker compose up -d --build app'
+                sh '''
+                    docker build \\
+                      -t school-erp-app:latest \\
+                      -f docker/Dockerfile .
+                '''
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                    # Stop and remove existing container if it exists
+                    docker stop school_erp_app || true
+                    docker rm school_erp_app || true
+
+                    # Ensure network exists
+                    docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
+
+                    # Run new container
+                    docker run -d \\
+                      --name school_erp_app \\
+                      --restart=always \\
+                      -p 127.0.0.1:9001:9000 \\
+                      -v school_storage:/var/www/storage \\
+                      --network school_erp_network \\
+                      --network mysql_default \\
+                      --env-file src/.env \\
+                      school-erp-app:latest
+                '''
             }
         }
 
         stage('Run Migrations') {
             steps {
-                sh "docker exec ${APP_CONTAINER} php artisan migrate --force"
+                sh 'docker exec school_erp_app php artisan migrate --force'
             }
         }
 
         stage('Optimize Application') {
             steps {
-                sh """
-                    docker exec ${APP_CONTAINER} php artisan config:cache
-                    docker exec ${APP_CONTAINER} php artisan route:cache
-                    docker exec ${APP_CONTAINER} php artisan view:cache
-                """
+                sh '''
+                    docker exec school_erp_app php artisan config:cache
+                    docker exec school_erp_app php artisan route:cache
+                    docker exec school_erp_app php artisan view:cache
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "Deployment Successful - Image Based"
+            echo "Deployment Successful - Pure Docker Mode"
         }
         failure {
             echo "Deployment Failed"
