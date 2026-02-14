@@ -39,3 +39,36 @@ networks:
 
 volumes:
   school_storage:
+
+
+services:
+
+  app:
+    image: school-erp-app:latest
+    container_name: school_erp_app
+    restart: always
+    volumes:
+      - school_storage:/var/www/storage
+      - ${ENV_FILE}:/var/www/.env
+    networks:
+      - school_network
+      - mysql_default
+
+  nginx:
+    image: school-erp-nginx:latest
+    container_name: school_erp_nginx
+    restart: always
+    ports:
+      - "127.0.0.1:9001:80"
+    depends_on:
+      - app
+    networks:
+      - school_network
+
+networks:
+  school_network:
+  mysql_default:
+    external: true
+
+volumes:
+  school_storage:

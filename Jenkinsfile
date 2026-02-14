@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         IMAGE_NAME = "school-erp-app"
-        IMAGE_TAG  = "${env.GIT_COMMIT}"
-        CONTAINER  = "school_erp_app"
-        ENV_PATH   = "/opt/school-erp/src/.env"
+        NGINX_IMAGE = "school-erp-nginx"
+        IMAGE_TAG = "${env.GIT_COMMIT}"
+        ENV_FILE = "${WORKSPACE}/.env"
     }
 
     stages {
@@ -16,15 +16,26 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Inject ENV') {
+            steps {
+                withCredentials([file(credentialsId: 'school-erp-env', variable: 'ENVFILE')]) {
+                    sh 'cp $ENVFILE .env'
+                }
+            }
+        }
+
+        stage('Build Images') {
             steps {
                 sh '''
-                    docker build \
-                      --pull \
-                      --no-cache \
+                    docker build --pull --no-cache \
                       -t ${IMAGE_NAME}:${IMAGE_TAG} \
                       -t ${IMAGE_NAME}:latest \
                       -f docker/Dockerfile .
+
+                    docker build --pull --no-cache \
+                      -t ${NGINX_IMAGE}:${IMAGE_TAG} \
+                      -t ${NGINX_IMAGE}:latest \
+                      -f docker/nginx/Dockerfile .
                 '''
             }
         }
@@ -32,18 +43,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    docker stop ${CONTAINER} || true
-                    docker rm ${CONTAINER} || true
-
-                    docker run -d \
-                      --name ${CONTAINER} \
-                      --restart=always \
-                      -p 127.0.0.1:9001:9000 \
-                      -v school_storage:/var/www/storage \
-                      -v ${ENV_PATH}:/var/www/.env \
-                      --network school_erp_network \
-                      --network mysql_default \
-                      ${IMAGE_NAME}:${IMAGE_TAG}
+                    export ENV_FILE=${ENV_FILE}
+                    docker-compose down || true
+                    docker-compose up -d --build
                 '''
             }
         }
@@ -51,10 +53,10 @@ pipeline {
         stage('Migrate & Optimize') {
             steps {
                 sh '''
-                    docker exec ${CONTAINER} php artisan migrate --force
-                    docker exec ${CONTAINER} php artisan config:clear
-                    docker exec ${CONTAINER} php artisan config:cache
-                    docker exec ${CONTAINER} php artisan view:cache
+                    docker exec school_erp_app php artisan migrate --force
+                    docker exec school_erp_app php artisan config:cache
+                    docker exec school_erp_app php artisan route:cache
+                    docker exec school_erp_app php artisan view:cache
                 '''
             }
         }
