@@ -27,7 +27,7 @@ return [
     'company' => [
         'name' => env('COMPANY_NAME', 'School ERP'),
         'tagline' => env('COMPANY_TAGLINE', 'Complete School Management System'),
-        'email' => env('COMPANY_EMAIL', 'info@myschool.com'),
+        'email' => env('COMPANY_EMAIL', 'care@' . env('PRIMARY_DOMAIN', 'myschool.test')),
         'phone' => env('COMPANY_PHONE', '+91 98765 43210'),
     ],
 
