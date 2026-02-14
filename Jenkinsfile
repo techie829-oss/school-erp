@@ -3,33 +3,37 @@ pipeline {
 
     stages {
 
-        // 1. Checkout the code from the Git repository
-        stage('Checkout Code') {
+        stage('Pull Latest Code') {
             steps {
-                checkout scm
+                sh '''
+                    cd /opt/school-erp
+                    git pull origin main
+                '''
             }
         }
 
-        // 2. Deploy: Build image & deploy containers with zero downtime (orphans removed)
-        stage('Deploy') {
+        stage('Build & Deploy') {
             steps {
-                sh 'docker-compose up -d --build --remove-orphans'
+                sh '''
+                    cd /opt/school-erp
+                    docker compose up -d --build --remove-orphans
+                '''
             }
         }
 
-        // 3. Post-Deployment: Run database migrations forcefully
         stage('Run Migrations') {
             steps {
-                sh 'docker exec school_erp_app php artisan migrate --force'
+                sh '''
+                    docker exec school_erp_app php artisan migrate --force
+                '''
             }
         }
 
-        // 4. Optimization: Cache config, routes, and views for production performance
-        stage('Optimize Application') {
+        stage('Optimize Laravel') {
             steps {
                 sh '''
                     docker exec school_erp_app php artisan config:cache
-                    docker exec school_erp_app php artisan route:cache
+                    docker exec school_erp_app php artisan route:cache || true
                     docker exec school_erp_app php artisan view:cache
                 '''
             }
@@ -38,7 +42,7 @@ pipeline {
 
     post {
         success {
-            echo "Deployment Successful - Pure Docker Mode"
+            echo "Deployment Successful"
         }
         failure {
             echo "Deployment Failed"
