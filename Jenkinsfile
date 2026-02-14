@@ -22,26 +22,22 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sh '''
-                    # Stop and remove existing container if it exists
                     docker stop school_erp_app || true
                     docker rm school_erp_app || true
 
-                    # Ensure network exists
-                    docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
-
-                    # Run new container
-                    docker run -d \\
-                      --name school_erp_app \\
-                      --restart=always \\
-                      -p 127.0.0.1:9001:9000 \\
-                      -v school_storage:/var/www/storage \\
-                      --network school_erp_network \\
-                      --network mysql_default \\
-                      --env-file src/.env \\
-                      school-erp-app:latest
+                    docker run -d \
+                    --name school_erp_app \
+                    --restart=always \
+                    -p 127.0.0.1:9001:9000 \
+                    -v school_storage:/var/www/storage \
+                    --network school_erp_network \
+                    --network mysql_default \
+                    --env-file /opt/school-erp/src/.env \
+                    school-erp-app:latest
                 '''
             }
         }
+
 
         stage('Run Migrations') {
             steps {
