@@ -44,7 +44,7 @@ pipeline {
                       --restart=always \\
                       -p 127.0.0.1:9001:9000 \\
                       -v school_storage:/var/www/storage \
-                      --env-file ${ENV_PATH} \
+                      -v ${ENV_PATH}:/var/www/.env \
                       --network school_erp_network \
                       --network mysql_default \
                       ${IMAGE_NAME}:${IMAGE_TAG}
