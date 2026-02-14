@@ -27,14 +27,26 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copy application files
-COPY src /var/www
+# Copy Composer dependencies
+COPY src/composer.json src/composer.lock /var/www/
 
 # Install composer dependencies
 # Use --no-dev for production
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Install NPM dependencies and build assets
-RUN npm ci && npm run build
+# Copy NPM dependencies
+COPY src/package.json src/package-lock.json /var/www/
+
+# Install NPM dependencies
+RUN npm ci
+
+# Copy application files
+COPY src /var/www
+
+# Build assets
+RUN npm run build
+# dump autoload to generate classmap
+RUN composer dump-autoload --optimize
 
 # Copy entrypoint script
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
