@@ -9,32 +9,9 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Deploy') {
             steps {
-                sh '''
-                    docker build \\
-                      -t school-erp-app:latest \\
-                      -f docker/Dockerfile .
-                '''
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                    docker stop school_erp_app || true
-                    docker rm school_erp_app || true
-
-                    docker run -d \
-                    --name school_erp_app \
-                    --restart=always \
-                    -p 127.0.0.1:9001:9000 \
-                    -v school_storage:/var/www/storage \
-                    -v /opt/school-erp/src/.env:/var/www/.env \
-                    --network school_erp_network \
-                    --network mysql_default \
-                    school-erp-app:latest
-                '''
+                sh 'docker compose up -d --build --remove-orphans'
             }
         }
 
