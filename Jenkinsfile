@@ -51,22 +51,26 @@ pipeline {
                     # Ensure network exists
                     docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
 
-                    # 1. Run App Container
+                    # 1. Run App Container (Mount Host Code + Preserve Image Builds)
                     docker run -d \
                       --name ${CONTAINER} \
                       --restart=always \
+                      -v $(pwd):/var/www \
+                      -v /var/www/vendor \
+                      -v /var/www/node_modules \
+                      -v /var/www/public/build \
                       -v school_storage:/var/www/storage \
                       -v ${ENV_PATH}:/var/www/.env \
                       --network school_erp_network \
                       --network mysql_default \
                       ${IMAGE_NAME}:${IMAGE_TAG}
 
-                    # 2. Run Nginx Container
+                    # 2. Run Nginx Container (Share App Filesystem)
                     docker run -d \
                       --name school_erp_nginx \
                       --restart=always \
                       -p 127.0.0.1:9001:80 \
-                      -v school_storage:/var/www/storage \
+                      --volumes-from ${CONTAINER} \
                       --network school_erp_network \
                       school-erp-nginx:${IMAGE_TAG}
                 '''
