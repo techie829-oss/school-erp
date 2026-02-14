@@ -17,9 +17,59 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Build Images') {
             steps {
-                sh 'docker-compose up -d --build --remove-orphans'
+                sh '''
+                    # Build App Image
+                    docker build \
+                      --pull \
+                      --no-cache \
+                      -t ${IMAGE_NAME}:${IMAGE_TAG} \
+                      -t ${IMAGE_NAME}:latest \
+                      -f docker/Dockerfile .
+
+                    # Build Nginx Image
+                    docker build \
+                      --pull \
+                      --no-cache \
+                      -t school-erp-nginx:${IMAGE_TAG} \
+                      -t school-erp-nginx:latest \
+                      -f docker/nginx/Dockerfile .
+                '''
+            }
+        }
+
+        stage('Deploy Containers') {
+            steps {
+                sh '''
+                    # Clean up old containers
+                    docker stop school_erp_nginx || true
+                    docker rm school_erp_nginx || true
+                    docker stop ${CONTAINER} || true
+                    docker rm ${CONTAINER} || true
+
+                    # Ensure network exists
+                    docker network inspect school_erp_network >/dev/null 2>&1 || docker network create school_erp_network
+
+                    # 1. Run App Container
+                    docker run -d \
+                      --name ${CONTAINER} \
+                      --restart=always \
+                      -v school_storage:/var/www/storage \
+                      -v ${ENV_PATH}:/var/www/.env \
+                      --network school_erp_network \
+                      --network mysql_default \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
+
+                    # 2. Run Nginx Container
+                    docker run -d \
+                      --name school_erp_nginx \
+                      --restart=always \
+                      -p 127.0.0.1:9001:80 \
+                      -v school_storage:/var/www/storage \
+                      --network school_erp_network \
+                      school-erp-nginx:${IMAGE_TAG}
+                '''
             }
         }
 
