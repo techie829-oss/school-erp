@@ -44,8 +44,8 @@ pipeline {
                             # 1. Create secret directory in /opt (shared volume)
                             docker run --rm -v /opt:/opt alpine sh -c "mkdir -p /opt/deployments/.ssh_deploy && chmod 700 /opt/deployments/.ssh_deploy"
                             
-                            # 2. KeyScan GitHub (to known_hosts)
-                            docker run --rm -v /opt:/opt alpine/git:latest sh -c "mkdir -p ~/.ssh && ssh-keyscan github.com > /opt/deployments/.ssh_deploy/known_hosts && chmod 644 /opt/deployments/.ssh_deploy/known_hosts"
+                            # 2. KeyScan GitHub (to known_hosts) - Using alpine with openssh-client
+                            docker run --rm -v /opt:/opt alpine sh -c "apk add --no-cache openssh-client && mkdir -p ~/.ssh && ssh-keyscan github.com > /opt/deployments/.ssh_deploy/known_hosts && chmod 644 /opt/deployments/.ssh_deploy/known_hosts"
                             
                             # 3. Copy Private Key (Stream from Jenkins to Container Volume)
                             cat ${SSH_KEY_FILE} | docker run -i --rm -v /opt:/opt alpine sh -c "cat > /opt/deployments/.ssh_deploy/id_rsa && chmod 600 /opt/deployments/.ssh_deploy/id_rsa"
@@ -62,12 +62,12 @@ pipeline {
                 sh '''
                     echo "=== Deploying Code from GitHub ==="
                     
-                    # Verify git existence
+                    # Verify git existence (Using alpine since alpine/git entrypoint is 'git')
                     if docker run --rm \
                         -v /opt/deployments/.ssh_deploy:/root/.ssh:ro \
                         -v ${DEPLOY_DIR}:${DEPLOY_DIR} \
                         -w ${DEPLOY_DIR} \
-                        alpine/git:latest test -d .git; then
+                        alpine test -d .git; then
                         
                         echo "Pulling latest changes..."
                         docker run --rm \
