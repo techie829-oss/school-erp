@@ -33,23 +33,53 @@ pipeline {
                 '''
             }
         }
+
+        stage('🔑 Prepare SSH Keys') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'github-ssh-key', keyFileVariable: 'SSH_KEY_FILE', passphraseVariable: '', usernameVariable: '')]) {
+                        sh '''
+                            echo "=== Setting up SSH Keys for Deployment ==="
+                            
+                            # 1. Create secret directory in /opt (shared volume)
+                            docker run --rm -v /opt:/opt alpine sh -c "mkdir -p /opt/deployments/.ssh_deploy && chmod 700 /opt/deployments/.ssh_deploy"
+                            
+                            # 2. KeyScan GitHub (to known_hosts)
+                            docker run --rm -v /opt:/opt alpine/git:latest sh -c "mkdir -p ~/.ssh && ssh-keyscan github.com > /opt/deployments/.ssh_deploy/known_hosts && chmod 644 /opt/deployments/.ssh_deploy/known_hosts"
+                            
+                            # 3. Copy Private Key (Stream from Jenkins to Container Volume)
+                            cat ${SSH_KEY_FILE} | docker run -i --rm -v /opt:/opt alpine sh -c "cat > /opt/deployments/.ssh_deploy/id_rsa && chmod 600 /opt/deployments/.ssh_deploy/id_rsa"
+                            
+                            echo "✓ SSH Keys staged in /opt/deployments/.ssh_deploy"
+                        '''
+                    }
+                }
+            }
+        }
         
         stage('📥 Deploy Code') {
             steps {
                 sh '''
                     echo "=== Deploying Code from GitHub ==="
-                    if docker run --rm -v ${DEPLOY_DIR}:${DEPLOY_DIR} -w ${DEPLOY_DIR} alpine:latest test -d .git; then
+                    
+                    # Verify git existence
+                    if docker run --rm \
+                        -v /opt/deployments/.ssh_deploy:/root/.ssh:ro \
+                        -v ${DEPLOY_DIR}:${DEPLOY_DIR} \
+                        -w ${DEPLOY_DIR} \
+                        alpine/git:latest test -d .git; then
+                        
                         echo "Pulling latest changes..."
                         docker run --rm \
+                            -v /opt/deployments/.ssh_deploy:/root/.ssh:ro \
                             -v ${DEPLOY_DIR}:${DEPLOY_DIR} \
-                            -v /home/jadmin/.ssh:/root/.ssh:ro \
                             -w ${DEPLOY_DIR} \
                             alpine/git:latest pull origin ${GIT_BRANCH}
                     else
                         echo "Cloning repository..."
                         docker run --rm \
+                            -v /opt/deployments/.ssh_deploy:/root/.ssh:ro \
                             -v ${DEPLOY_DIR}:/git \
-                            -v /home/jadmin/.ssh:/root/.ssh:ro \
                             alpine/git:latest clone ${GIT_REPO} /git
                     fi
                     echo "✓ Code deployed"
